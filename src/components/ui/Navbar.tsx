@@ -20,7 +20,7 @@ export default function Navbar() {
 
   return (
     <nav className="h-19 border-b border-[#e8e8e8] bg-[#fbfbfb]">
-      <div className="mx-auto flex h-full max-w-7xl items-center justify-between">
+      <div className="flex px-10 h-full items-center justify-between">
         <h2 className="text-xl font-bold tracking-[0.02em] text-[#181818] sm:text-2xl">
           ROOMAI
         </h2>

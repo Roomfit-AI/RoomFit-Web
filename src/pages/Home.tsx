@@ -26,7 +26,7 @@ export function Home() {
   return (
     <main className="min-h-screen bg-[#fbfbfb] text-[#141414]">
 
-      <section className="mx-auto grid min-h-135 max-w-7xl items-center gap-8 px-5 py-10 sm:px-8 lg:grid-cols-[0.88fr_1.12fr] lg:px-12 lg:py-14">        
+      <section className="ml-20 grid min-h-135 items-center gap-8 px-5 py-10 sm:px-8 lg:grid-cols-[0.88fr_1.12fr] lg:px-12 lg:py-14">        
         <div className="max-w-130">
           <h1 className="flex flex-col gap-3 text-[34px] font-bold leading-[1.2] tracking-normal text-[#111111] sm:text-[44px] lg:text-[50px]">
             <span>당신만의 공간,</span>
@@ -57,26 +57,34 @@ export function Home() {
       </section>
 
       <section>
-        <div className="mx-auto flex max-w-7xl flex-col gap-6 px-5 py-9 mb-2 sm:px-8 md:flex-row md:justify-between lg:px-12">
-          {features.map((feature) => {
+        <div className="flex px-35 py-9">
+          {features.map((feature, index) => {
             const Icon = feature.icon;
 
             return (
-              <article
+              <div
                 key={feature.title}
-                className="flex flex-1 items-center gap-5"
+                className={`flex-1 ${
+                  index === 0
+                    ? "flex justify-start"
+                    : index === 1
+                    ? "flex justify-center"
+                    : "flex justify-end"
+                }`}
               >
-                <Icon className="h-10 w-10 shrink-0 stroke-[1.6] text-[#111111]" />
+                <article className="flex items-center gap-5">
+                  <Icon className="h-10 w-10 shrink-0 stroke-[1.6] text-[#111111]" />
 
-                <div>
-                  <h3 className="text-base font-bold text-[#161616]">
-                    {feature.title}
-                  </h3>
-                  <p className="mt-2 whitespace-pre-line text-sm leading-normal text-[#777777]">
-                    {feature.description}
-                  </p>
-                </div>
-              </article>
+                  <div>
+                    <h3 className="text-base font-bold text-[#161616]">
+                      {feature.title}
+                    </h3>
+                    <p className="mt-2 whitespace-pre-line text-sm leading-normal text-[#777777]">
+                      {feature.description}
+                    </p>
+                  </div>
+                </article>
+              </div>
             );
           })}
         </div>
