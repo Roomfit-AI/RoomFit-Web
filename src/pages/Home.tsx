@@ -30,8 +30,8 @@ export function Home() {
       <section className="ml-20 grid min-h-135 items-center gap-8 px-5 py-10 sm:px-8 lg:grid-cols-[0.88fr_1.12fr] lg:px-12 lg:py-14">        
         <div className="max-w-130">
           <h1 className="flex flex-col gap-3 text-[34px] font-bold leading-[1.2] tracking-normal text-[#111111] sm:text-[44px] lg:text-[50px]">
-            <span>당신만의 공간,</span>
-            <span>AI가 완성해드립니다</span>
+            <span className="whitespace-nowrap">당신만의 공간,</span>
+            <span className="whitespace-nowrap">AI가 완성해드립니다</span>
           </h1>
 
           <p className="mt-7 text-base font-medium leading-[1.6] text-[#747474] sm:text-lg">

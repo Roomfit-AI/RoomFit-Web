@@ -1,40 +1,76 @@
 import { useLocation, useNavigate } from "react-router-dom";
 import Button from "./Button";
 
+const navigationSteps = [
+  { path: "/", label: "홈" },
+  {
+    path: "/rooms",
+    label: "샘플 선택",
+    beforeNext: ensureSelectedRoom,
+  },
+  { path: "/manage-furniture", label: "가구 관리" },
+  { path: "/editor", label: "편집" },
+];
+
 export default function Navbar() {
   const location = useLocation();
   const navigate = useNavigate();
-  const isHome = location.pathname === "/";
-  const buttonLabel = isHome ? "시작하기" : "다음";
-  const nextPath = isHome ? "/rooms" : "/manage-furniture";
-  const goNext = () => {
-    if (location.pathname === "/rooms" && !localStorage.getItem("roomfit:selectedRoomId")) {
-      localStorage.setItem("roomfit:selectedRoomId", "studio-1r-sample");
-      localStorage.setItem("roomfit:selectedRoomTitle", "오픈형 원룸");
-      localStorage.setItem("roomfit:selectedRoomType", "원룸");
-      localStorage.setItem("roomfit:selectedRoomSize", "6평");
-      localStorage.removeItem("roomfit:selectedRoomLayout");
-    }
+  const currentStepIndex = navigationSteps.findIndex((step) => step.path === location.pathname);
+  const safeStepIndex = currentStepIndex >= 0 ? currentStepIndex : 0;
+  const isHome = safeStepIndex === 0;
+  const previousStep = navigationSteps[safeStepIndex - 1];
+  const nextStep = navigationSteps[safeStepIndex + 1];
 
-    navigate(nextPath);
+  const goPrevious = () => {
+    if (previousStep) {
+      navigate(previousStep.path);
+    }
+  };
+
+  const goNext = () => {
+    const currentStep = navigationSteps[safeStepIndex];
+    currentStep.beforeNext?.();
+
+    if (nextStep) {
+      navigate(nextStep.path);
+    }
   };
 
   return (
     <nav className="h-19 border-b border-[#e8e8e8] bg-[#fbfbfb]">
-      <div className="flex px-10 h-full items-center justify-between">
-        <h2 className="text-xl font-bold tracking-[0.02em] text-[#181818] sm:text-2xl">
-          ROOMAI
-        </h2>
+      <div className="flex h-full items-center justify-between px-10">
+        <h2 className="text-xl font-bold tracking-[0.02em] text-[#181818] sm:text-2xl">ROOMAI</h2>
 
-        <div className="flex items-center gap-4">
-          <Button
-            onClick={goNext}
-            className="hidden px-7 py-2.5 sm:inline-flex"
-          >
-            {buttonLabel}
-          </Button>
+        <div className="flex items-center gap-3">
+          {!isHome && previousStep && (
+            <button
+              type="button"
+              onClick={goPrevious}
+              className="hidden items-center justify-center rounded-full border border-[#111111] bg-white px-7 py-2.5 text-sm font-semibold text-[#111111] transition-colors hover:bg-[#f5f5f5] sm:inline-flex"
+            >
+              이전
+            </button>
+          )}
+
+          {nextStep && (
+            <Button onClick={goNext} className="hidden px-7 py-2.5 sm:inline-flex">
+              {isHome ? "시작하기" : "다음"}
+            </Button>
+          )}
         </div>
       </div>
     </nav>
   );
+}
+
+function ensureSelectedRoom() {
+  if (localStorage.getItem("roomfit:selectedRoomId")) {
+    return;
+  }
+
+  localStorage.setItem("roomfit:selectedRoomId", "studio-1r-sample");
+  localStorage.setItem("roomfit:selectedRoomTitle", "오픈형 원룸");
+  localStorage.setItem("roomfit:selectedRoomType", "원룸");
+  localStorage.setItem("roomfit:selectedRoomSize", "6평");
+  localStorage.removeItem("roomfit:selectedRoomLayout");
 }
