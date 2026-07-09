@@ -9,6 +9,7 @@ const navigationSteps = [
     beforeNext: ensureSelectedRoom,
   },
   { path: "/manage-furniture", label: "가구 관리" },
+  { path: "/preference", label: "취향 선택" },
   { path: "/editor", label: "편집" },
 ];
 

@@ -1,0 +1,163 @@
+import { useState } from "react";
+import { FiBookOpen, FiBriefcase, FiCheck, FiCoffee, FiGrid, FiHeart, FiHome, FiMoon, FiPackage, FiSmile } from "react-icons/fi";
+
+const purposes = [
+  { id: "rest", title: "휴식", description: "편안하게 쉴 수 있는 목적", icon: FiCoffee },
+  { id: "work", title: "업무 / 공부", description: "집중할 수 있는 공간", icon: FiBriefcase },
+  { id: "exercise", title: "운동", description: "홈트레이닝 공간", icon: FiGrid },
+  { id: "cook", title: "요리", description: "요리를 즐겨해요", icon: FiPackage },
+  { id: "party", title: "모임 / 접객", description: "사람들을 초대해요", icon: FiSmile },
+  { id: "hobby", title: "취미 / 수집", description: "취미 생활을 즐겨요", icon: FiBookOpen },
+  { id: "kids", title: "아이와 함께", description: "아이 중심의 공간", icon: FiHeart },
+  { id: "pet", title: "반려동물", description: "반려동물과 함께해요", icon: FiHome },
+  { id: "etc", title: "기타", description: "기타 목적", icon: FiMoon },
+];
+
+const styles = [
+  { id: "minimal", title: "미니멀", tone: "white" },
+  { id: "natural", title: "내추럴", tone: "wood" },
+  { id: "modern", title: "모던", tone: "light" },
+  { id: "midcentury", title: "미드센추리", tone: "deep" },
+  { id: "classic", title: "클래식", tone: "cream" },
+];
+
+const palettes = [
+  { id: "ivory", title: "화이트 / 아이보리", colors: ["#f8f5ee", "#1d1d1d"] },
+  { id: "beige", title: "베이지 / 샌드", colors: ["#d9c8ad"] },
+  { id: "gray", title: "그레이", colors: ["#b9b9b9"] },
+  { id: "brown", title: "브라운 / 우드", colors: ["#9d7b58"] },
+  { id: "green", title: "그린 / 올리브", colors: ["#4e6040"] },
+  { id: "blue", title: "블루 / 네이비", colors: ["#152238"] },
+  { id: "pink", title: "핑크 / 코랄", colors: ["#cfa293"] },
+  { id: "black", title: "블랙 / 다크", colors: ["#101010"] },
+];
+
+export default function Preference() {
+  const [selectedPurpose, setSelectedPurpose] = useState("rest");
+  const [selectedStyle, setSelectedStyle] = useState("minimal");
+  const [selectedPalette, setSelectedPalette] = useState("ivory");
+
+  return (
+    <main className="min-h-[calc(100vh-76px)] bg-[#fbfbfb] px-5 py-8 text-[#141414] sm:px-8 lg:px-10">
+      <section className="mx-auto max-w-7xl">
+        <div className="mb-8 flex items-center gap-4">
+          <span className="grid h-9 w-9 place-items-center rounded-md bg-[#eeeeee] text-base font-bold">3</span>
+          <span className="text-lg font-extrabold">생활 목적 및 디자인 취향 선택</span>
+        </div>
+
+        <header className="mb-9 text-center">
+          <h1 className="text-3xl font-extrabold tracking-normal sm:text-4xl">당신의 라이프스타일을 알려주세요</h1>
+          <p className="mt-3 text-sm font-semibold text-[#777777]">정확한 추천을 위해 생활 패턴을 입력해주세요.</p>
+        </header>
+
+        <section className="mb-10">
+          <h2 className="mb-4 text-base font-extrabold">1. 생활 목적 <span className="font-semibold text-[#777777]">(중복 선택 가능)</span></h2>
+          <div className="grid gap-4 md:grid-cols-3">
+            {purposes.map((purpose) => {
+              const Icon = purpose.icon;
+              const selected = selectedPurpose === purpose.id;
+
+              return (
+                <button
+                  key={purpose.id}
+                  type="button"
+                  onClick={() => setSelectedPurpose(purpose.id)}
+                  className={`relative flex items-center gap-4 rounded-lg border bg-white px-5 py-4 text-left transition-all hover:border-[#111111] ${
+                    selected ? "border-[#111111] shadow-[0_14px_28px_rgba(0,0,0,0.08)]" : "border-[#e5e5e5]"
+                  }`}
+                >
+                  {selected && (
+                    <span className="absolute right-4 top-4 grid h-5 w-5 place-items-center rounded-full bg-[#111111] text-white">
+                      <FiCheck className="h-3.5 w-3.5" />
+                    </span>
+                  )}
+                  <Icon className="h-7 w-7 shrink-0 stroke-[1.5]" />
+                  <span>
+                    <strong className="block text-base font-extrabold">{purpose.title}</strong>
+                    <span className="mt-1 block text-sm font-medium text-[#777777]">{purpose.description}</span>
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </section>
+
+        <section className="mb-10">
+          <h2 className="mb-4 text-base font-extrabold">2. 선호하는 디자인 분위기 <span className="font-semibold text-[#777777]">(1~2개 선택)</span></h2>
+          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-5">
+            {styles.map((style) => {
+              const selected = selectedStyle === style.id;
+
+              return (
+                <button
+                  key={style.id}
+                  type="button"
+                  onClick={() => setSelectedStyle(style.id)}
+                  className={`relative overflow-hidden rounded-lg border bg-white p-2 text-left transition-all hover:-translate-y-1 hover:shadow-[0_18px_35px_rgba(0,0,0,0.08)] ${
+                    selected ? "border-[#111111]" : "border-[#e5e5e5]"
+                  }`}
+                >
+                  {selected && (
+                    <span className="absolute right-3 top-3 z-10 grid h-6 w-6 place-items-center rounded-full bg-[#111111] text-white">
+                      <FiCheck className="h-4 w-4" />
+                    </span>
+                  )}
+                  <RoomStylePreview tone={style.tone} />
+                  <strong className="mt-3 block text-center text-sm font-extrabold">{style.title}</strong>
+                </button>
+              );
+            })}
+          </div>
+        </section>
+
+        <section>
+          <h2 className="mb-5 text-base font-extrabold">3. 선호하는 색감 톤</h2>
+          <div className="grid gap-5 sm:grid-cols-4 lg:grid-cols-8">
+            {palettes.map((palette) => {
+              const selected = selectedPalette === palette.id;
+
+              return (
+                <button
+                  key={palette.id}
+                  type="button"
+                  onClick={() => setSelectedPalette(palette.id)}
+                  className="flex flex-col items-center gap-3 text-center"
+                >
+                  <span
+                    className={`relative grid h-14 w-14 place-items-center rounded-full border transition-all ${
+                      selected ? "border-[#111111] ring-4 ring-[#eeeeee]" : "border-[#dddddd]"
+                    }`}
+                    style={{
+                      background:
+                        palette.colors.length > 1
+                          ? `linear-gradient(135deg, ${palette.colors[0]} 0 50%, ${palette.colors[1]} 50% 100%)`
+                          : palette.colors[0],
+                    }}
+                  >
+                    {selected && <FiCheck className="h-5 w-5 text-white mix-blend-difference" />}
+                  </span>
+                  <span className="text-xs font-bold text-[#333333]">{palette.title}</span>
+                </button>
+              );
+            })}
+          </div>
+        </section>
+      </section>
+    </main>
+  );
+}
+
+function RoomStylePreview({ tone }: { tone: string }) {
+  return (
+    <div className={`room-preview room-preview-${tone} h-36`}>
+      <span className="room-wall room-wall-left" />
+      <span className="room-wall room-wall-right" />
+      <span className="room-floor" />
+      <span className="room-window" />
+      <span className="room-bed" />
+      <span className="room-table" />
+      <span className="room-rug" />
+      <span className="room-plant" />
+    </div>
+  );
+}
