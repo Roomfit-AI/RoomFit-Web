@@ -209,4 +209,355 @@
       min-height: 480px;
     }
   }
+
+  .furniture-card-visual {
+    position: relative;
+    width: 110px;
+    height: 82px;
+  }
+
+  .furniture-card-visual span {
+    position: absolute;
+    display: block;
+  }
+
+  .furniture-card-sofa span:nth-child(1) {
+    left: 8px;
+    right: 8px;
+    bottom: 20px;
+    height: 30px;
+    border-radius: 8px;
+    background: #f0e8dc;
+    box-shadow: 0 10px 18px rgba(83, 65, 48, 0.16);
+  }
+
+  .furniture-card-sofa span:nth-child(2) {
+    left: 12px;
+    right: 12px;
+    bottom: 47px;
+    height: 22px;
+    border-radius: 7px 7px 4px 4px;
+    background: #e8ded1;
+  }
+
+  .furniture-card-sofa span:nth-child(3),
+  .furniture-card-sofa span:nth-child(4) {
+    bottom: 16px;
+    width: 6px;
+    height: 16px;
+    background: #7d6042;
+  }
+
+  .furniture-card-sofa span:nth-child(3) {
+    left: 22px;
+  }
+
+  .furniture-card-sofa span:nth-child(4) {
+    right: 22px;
+  }
+
+  .furniture-card-table span:nth-child(1),
+  .furniture-card-tray span:nth-child(1) {
+    left: 22px;
+    top: 15px;
+    width: 66px;
+    height: 42px;
+    border-radius: 50%;
+    background: #b98b57;
+    box-shadow: 0 10px 18px rgba(83, 65, 48, 0.16);
+  }
+
+  .furniture-card-table span:nth-child(2) {
+    left: 51px;
+    top: 52px;
+    width: 8px;
+    height: 24px;
+    background: #8b633d;
+  }
+
+  .furniture-card-table span:nth-child(3) {
+    left: 39px;
+    bottom: 4px;
+    width: 32px;
+    height: 8px;
+    border-radius: 50%;
+    background: #8b633d;
+  }
+
+  .furniture-card-tvStand span:nth-child(1) {
+    left: 15px;
+    top: 30px;
+    width: 80px;
+    height: 32px;
+    border-radius: 3px;
+    background: #8a6039;
+    box-shadow: 0 12px 18px rgba(83, 65, 48, 0.16);
+  }
+
+  .furniture-card-tvStand span:nth-child(2),
+  .furniture-card-tvStand span:nth-child(3) {
+    top: 39px;
+    width: 25px;
+    height: 2px;
+    background: #5d3f25;
+  }
+
+  .furniture-card-tvStand span:nth-child(2) {
+    left: 27px;
+  }
+
+  .furniture-card-tvStand span:nth-child(3) {
+    right: 27px;
+  }
+
+  .furniture-card-shelf span:nth-child(1) {
+    left: 36px;
+    top: 8px;
+    width: 42px;
+    height: 70px;
+    border-radius: 3px;
+    background: #8b633d;
+    box-shadow: 0 12px 18px rgba(83, 65, 48, 0.16);
+  }
+
+  .furniture-card-shelf span:nth-child(2),
+  .furniture-card-shelf span:nth-child(3),
+  .furniture-card-shelf span:nth-child(4) {
+    left: 40px;
+    width: 34px;
+    height: 3px;
+    background: #5d3f25;
+  }
+
+  .furniture-card-shelf span:nth-child(2) {
+    top: 27px;
+  }
+
+  .furniture-card-shelf span:nth-child(3) {
+    top: 45px;
+  }
+
+  .furniture-card-shelf span:nth-child(4) {
+    top: 62px;
+  }
+
+  .furniture-card-chair span:nth-child(1),
+  .furniture-card-greenChair span:nth-child(1) {
+    left: 32px;
+    bottom: 19px;
+    width: 48px;
+    height: 34px;
+    border-radius: 10px;
+    background: #c39b6c;
+    box-shadow: 0 12px 18px rgba(83, 65, 48, 0.16);
+  }
+
+  .furniture-card-chair span:nth-child(2),
+  .furniture-card-greenChair span:nth-child(2) {
+    left: 36px;
+    top: 12px;
+    width: 40px;
+    height: 36px;
+    border-radius: 12px 12px 6px 6px;
+    background: #d8b98e;
+  }
+
+  .furniture-card-greenChair span:nth-child(1),
+  .furniture-card-greenChair span:nth-child(2) {
+    background: #53643c;
+  }
+
+  .furniture-card-dining span:nth-child(1) {
+    left: 18px;
+    top: 28px;
+    width: 74px;
+    height: 24px;
+    border-radius: 50%;
+    background: #a97845;
+  }
+
+  .furniture-card-dining span:nth-child(2),
+  .furniture-card-dining span:nth-child(3),
+  .furniture-card-dining span:nth-child(4) {
+    top: 50px;
+    width: 6px;
+    height: 24px;
+    background: #7b5431;
+  }
+
+  .furniture-card-dining span:nth-child(2) {
+    left: 34px;
+  }
+
+  .furniture-card-dining span:nth-child(3) {
+    left: 54px;
+  }
+
+  .furniture-card-dining span:nth-child(4) {
+    left: 74px;
+  }
+
+  .furniture-card-stool span:nth-child(1) {
+    left: 32px;
+    top: 22px;
+    width: 48px;
+    height: 42px;
+    border-radius: 18px 18px 12px 12px;
+    background: #eee7dc;
+    box-shadow: 0 12px 18px rgba(83, 65, 48, 0.12);
+  }
+
+  .furniture-card-lamp span:nth-child(1) {
+    left: 51px;
+    top: 20px;
+    width: 8px;
+    height: 52px;
+    background: #2a251f;
+  }
+
+  .furniture-card-lamp span:nth-child(2) {
+    left: 35px;
+    top: 4px;
+    width: 40px;
+    height: 30px;
+    clip-path: polygon(35% 0, 65% 0, 100% 100%, 0 100%);
+    background: #efe4d2;
+  }
+
+  .furniture-card-lamp span:nth-child(3) {
+    left: 40px;
+    bottom: 5px;
+    width: 30px;
+    height: 7px;
+    border-radius: 50%;
+    background: #2a251f;
+  }
+
+  .furniture-card-pendant span:nth-child(1) {
+    left: 54px;
+    top: 0;
+    width: 2px;
+    height: 35px;
+    background: #2a251f;
+  }
+
+  .furniture-card-pendant span:nth-child(2) {
+    left: 35px;
+    top: 34px;
+    width: 40px;
+    height: 26px;
+    border-radius: 0 0 22px 22px;
+    background: #eee7dc;
+  }
+
+  .furniture-card-rug span:nth-child(1) {
+    left: 28px;
+    top: 17px;
+    width: 54px;
+    height: 54px;
+    background: #d6c9b7;
+  }
+
+  .furniture-card-poster span:nth-child(1) {
+    left: 34px;
+    top: 9px;
+    width: 42px;
+    height: 62px;
+    border: 5px solid #9b764c;
+    background: #f5efe3;
+  }
+
+  .furniture-card-poster span:nth-child(2) {
+    left: 50px;
+    top: 33px;
+    width: 13px;
+    height: 18px;
+    transform: rotate(45deg);
+    background: #9b8c6a;
+  }
+
+  .furniture-card-vase span:nth-child(1) {
+    left: 39px;
+    top: 17px;
+    width: 34px;
+    height: 50px;
+    border-radius: 45% 45% 35% 35%;
+    background: #d8c6a6;
+  }
+
+  .furniture-card-vase span:nth-child(2) {
+    left: 48px;
+    top: 8px;
+    width: 16px;
+    height: 18px;
+    border-radius: 8px;
+    background: #d8c6a6;
+  }
+
+  .furniture-card-diffuser span:nth-child(1) {
+    left: 47px;
+    bottom: 12px;
+    width: 18px;
+    height: 32px;
+    border-radius: 4px;
+    background: #c5ad8c;
+  }
+
+  .furniture-card-diffuser span:nth-child(2),
+  .furniture-card-diffuser span:nth-child(3),
+  .furniture-card-diffuser span:nth-child(4) {
+    bottom: 42px;
+    width: 2px;
+    height: 34px;
+    background: #5d3f25;
+    transform-origin: bottom;
+  }
+
+  .furniture-card-diffuser span:nth-child(2) {
+    left: 50px;
+    transform: rotate(-18deg);
+  }
+
+  .furniture-card-diffuser span:nth-child(3) {
+    left: 56px;
+  }
+
+  .furniture-card-diffuser span:nth-child(4) {
+    left: 62px;
+    transform: rotate(18deg);
+  }
+
+  .furniture-card-plant span:nth-child(1) {
+    left: 43px;
+    bottom: 10px;
+    width: 26px;
+    height: 26px;
+    border-radius: 5px 5px 9px 9px;
+    background: #9a7048;
+  }
+
+  .furniture-card-plant span:nth-child(2),
+  .furniture-card-plant span:nth-child(3),
+  .furniture-card-plant span:nth-child(4) {
+    bottom: 33px;
+    width: 18px;
+    height: 42px;
+    border-radius: 100% 0 100% 0;
+    background: #4d6b3e;
+    transform-origin: bottom;
+  }
+
+  .furniture-card-plant span:nth-child(2) {
+    left: 35px;
+    transform: rotate(-32deg);
+  }
+
+  .furniture-card-plant span:nth-child(3) {
+    left: 48px;
+  }
+
+  .furniture-card-plant span:nth-child(4) {
+    left: 59px;
+    transform: rotate(32deg);
+  }
 }

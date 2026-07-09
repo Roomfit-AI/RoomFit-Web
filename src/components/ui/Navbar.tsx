@@ -10,6 +10,7 @@ const navigationSteps = [
   },
   { path: "/manage-furniture", label: "가구 관리" },
   { path: "/preference", label: "취향 선택" },
+  { path: "/add-furniture", label: "가구 선택" },
   { path: "/editor", label: "편집" },
 ];
 
@@ -49,13 +50,13 @@ export default function Navbar() {
               onClick={goPrevious}
               className="hidden items-center justify-center rounded-full border border-[#111111] bg-white px-7 py-2.5 text-sm font-semibold text-[#111111] transition-colors hover:bg-[#f5f5f5] sm:inline-flex"
             >
-              이전
+              이전 단계
             </button>
           )}
 
           {nextStep && (
             <Button onClick={goNext} className="hidden px-7 py-2.5 sm:inline-flex">
-              {isHome ? "시작하기" : "다음"}
+              {isHome ? "시작하기" : "다음 단계"}
             </Button>
           )}
         </div>
