@@ -2,7 +2,9 @@ import { FiArrowRight, FiCpu, FiEdit3, FiHome } from "react-icons/fi";
 
 import Button from "../components/ui/Button";
 import { initialRoomLayout } from "../mock/interiorPlacementMock";
-import { RoomViewer } from "../components/room/RoomViewer";
+import { sampleRoom } from "../mock/sampleRoom";
+import RoomViewer from "../components/room/RoomViewer";
+
 
 const features = [
   {
@@ -47,8 +49,8 @@ export function Home() {
 
         <div className="hero-room min-h-75 lg:min-h-105">
           <RoomViewer
-            room={initialRoomLayout}
-            furniture={initialRoomLayout.furniture}
+            room={sampleRoom.room}
+            furniture={sampleRoom.furniture}
             selectedFurnitureId={null}
             onSelectFurniture={() => undefined}
             onMoveFurniture={() => undefined}

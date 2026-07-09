@@ -1,35 +1,66 @@
 import type { ReactNode } from "react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { FiBox, FiCheck, FiPlus, FiStar } from "react-icons/fi";
+
+import { getSampleRooms, type SampleRoomCard } from "../api/rooms";
+import { sampleRoomLayouts } from "../mock/interiorPlacementMock";
 
 const filters = ["전체", "원룸", "사무실"];
 
-const roomSamples = [
-  { title: "오픈형 원룸", size: "6평", tone: "white", category: "원룸", layoutId: "studio-1r-sample" },
-  { title: "분리형 원룸", size: "7평", tone: "wood", category: "원룸", layoutId: "studio-long-window" },
-  { title: "복층형 원룸", size: "9평", tone: "cream", category: "원룸", layoutId: "studio-storage-focus" },
-  { title: "넓은 1.5룸", size: "11평", tone: "modern", category: "원룸", layoutId: "studio-1r-sample" },
-  { title: "작업형 원룸", size: "8평", tone: "bright", category: "사무실", layoutId: "studio-long-window" },
-  { title: "스튜디오 원룸", size: "10평", tone: "deep", category: "사무실", layoutId: "studio-storage-focus" },
+const fallbackRoomSamples: SampleRoomCard[] = [
+  { title: "오픈형 원룸", size: "6평", tone: "white", category: "원룸", layoutId: "studio-1r-sample", layout: sampleRoomLayouts[0] },
+  { title: "분리형 원룸", size: "7평", tone: "wood", category: "원룸", layoutId: "studio-long-window", layout: sampleRoomLayouts[1] },
+  { title: "복층형 원룸", size: "9평", tone: "cream", category: "원룸", layoutId: "studio-storage-focus", layout: sampleRoomLayouts[2] },
+  { title: "넓은 1.5룸", size: "11평", tone: "bright", category: "원룸", layoutId: "studio-1r-sample", layout: sampleRoomLayouts[0] },
 ];
 
 export default function Rooms() {
   const [activeFilter, setActiveFilter] = useState("전체");
+  const [roomSamples, setRoomSamples] = useState<SampleRoomCard[]>(fallbackRoomSamples);
+  const [isLoading, setIsLoading] = useState(true);
   const [selectedRoomTitle, setSelectedRoomTitle] = useState(() => {
     return localStorage.getItem("roomfit:selectedRoomTitle") ?? "";
   });
+
+  useEffect(() => {
+    let ignore = false;
+
+    getSampleRooms()
+      .then((samples) => {
+        if (!ignore && samples.length > 0) {
+          setRoomSamples(samples);
+        }
+      })
+      .catch(() => {
+        if (!ignore) {
+          setRoomSamples(fallbackRoomSamples);
+        }
+      })
+      .finally(() => {
+        if (!ignore) {
+          setIsLoading(false);
+        }
+      });
+
+    return () => {
+      ignore = true;
+    };
+  }, []);
+
   const visibleRooms = useMemo(
     () =>
       activeFilter === "전체"
         ? roomSamples
         : roomSamples.filter((room) => room.category === activeFilter),
-    [activeFilter],
+    [activeFilter, roomSamples],
   );
-  const selectRoom = (room: (typeof roomSamples)[number]) => {
+
+  const selectRoom = (room: SampleRoomCard) => {
     localStorage.setItem("roomfit:selectedRoomId", room.layoutId);
     localStorage.setItem("roomfit:selectedRoomTitle", room.title);
     localStorage.setItem("roomfit:selectedRoomType", room.category);
     localStorage.setItem("roomfit:selectedRoomSize", room.size);
+    localStorage.setItem("roomfit:selectedRoomLayout", JSON.stringify(room.layout));
     setSelectedRoomTitle(room.title);
   };
 
@@ -57,8 +88,8 @@ export default function Rooms() {
           <div className="mt-20 space-y-9">
             <InfoRow
               icon={<FiBox className="h-6 w-6" />}
-              title="원룸 중심의 샘플 방"
-              description="작은 공간에 어울리는 배치를 골라 시작하세요."
+              title="API 샘플 방 목록"
+              description="백엔드 샘플 데이터를 불러와 공간을 시작합니다."
             />
             <InfoRow
               icon={<FiStar className="h-6 w-6" />}
@@ -66,12 +97,10 @@ export default function Rooms() {
               description="선택한 방을 내 생활 방식에 맞게 바꿀 수 있어요."
             />
           </div>
-
-          
         </aside>
 
         <section>
-          <div className="mb-9 flex flex-wrap gap-4">
+          <div className="mb-9 flex flex-wrap items-center gap-4">
             {filters.map((filter) => (
               <button
                 key={filter}
@@ -86,12 +115,13 @@ export default function Rooms() {
                 {filter}
               </button>
             ))}
+            {isLoading && <span className="text-sm font-semibold text-[#777777]">샘플 방을 불러오는 중...</span>}
           </div>
 
           <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-4">
             {visibleRooms.map((room) => (
               <button
-                key={room.title}
+                key={`${room.layoutId}-${room.title}`}
                 type="button"
                 onClick={() => selectRoom(room)}
                 className={`group relative rounded-lg border bg-white p-5 text-left transition-all hover:-translate-y-1 hover:shadow-[0_18px_35px_rgba(0,0,0,0.08)] ${
@@ -122,7 +152,8 @@ export default function Rooms() {
                   size: "직접 설정",
                   tone: "white",
                   category: "원룸",
-                  layoutId: "studio-1r-sample",
+                  layoutId: sampleRoomLayouts[0].id,
+                  layout: sampleRoomLayouts[0],
                 })
               }
               className="flex min-h-63.5 flex-col items-center justify-center rounded-lg border border-dashed border-[#d9d9d9] bg-white p-5 text-center transition-colors hover:bg-[#f6f6f6]"

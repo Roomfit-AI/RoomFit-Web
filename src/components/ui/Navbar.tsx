@@ -13,6 +13,7 @@ export default function Navbar() {
       localStorage.setItem("roomfit:selectedRoomTitle", "오픈형 원룸");
       localStorage.setItem("roomfit:selectedRoomType", "원룸");
       localStorage.setItem("roomfit:selectedRoomSize", "6평");
+      localStorage.removeItem("roomfit:selectedRoomLayout");
     }
 
     navigate(nextPath);

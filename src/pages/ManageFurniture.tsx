@@ -274,6 +274,15 @@ function FurnitureThumb({ category, color }: { category: FurnitureCategory; colo
 }
 
 function getSelectedRoom(): RoomLayout {
+  const selectedRoomLayout = localStorage.getItem("roomfit:selectedRoomLayout");
+  if (selectedRoomLayout) {
+    try {
+      return JSON.parse(selectedRoomLayout) as RoomLayout;
+    } catch {
+      localStorage.removeItem("roomfit:selectedRoomLayout");
+    }
+  }
+
   const selectedRoomId = localStorage.getItem("roomfit:selectedRoomId");
   return sampleRoomLayouts.find((room) => room.id === selectedRoomId) ?? initialRoomLayout;
 }
