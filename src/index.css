@@ -1,0 +1,38 @@
+@import "tailwindcss";
+
+@layer base {
+  html,
+  body {
+    background-color: #fbfbfb;
+    font-family: 'Pretendard', system-ui, sans-serif;
+  }
+
+  .hero-room .viewer-shell {
+    position: relative;
+    width: 100%;
+    min-height: 300px;
+    height: clamp(300px, 34vw, 440px);
+    background: transparent;
+  }
+
+  .hero-room canvas {
+    background: transparent;
+  }
+
+  .hero-room .viewer-caption {
+    display: none;
+  }
+
+  @media (max-width: 1023px) {
+    .hero-room .viewer-shell {
+      height: 360px;
+    }
+  }
+
+  @media (max-width: 640px) {
+    .hero-room .viewer-shell {
+      height: 300px;
+      min-height: 300px;
+    }
+  }
+}
