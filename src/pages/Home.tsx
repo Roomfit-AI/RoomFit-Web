@@ -1,7 +1,6 @@
 import { FiArrowRight, FiCpu, FiEdit3, FiHome } from "react-icons/fi";
 
 import Button from "../components/ui/Button";
-import Navbar from "../components/ui/Navbar";
 import { initialRoomLayout } from "../mock/interiorPlacementMock";
 import { RoomViewer } from "../components/room/RoomViewer";
 
@@ -26,10 +25,9 @@ const features = [
 export function Home() {
   return (
     <main className="min-h-screen bg-[#fbfbfb] text-[#141414]">
-      <Navbar />
 
-      <section className="mx-auto grid min-h-[540px] max-w-[1240px] items-center gap-8 px-5 py-10 sm:px-8 lg:grid-cols-[0.88fr_1.12fr] lg:px-12 lg:py-14">
-        <div className="max-w-[520px]">
+      <section className="mx-auto grid min-h-135 max-w-7xl items-center gap-8 px-5 py-10 sm:px-8 lg:grid-cols-[0.88fr_1.12fr] lg:px-12 lg:py-14">        
+        <div className="max-w-130">
           <h1 className="flex flex-col gap-3 text-[34px] font-bold leading-[1.2] tracking-normal text-[#111111] sm:text-[44px] lg:text-[50px]">
             <span>당신만의 공간,</span>
             <span>AI가 완성해드립니다</span>
@@ -47,7 +45,7 @@ export function Home() {
           </Button>
         </div>
 
-        <div className="hero-room min-h-[300px] lg:min-h-[420px]">
+        <div className="hero-room min-h-75 lg:min-h-105">
           <RoomViewer
             room={initialRoomLayout}
             furniture={initialRoomLayout.furniture}
@@ -58,20 +56,25 @@ export function Home() {
         </div>
       </section>
 
-      <section className="border-y border-[#e8e8e8] bg-[#fbfbfb]">
-        <div className="mx-auto grid max-w-[1120px] gap-6 px-5 py-9 sm:px-8 md:grid-cols-3 lg:px-12">
-          {features.map((feature, index) => {
+      <section>
+        <div className="mx-auto flex max-w-7xl flex-col gap-6 px-5 py-9 mb-2 sm:px-8 md:flex-row md:justify-between lg:px-12">
+          {features.map((feature) => {
             const Icon = feature.icon;
 
             return (
               <article
                 key={feature.title}
-                className={`flex items-center gap-5 md:px-6 ${index > 0 ? "md:border-l md:border-[#e8e8e8]" : ""}`}
+                className="flex flex-1 items-center gap-5"
               >
                 <Icon className="h-10 w-10 shrink-0 stroke-[1.6] text-[#111111]" />
+
                 <div>
-                  <h3 className="text-base font-bold text-[#161616]">{feature.title}</h3>
-                  <p className="mt-2 whitespace-pre-line text-sm leading-[1.5] text-[#777777]">{feature.description}</p>
+                  <h3 className="text-base font-bold text-[#161616]">
+                    {feature.title}
+                  </h3>
+                  <p className="mt-2 whitespace-pre-line text-sm leading-normal text-[#777777]">
+                    {feature.description}
+                  </p>
                 </div>
               </article>
             );

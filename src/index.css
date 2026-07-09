@@ -35,4 +35,116 @@
       min-height: 300px;
     }
   }
+
+  .room-preview {
+    position: relative;
+    height: 140px;
+    overflow: hidden;
+    border-radius: 6px;
+    background: linear-gradient(180deg, #ffffff 0%, #f4f1ec 100%);
+  }
+
+  .room-preview span {
+    position: absolute;
+    display: block;
+  }
+
+  .room-wall {
+    top: 22px;
+    width: 84px;
+    height: 78px;
+    background: #f7f4ee;
+    box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.04);
+  }
+
+  .room-wall-left {
+    left: 33px;
+    transform: skewY(29deg);
+    transform-origin: right top;
+  }
+
+  .room-wall-right {
+    right: 33px;
+    transform: skewY(-29deg);
+    transform-origin: left top;
+  }
+
+  .room-floor {
+    left: 42px;
+    right: 42px;
+    bottom: 16px;
+    height: 62px;
+    transform: perspective(150px) rotateX(58deg);
+    border-radius: 4px;
+    background: linear-gradient(135deg, #d9c5aa, #eee2d0);
+    box-shadow: 0 13px 18px rgba(0, 0, 0, 0.12);
+  }
+
+  .room-window {
+    top: 34px;
+    right: 53px;
+    width: 40px;
+    height: 28px;
+    border: 4px solid #b78d5d;
+    background: #fffaf1;
+  }
+
+  .room-bed {
+    right: 52px;
+    bottom: 40px;
+    width: 62px;
+    height: 30px;
+    border-radius: 5px;
+    background: #f5efe6;
+    box-shadow: 0 6px 0 #d4bfa1;
+  }
+
+  .room-table {
+    left: 82px;
+    bottom: 43px;
+    width: 34px;
+    height: 22px;
+    border-radius: 50%;
+    background: #9f7447;
+  }
+
+  .room-rug {
+    left: 68px;
+    bottom: 29px;
+    width: 72px;
+    height: 26px;
+    border-radius: 50%;
+    background: rgba(160, 121, 79, 0.24);
+  }
+
+  .room-plant {
+    left: 52px;
+    bottom: 49px;
+    width: 13px;
+    height: 26px;
+    border-radius: 10px 10px 4px 4px;
+    background: #52724d;
+    box-shadow: 0 14px 0 -4px #8b633a;
+  }
+
+  .room-preview-light .room-floor,
+  .room-preview-white .room-floor {
+    background: linear-gradient(135deg, #e5ded4, #fbf8f2);
+  }
+
+  .room-preview-wood .room-floor,
+  .room-preview-deep .room-floor {
+    background: linear-gradient(135deg, #b58a5b, #d7b991);
+  }
+
+  .room-preview-bright .room-wall,
+  .room-preview-white .room-wall {
+    background: #fbfaf7;
+  }
+
+  .room-preview-deep .room-bed,
+  .room-preview-wood .room-bed {
+    background: #ead7be;
+    box-shadow: 0 6px 0 #ad8255;
+  }
 }
