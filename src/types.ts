@@ -7,6 +7,15 @@ export type FurnitureCategory =
   | "lighting";
 
 export type FurnitureStatus = "existing" | "recommended";
+export type FurnitureGeometry = "box" | "rounded-box" | "cylinder" | "plane" | "model";
+export type FurnitureMaterialType = "fabric" | "wood" | "white" | "metal" | "glass" | "accent";
+
+export interface MaterialConfig {
+  type: FurnitureMaterialType;
+  color: string;
+  roughness?: number;
+  metalness?: number;
+}
 
 export interface Vector2D {
   x: number;
@@ -27,7 +36,9 @@ export interface Furniture {
   position: Vector2D;
   rotationY: number;
   color: string;
-  material: "fabric" | "wood" | "white" | "metal" | "glass" | "accent";
+  geometry?: FurnitureGeometry;
+  model?: string;
+  material: FurnitureMaterialType | MaterialConfig;
   status: FurnitureStatus;
   removable: boolean;
 }
@@ -36,6 +47,12 @@ export interface WallSegment {
   id: string;
   start: Vector2D;
   end: Vector2D;
+  height?: number;
+  thickness?: number;
+  material?: {
+    color: string;
+    roughness: number;
+  };
 }
 
 export interface Opening {
@@ -44,6 +61,18 @@ export interface Opening {
   position: Vector2D;
   dimensions: Size3D;
   rotationY: number;
+  frame?: {
+    color: string;
+  };
+  glass?: {
+    transmission: number;
+    opacity: number;
+  };
+  blind?: {
+    enabled: boolean;
+    type: "wood";
+    slats: number;
+  };
 }
 
 export interface RoomLayout {
@@ -52,6 +81,38 @@ export interface RoomLayout {
   description?: string;
   width: number;
   depth: number;
+  floor?: {
+    size: {
+      width: number;
+      depth: number;
+    };
+    material: {
+      color: string;
+      roughness: number;
+    };
+  };
+  camera?: {
+    type: "orthographic";
+    position: {
+      x: number;
+      y: number;
+      z: number;
+    };
+    target: {
+      x: number;
+      y: number;
+      z: number;
+    };
+    zoom: number;
+  };
+  lighting?: {
+    ambient: number;
+    sun: {
+      intensity: number;
+      position: [number, number, number];
+    };
+    environment: string;
+  };
   walls: WallSegment[];
   door: Opening;
   window: Opening;

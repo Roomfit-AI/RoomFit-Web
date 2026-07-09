@@ -1,7 +1,13 @@
-import { ContactShadows, Grid, OrbitControls, PerspectiveCamera, Text } from "@react-three/drei";
+import { ContactShadows, OrbitControls, OrthographicCamera } from "@react-three/drei";
 import { Canvas } from "@react-three/fiber";
+import * as THREE from "three";
 import { FurnitureMesh } from "./FurnitureMesh";
-import type { Furniture, RoomLayout, Vector2D, WallSegment } from "../../types";
+import Floor from "./Floor";
+import Lighting from "./Lighting";
+import Wall from "./Wall";
+import Window from "./Window";
+import Material from "../materials/Material";
+import type { Furniture, RoomLayout, Vector2D } from "../../types";
 
 interface RoomViewerProps {
   room: RoomLayout;
@@ -18,25 +24,38 @@ export function RoomViewer({
   onSelectFurniture,
   onMoveFurniture,
 }: RoomViewerProps) {
+  const camera = room.camera ?? {
+    type: "orthographic" as const,
+    position: { x: 6.2, y: 5.2, z: 6.2 },
+    target: { x: 0, y: 0.6, z: 0 },
+    zoom: 78,
+  };
+
   return (
     <div className="viewer-shell">
       <Canvas
         shadows
         dpr={[1, 2]}
         gl={{ antialias: true }}
+        onCreated={({ gl }) => {
+          gl.toneMapping = THREE.ACESFilmicToneMapping;
+          gl.toneMappingExposure = 1.05;
+          gl.outputColorSpace = THREE.SRGBColorSpace;
+        }}
         onPointerMissed={() => onSelectFurniture(null)}
       >
-        <color attach="background" args={["#f8fafc"]} />
-        <PerspectiveCamera makeDefault position={[4.7, 5.1, 5.4]} fov={44} />
-        <ambientLight intensity={0.72} />
-        <directionalLight
-          castShadow
-          position={[2.5, 6, 3.8]}
-          intensity={1.15}
-          shadow-mapSize={[2048, 2048]}
+        <color attach="background" args={["#faf9f6"]} />
+        <OrthographicCamera
+          makeDefault
+          position={[camera.position.x, camera.position.y, camera.position.z]}
+          zoom={camera.zoom}
+          near={0.1}
+          far={100}
         />
+        <Lighting room={room} />
 
         <RoomShell room={room} />
+
         {furniture.map((item) => (
           <FurnitureMesh
             key={item.id}
@@ -48,103 +67,75 @@ export function RoomViewer({
           />
         ))}
 
-        <Grid
-          position={[0, 0.006, 0]}
-          args={[8, 8]}
-          cellSize={0.5}
-          cellThickness={0.45}
-          cellColor="#d4d4d8"
-          sectionSize={1}
-          sectionThickness={0.8}
-          sectionColor="#a1a1aa"
-          fadeDistance={9}
-          fadeStrength={1.3}
-          infiniteGrid={false}
+        <ContactShadows opacity={0.24} scale={8} blur={3.2} far={5} position={[0, 0.015, 0]} />
+        <OrbitControls
+          makeDefault
+          enableDamping
+          target={[camera.target.x, camera.target.y, camera.target.z]}
+          minDistance={4.2}
+          maxDistance={10}
+          minPolarAngle={Math.PI / 4.8}
+          maxPolarAngle={Math.PI / 2.12}
         />
-        <ContactShadows opacity={0.22} scale={8} blur={2.4} far={4} position={[0, 0.01, 0]} />
-        <OrbitControls makeDefault enableDamping minDistance={3.8} maxDistance={9} maxPolarAngle={Math.PI / 2.08} />
       </Canvas>
       <div className="viewer-caption">
-        <span>가구를 클릭한 뒤 화살표를 드래그해 이동할 수 있습니다.</span>
+        <span>가구를 클릭한 뒤 드래그해 이동할 수 있습니다.</span>
         <strong>{selectedFurnitureId ? "선택됨" : "둘러보기"}</strong>
       </div>
     </div>
   );
 }
 
+export default RoomViewer;
+
 function RoomShell({ room }: { room: RoomLayout }) {
   return (
     <group>
-      <mesh receiveShadow position={[0, -0.015, 0]}>
-        <boxGeometry args={[room.width, 0.03, room.depth]} />
-        <meshStandardMaterial color="#ffffff" roughness={0.82} />
-      </mesh>
+      <Floor room={room} />
 
       {room.walls.map((wall) => (
         <Wall key={wall.id} wall={wall} />
       ))}
 
-      <OpeningMarker
-        label="Door"
-        position={[room.door.position.x, 0.04, room.door.position.z]}
-        size={[room.door.dimensions.width, 0.035, 0.28]}
-        color="#111827"
-      />
-      <OpeningMarker
-        label="Window"
-        position={[room.window.position.x, 1.05, room.window.position.z]}
-        size={[room.window.dimensions.width, 0.08, 0.05]}
-        color="#7dd3fc"
-      />
-
-      <mesh position={[0, 0.012, 0]}>
-        <boxGeometry args={[1.1, 0.018, room.depth - 1.1]} />
-        <meshBasicMaterial color="#fef3c7" transparent opacity={0.24} />
-      </mesh>
+      <DecorWall room={room} />
+      <Window opening={room.window} />
     </group>
   );
 }
 
-function Wall({ wall }: { wall: WallSegment }) {
-  const dx = wall.end.x - wall.start.x;
-  const dz = wall.end.z - wall.start.z;
-  const length = Math.sqrt(dx * dx + dz * dz);
-  const angle = Math.atan2(dz, dx);
-  const centerX = (wall.start.x + wall.end.x) / 2;
-  const centerZ = (wall.start.z + wall.end.z) / 2;
-
+function DecorWall({ room }: { room: RoomLayout }) {
   return (
-    <mesh castShadow receiveShadow position={[centerX, 0.34, centerZ]} rotation={[0, -angle, 0]}>
-      <boxGeometry args={[length, 0.68, 0.08]} />
-      <meshStandardMaterial color="#e4e4e7" roughness={0.78} />
-    </mesh>
+    <group>
+      <MarblePanel position={[-room.width / 2 + 0.8, 1.1, -room.depth / 2 + 0.07]} />
+      <WoodTrim position={[room.width / 2 - 0.07, 1.45, -0.25]} depth={room.depth - 0.45} />
+    </group>
   );
 }
 
-interface OpeningMarkerProps {
-  label: string;
-  position: [number, number, number];
-  size: [number, number, number];
-  color: string;
-}
-
-function OpeningMarker({ label, position, size, color }: OpeningMarkerProps) {
+function MarblePanel({ position }: { position: [number, number, number] }) {
   return (
     <group position={position}>
-      <mesh>
-        <boxGeometry args={size} />
-        <meshStandardMaterial color={color} roughness={0.45} />
+      <mesh castShadow receiveShadow>
+        <boxGeometry args={[1.85, 1.35, 0.055]} />
+        <Material type="white" color="#e9e4dc" roughness={0.72} />
       </mesh>
-      <Text
-        position={[0, 0.18, 0]}
-        rotation={[-Math.PI / 2, 0, 0]}
-        fontSize={0.13}
-        color="#27272a"
-        anchorX="center"
-        anchorY="middle"
-      >
-        {label}
-      </Text>
+      {[-0.55, 0.05, 0.55].map((offset, index) => (
+        <mesh key={index} position={[offset, 0, 0.032]} rotation={[0, 0, -0.55 + index * 0.24]}>
+          <boxGeometry args={[0.018, 1.55, 0.012]} />
+          <meshBasicMaterial color="#d2cbc1" transparent opacity={0.46} />
+        </mesh>
+      ))}
+    </group>
+  );
+}
+
+function WoodTrim({ position, depth }: { position: [number, number, number]; depth: number }) {
+  return (
+    <group position={position}>
+      <mesh castShadow receiveShadow>
+        <boxGeometry args={[0.12, 2.9, depth]} />
+        <Material type="wood" color="#8a623d" roughness={0.55} />
+      </mesh>
     </group>
   );
 }

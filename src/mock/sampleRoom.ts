@@ -1,343 +1,255 @@
-export const sampleRoom = {
-  id: "living-room-01",
+import type { RoomLayout } from "../types";
 
-  name: "Modern Living Room",
-
-  description:
-    "3D interior preview room",
-
-
-  width: 10,
-
-  depth: 8,
-
-
+export const sampleRoom: RoomLayout = {
+  id: "modern-studio-preview",
+  name: "모던 원룸",
+  description: "따뜻한 우드 블라인드와 화이트 패브릭 가구가 있는 원룸 프리뷰",
+  width: 6.4,
+  depth: 4.8,
+  floor: {
+    size: {
+      width: 6.4,
+      depth: 4.8,
+    },
+    material: {
+      color: "#eee6dc",
+      roughness: 0.86,
+    },
+  },
+  camera: {
+    type: "orthographic",
+    position: {
+      x: 6.4,
+      y: 5.2,
+      z: 6.2,
+    },
+    target: {
+      x: 0.25,
+      y: 0.7,
+      z: -0.15,
+    },
+    zoom: 82,
+  },
+  lighting: {
+    ambient: 0.78,
+    sun: {
+      intensity: 1.95,
+      position: [3.8, 7.5, 4.6],
+    },
+    environment: "bright-neutral-studio",
+  },
   walls: [
     {
       id: "back-wall",
-
-      start: {
-        x: -5,
-        z: -4,
-      },
-
-      end: {
-        x: 5,
-        z: -4,
+      start: { x: -3.2, z: -2.4 },
+      end: { x: 3.2, z: -2.4 },
+      height: 2.9,
+      thickness: 0.12,
+      material: {
+        color: "#f6f3ee",
+        roughness: 0.82,
       },
     },
-
     {
-      id: "left-wall",
-
-      start: {
-        x: -5,
-        z: -4,
-      },
-
-      end: {
-        x: -5,
-        z: 4,
+      id: "right-wall",
+      start: { x: 3.2, z: -2.4 },
+      end: { x: 3.2, z: 2.4 },
+      height: 2.9,
+      thickness: 0.14,
+      material: {
+        color: "#f4f0ea",
+        roughness: 0.84,
       },
     },
   ],
-
-
   door: {
-    position: {
-      x: 3.5,
-      z: 4,
-    },
-
-    dimensions: {
-      width: 1,
-      height: 2,
-    },
+    id: "preview-door",
+    label: "현관",
+    position: { x: -2.55, z: 2.35 },
+    dimensions: { width: 0.9, depth: 0.18, height: 2.1 },
+    rotationY: 0,
   },
-
-
   window: {
-    position: {
-      x: 1.5,
-      z: -4,
+    id: "preview-window",
+    label: "창문",
+    position: { x: 1.15, z: -2.34 },
+    dimensions: { width: 3.35, depth: 0.18, height: 1.55 },
+    rotationY: 0,
+    frame: {
+      color: "#8a623d",
     },
-
-    dimensions: {
-      width: 3,
-      height: 2,
+    glass: {
+      transmission: 0.28,
+      opacity: 0.24,
+    },
+    blind: {
+      enabled: true,
+      type: "wood",
+      slats: 18,
     },
   },
-  furniture:[
-
-
-
-    // TV 벽
-
+  furniture: [
     {
-
-      id:"tv-wall",
-
-      type:"wall-panel",
-
-      position:[
-        -4.75,
-        1.7,
-        -0.5
-      ],
-
-      size:[
-        0.12,
-        3.2,
-        3.8
-      ],
-
-      color:"#ddd8d2"
-
+      id: "preview-tv",
+      name: "벽걸이 TV",
+      category: "cabinet",
+      geometry: "box",
+      dimensions: { width: 1.55, depth: 0.08, height: 0.9 },
+      position: { x: -2.45, z: -2.28 },
+      rotationY: 0,
+      color: "#101010",
+      material: {
+        type: "glass",
+        color: "#101010",
+        roughness: 0.08,
+        metalness: 0.18,
+      },
+      status: "existing",
+      removable: true,
     },
-
-
-
-    // TV
-
     {
-
-      id:"tv",
-
-      type:"tv",
-
-      position:[
-        -4.55,
-        1.9,
-        -0.5
-      ],
-
-      size:[
-        0.08,
-        1.25,
-        2.2
-      ],
-
-      color:"#111111"
-
+      id: "preview-tv-stand",
+      name: "TV 장식장",
+      category: "cabinet",
+      geometry: "rounded-box",
+      dimensions: { width: 1.8, depth: 0.36, height: 0.28 },
+      position: { x: -2.35, z: -1.95 },
+      rotationY: 0,
+      color: "#8a6847",
+      material: {
+        type: "wood",
+        color: "#8a6847",
+        roughness: 0.55,
+        metalness: 0,
+      },
+      status: "existing",
+      removable: true,
     },
-
-
-
-    // TV 하부장
-
     {
-
-      id:"tv-stand",
-
-      type:"cabinet",
-
-      position:[
-        -4.35,
-        0.35,
-        -0.5
-      ],
-
-      size:[
-        0.55,
-        0.45,
-        2.8
-      ],
-
-      color:"#7b6248"
-
+      id: "preview-bookshelf",
+      name: "우드 책장",
+      category: "cabinet",
+      geometry: "box",
+      dimensions: { width: 0.58, depth: 0.42, height: 1.72 },
+      position: { x: -0.65, z: -2.0 },
+      rotationY: 0,
+      color: "#8b623a",
+      material: {
+        type: "wood",
+        color: "#8b623a",
+        roughness: 0.56,
+        metalness: 0,
+      },
+      status: "existing",
+      removable: true,
     },
-
-
-
-    // 책장
-
     {
-
-      id:"bookshelf",
-
-      type:"bookshelf",
-
-      position:[
-        -3.9,
-        1.8,
-        -2.8
-      ],
-
-      size:[
-        0.45,
-        3.2,
-        1.1
-      ],
-
-      color:"#8b6848"
-
+      id: "preview-lounge-chair",
+      name: "라운지 소파",
+      category: "chair",
+      geometry: "rounded-box",
+      dimensions: { width: 1.34, depth: 0.95, height: 0.72 },
+      position: { x: 0.65, z: -0.55 },
+      rotationY: -0.18,
+      color: "#f2ece2",
+      material: {
+        type: "fabric",
+        color: "#f2ece2",
+        roughness: 0.92,
+        metalness: 0,
+      },
+      status: "existing",
+      removable: true,
     },
-
-
-
-    // 왼쪽 소파
-
     {
-
-      id:"sofa-left",
-
-      type:"sofa",
-
-      position:[
-        1.0,
-        0.55,
-        -1.1
-      ],
-
-
-      rotation:[
-        0,
-        Math.PI / 2,
-        0
-      ],
-
-
-      size:[
-        2.6,
-        1.1,
-        1
-      ],
-
-
-      color:"#f5f1ea"
-
+      id: "preview-sofa",
+      name: "3인 소파",
+      category: "chair",
+      geometry: "rounded-box",
+      dimensions: { width: 2.85, depth: 0.9, height: 0.76 },
+      position: { x: 1.65, z: 1.15 },
+      rotationY: 0,
+      color: "#f4eee5",
+      material: {
+        type: "fabric",
+        color: "#f4eee5",
+        roughness: 0.92,
+        metalness: 0,
+      },
+      status: "existing",
+      removable: true,
     },
-
-
-
-    // 앞쪽 소파
-
     {
-
-      id:"sofa-bottom",
-
-      type:"sofa",
-
-      position:[
-        2,
-        0.55,
-        2
-      ],
-
-
-      size:[
-        3.4,
-        1.1,
-        1
-      ],
-
-
-      color:"#f5f1ea"
-
+      id: "preview-rug",
+      name: "베이지 러그",
+      category: "rug",
+      geometry: "plane",
+      dimensions: { width: 3.2, depth: 2.05, height: 0.035 },
+      position: { x: 0.45, z: 0.55 },
+      rotationY: 0,
+      color: "#d6c9b7",
+      material: {
+        type: "fabric",
+        color: "#d6c9b7",
+        roughness: 0.96,
+        metalness: 0,
+      },
+      status: "existing",
+      removable: true,
     },
-
-
-
-    // 러그
-
     {
-
-      id:"rug",
-
-      type:"rug",
-
-      position:[
-        1.2,
-        0.02,
-        0.8
-      ],
-
-      size:[
-        4.5,
-        0.02,
-        3
-      ],
-
-
-      color:"#d8cdbd"
-
+      id: "preview-table",
+      name: "원형 커피테이블",
+      category: "desk",
+      geometry: "cylinder",
+      dimensions: { width: 0.92, depth: 0.92, height: 0.42 },
+      position: { x: 0.15, z: 0.45 },
+      rotationY: 0,
+      color: "#a57545",
+      material: {
+        type: "wood",
+        color: "#a57545",
+        roughness: 0.55,
+        metalness: 0,
+      },
+      status: "existing",
+      removable: true,
     },
-
-
-
-    // 원형 테이블
-
     {
-
-      id:"table",
-
-      type:"round-table",
-
-      position:[
-        0.5,
-        0.3,
-        0.7
-      ],
-
-
-      radius:0.65,
-
-
-      height:0.45,
-
-
-      color:"#a37446"
-
+      id: "preview-floor-lamp",
+      name: "플로어 조명",
+      category: "lighting",
+      geometry: "cylinder",
+      dimensions: { width: 0.35, depth: 0.35, height: 1.85 },
+      position: { x: 2.0, z: -1.35 },
+      rotationY: -0.28,
+      color: "#26211d",
+      material: {
+        type: "metal",
+        color: "#26211d",
+        roughness: 0.25,
+        metalness: 0.8,
+      },
+      status: "existing",
+      removable: true,
     },
-
-
-
-    // 스탠드
-
     {
-
-      id:"lamp",
-
-      type:"floor-lamp",
-
-      position:[
-        3.3,
-        0,
-        -2.5
-      ],
-
-
-      height:2.8,
-
-
-      color:"#222222"
-
+      id: "preview-plant",
+      name: "테이블 화병",
+      category: "cabinet",
+      geometry: "cylinder",
+      dimensions: { width: 0.28, depth: 0.28, height: 0.48 },
+      position: { x: 0.1, z: 0.42 },
+      rotationY: 0,
+      color: "#6f7d54",
+      material: {
+        type: "accent",
+        color: "#6f7d54",
+        roughness: 0.8,
+        metalness: 0,
+      },
+      status: "existing",
+      removable: true,
     },
-
-
-
-    // 화분
-
-    {
-
-      id:"plant",
-
-      type:"plant",
-
-      position:[
-        -1,
-        0.4,
-        2
-      ],
-
-
-      size:0.35,
-
-
-      color:"#4d7c4a"
-
-    }
-
-  ]
-
+  ],
 };

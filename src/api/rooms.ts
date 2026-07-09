@@ -58,7 +58,10 @@ export interface SampleRoomCard {
 }
 
 export async function getSampleRooms(): Promise<SampleRoomCard[]> {
-  const response = await apiClient.get<ApiResponse<SampleRoomApiItem[]>>("/api/rooms/samples");
+  const response = await apiClient.get<ApiResponse<SampleRoomApiItem[]>>(
+    "/api/rooms/samples"
+  );
+  console.log("rooms/samples resopnse: ", response);
   return response.data.data.map(toSampleRoomCard);
 }
 
