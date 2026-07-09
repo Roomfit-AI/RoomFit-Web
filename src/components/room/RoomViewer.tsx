@@ -42,7 +42,7 @@ export function RoomViewer({
             key={item.id}
             item={item}
             isSelected={selectedFurnitureId === item.id}
-            canTransform={item.category === "desk"}
+            canTransform
             onSelect={onSelectFurniture}
             onMove={onMoveFurniture}
           />

@@ -1,20 +1,23 @@
 import type { ReactNode } from "react";
 import { useMemo, useState } from "react";
-import { FiBox, FiPlus, FiStar } from "react-icons/fi";
+import { FiBox, FiCheck, FiPlus, FiStar } from "react-icons/fi";
 
 const filters = ["전체", "원룸", "사무실"];
 
 const roomSamples = [
-  { title: "오픈형 원룸", size: "6평", tone: "white", category: "원룸" },
-  { title: "분리형 원룸", size: "7평", tone: "wood", category: "원룸" },
-  { title: "복층형 원룸", size: "9평", tone: "cream", category: "원룸" },
-  { title: "넓은 1.5룸", size: "11평", tone: "modern", category: "원룸" },
-  { title: "작업형 원룸", size: "8평", tone: "bright", category: "사무실" },
-  { title: "스튜디오 원룸", size: "10평", tone: "deep", category: "사무실" },
+  { title: "오픈형 원룸", size: "6평", tone: "white", category: "원룸", layoutId: "studio-1r-sample" },
+  { title: "분리형 원룸", size: "7평", tone: "wood", category: "원룸", layoutId: "studio-long-window" },
+  { title: "복층형 원룸", size: "9평", tone: "cream", category: "원룸", layoutId: "studio-storage-focus" },
+  { title: "넓은 1.5룸", size: "11평", tone: "modern", category: "원룸", layoutId: "studio-1r-sample" },
+  { title: "작업형 원룸", size: "8평", tone: "bright", category: "사무실", layoutId: "studio-long-window" },
+  { title: "스튜디오 원룸", size: "10평", tone: "deep", category: "사무실", layoutId: "studio-storage-focus" },
 ];
 
 export default function Rooms() {
   const [activeFilter, setActiveFilter] = useState("전체");
+  const [selectedRoomTitle, setSelectedRoomTitle] = useState(() => {
+    return localStorage.getItem("roomfit:selectedRoomTitle") ?? "";
+  });
   const visibleRooms = useMemo(
     () =>
       activeFilter === "전체"
@@ -22,6 +25,13 @@ export default function Rooms() {
         : roomSamples.filter((room) => room.category === activeFilter),
     [activeFilter],
   );
+  const selectRoom = (room: (typeof roomSamples)[number]) => {
+    localStorage.setItem("roomfit:selectedRoomId", room.layoutId);
+    localStorage.setItem("roomfit:selectedRoomTitle", room.title);
+    localStorage.setItem("roomfit:selectedRoomType", room.category);
+    localStorage.setItem("roomfit:selectedRoomSize", room.size);
+    setSelectedRoomTitle(room.title);
+  };
 
   return (
     <main className="min-h-[calc(100vh-76px)] bg-[#fbfbfb] text-[#141414]">
@@ -83,16 +93,38 @@ export default function Rooms() {
               <button
                 key={room.title}
                 type="button"
-                className="group rounded-lg border border-[#e5e5e5] bg-white p-5 text-left transition-all hover:-translate-y-1 hover:border-[#cfcfcf] hover:shadow-[0_18px_35px_rgba(0,0,0,0.08)]"
+                onClick={() => selectRoom(room)}
+                className={`group relative rounded-lg border bg-white p-5 text-left transition-all hover:-translate-y-1 hover:shadow-[0_18px_35px_rgba(0,0,0,0.08)] ${
+                  selectedRoomTitle === room.title
+                    ? "border-[#111111] shadow-[0_18px_35px_rgba(0,0,0,0.08)]"
+                    : "border-[#e5e5e5] hover:border-[#cfcfcf]"
+                }`}
               >
+                {selectedRoomTitle === room.title && (
+                  <span className="absolute right-4 top-4 z-10 inline-flex items-center gap-1 rounded-full bg-[#111111] px-3 py-1 text-xs font-bold text-white">
+                    <FiCheck className="h-3.5 w-3.5" />
+                    선택됨
+                  </span>
+                )}
                 <RoomPreview tone={room.tone} />
                 <strong className="mt-5 block text-base font-bold text-[#151515]">{room.title}</strong>
-                <span className="mt-1 block text-sm font-medium text-[#777777]">{room.size}</span>
+                <span className="mt-1 block text-sm font-medium text-[#777777]">
+                  {room.category} · {room.size}
+                </span>
               </button>
             ))}
 
             <button
               type="button"
+              onClick={() =>
+                selectRoom({
+                  title: "직접 만들기",
+                  size: "직접 설정",
+                  tone: "white",
+                  category: "원룸",
+                  layoutId: "studio-1r-sample",
+                })
+              }
               className="flex min-h-63.5 flex-col items-center justify-center rounded-lg border border-dashed border-[#d9d9d9] bg-white p-5 text-center transition-colors hover:bg-[#f6f6f6]"
             >
               <span className="grid h-16 w-16 place-items-center rounded-full border border-[#d7d7d7]">
