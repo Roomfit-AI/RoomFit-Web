@@ -17,7 +17,7 @@ export interface SampleRoomApiItem {
     offset: number;
     width: number;
     height: number;
-    sillHeight: number;
+    sillHeight: number | null;
   }>;
   furniture: Array<{
     id: string;
@@ -32,7 +32,7 @@ export interface SampleRoomApiItem {
     };
     rotation: number;
     status: "EXISTING" | "RECOMMENDED" | string;
-    productId: string;
+    productId: string | null;
     styleTags: string[];
   }>;
   source: string;
@@ -58,11 +58,13 @@ export interface SampleRoomCard {
 }
 
 export async function getSampleRooms(): Promise<SampleRoomCard[]> {
-  const response = await apiClient.get<ApiResponse<SampleRoomApiItem[]>>(
-    "/api/rooms/samples"
-  );
-  console.log("rooms/samples resopnse: ", response);
+  const response = await apiClient.get<ApiResponse<SampleRoomApiItem[]>>("/api/rooms/samples");
   return response.data.data.map(toSampleRoomCard);
+}
+
+export async function getSampleRoomLayouts(): Promise<RoomLayout[]> {
+  const response = await apiClient.get<ApiResponse<SampleRoomApiItem[]>>("/api/rooms/samples");
+  return response.data.data.map(toRoomLayout);
 }
 
 function toSampleRoomCard(item: SampleRoomApiItem, index: number): SampleRoomCard {
@@ -88,13 +90,39 @@ function toRoomLayout(item: SampleRoomApiItem): RoomLayout {
   return {
     id: `api-room-${item.roomId}`,
     name: item.name,
-    description: `${item.room.width}m x ${item.room.depth}m ${item.room.unit} 샘플 방`,
+    description: `${width}m x ${depth}m ${item.room.unit} 샘플 방`,
     width,
     depth,
+    height: item.room.height,
+    unit: item.room.unit,
+    source: item.source,
+    createdAt: item.createdAt,
+    floor: {
+      size: { width, depth },
+      material: { color: "#eee6dc", roughness: 0.86 },
+    },
+    camera: {
+      type: "orthographic",
+      position: {
+        x: Math.max(width, depth) * 1.35,
+        y: Math.max(width, depth) * 1.08,
+        z: Math.max(width, depth) * 1.35,
+      },
+      target: { x: 0, y: 0.55, z: 0 },
+      zoom: Math.max(68, 108 - Math.max(width, depth) * 6),
+    },
+    lighting: {
+      ambient: 0.78,
+      sun: {
+        intensity: 1.85,
+        position: [3.8, 7.5, 4.6],
+      },
+      environment: "bright-neutral-studio",
+    },
     walls,
     door: toOpening(doorOpening, "door-main", "현관", width, depth),
     window: toOpening(windowOpening, "window-main", "창문", width, depth),
-    furniture: item.furniture.map(toFurniture),
+    furniture: item.furniture.map((furniture) => toFurniture(furniture, width, depth)),
   };
 }
 
@@ -103,11 +131,25 @@ function createWalls(width: number, depth: number): WallSegment[] {
   const halfDepth = depth / 2;
 
   return [
-    { id: "north", start: { x: -halfWidth, z: -halfDepth }, end: { x: halfWidth, z: -halfDepth } },
-    { id: "east", start: { x: halfWidth, z: -halfDepth }, end: { x: halfWidth, z: halfDepth } },
-    { id: "south", start: { x: halfWidth, z: halfDepth }, end: { x: -halfWidth, z: halfDepth } },
-    { id: "west", start: { x: -halfWidth, z: halfDepth }, end: { x: -halfWidth, z: -halfDepth } },
+    createWall("north", { x: -halfWidth, z: -halfDepth }, { x: halfWidth, z: -halfDepth }),
+    createWall("east", { x: halfWidth, z: -halfDepth }, { x: halfWidth, z: halfDepth }),
+    createWall("south", { x: halfWidth, z: halfDepth }, { x: -halfWidth, z: halfDepth }),
+    createWall("west", { x: -halfWidth, z: halfDepth }, { x: -halfWidth, z: -halfDepth }),
   ];
+}
+
+function createWall(id: string, start: { x: number; z: number }, end: { x: number; z: number }): WallSegment {
+  return {
+    id,
+    start,
+    end,
+    height: 2.4,
+    thickness: 0.12,
+    material: {
+      color: "#f6f3ee",
+      roughness: 0.82,
+    },
+  };
 }
 
 function toOpening(
@@ -124,7 +166,7 @@ function toOpening(
     offset: label === "현관" ? roomWidth * 0.25 : roomWidth * 0.65,
     width: label === "현관" ? 0.8 : 1.4,
     height: label === "현관" ? 2.1 : 1.2,
-    sillHeight: label === "현관" ? 0 : 0.9,
+    sillHeight: label === "현관" ? null : 0.9,
   };
 
   return {
@@ -137,6 +179,21 @@ function toOpening(
       height: normalized.height,
     },
     rotationY: normalized.wall === "east" || normalized.wall === "west" ? Math.PI / 2 : 0,
+    frame: {
+      color: "#8a623d",
+    },
+    glass: {
+      transmission: normalized.type === "window" ? 0.28 : 0,
+      opacity: normalized.type === "window" ? 0.24 : 1,
+    },
+    blind:
+      normalized.type === "window"
+        ? {
+            enabled: true,
+            type: "wood",
+            slats: 14,
+          }
+        : undefined,
   };
 }
 
@@ -159,22 +216,37 @@ function openingPosition(wall: string, offset: number, roomWidth: number, roomDe
   return { x: -halfWidth, z: -halfDepth + offset };
 }
 
-function toFurniture(item: SampleRoomApiItem["furniture"][number]): Furniture {
+function toFurniture(
+  item: SampleRoomApiItem["furniture"][number],
+  roomWidth: number,
+  roomDepth: number,
+): Furniture {
   const category = toFurnitureCategory(item.type);
+  const materialType = materialByCategory(category);
+  const color = colorByCategory(category);
 
   return {
     id: item.id,
     name: item.label,
     category,
+    geometry: geometryByType(item.type, category),
     dimensions: {
       width: item.width,
       depth: item.depth,
       height: item.height,
     },
-    position: item.position,
-    rotationY: item.rotation,
-    color: colorByCategory(category),
-    material: category === "desk" || category === "cabinet" ? "wood" : "fabric",
+    position: {
+      x: item.position.x - roomWidth / 2,
+      z: item.position.z - roomDepth / 2,
+    },
+    rotationY: normalizeRotation(item.rotation),
+    color,
+    material: {
+      type: materialType,
+      color,
+      roughness: category === "rug" ? 0.96 : materialType === "wood" ? 0.55 : 0.9,
+      metalness: materialType === "metal" ? 0.8 : 0,
+    },
     status: toFurnitureStatus(item.status),
     removable: true,
   };
@@ -193,15 +265,47 @@ function toFurnitureCategory(type: string): FurnitureCategory {
     return "desk";
   }
 
-  if (type === "shelf" || type === "tvStand") {
+  if (type === "shelf" || type === "tvStand" || type === "storage" || type === "wardrobe") {
     return "cabinet";
   }
 
   return "cabinet";
 }
 
+function geometryByType(type: string, category: FurnitureCategory) {
+  if (category === "rug") {
+    return "plane" as const;
+  }
+
+  if (category === "lighting" || type === "table") {
+    return "cylinder" as const;
+  }
+
+  if (type === "sofa") {
+    return "rounded-box" as const;
+  }
+
+  return "box" as const;
+}
+
+function normalizeRotation(rotation: number): number {
+  return Math.abs(rotation) > Math.PI * 2 ? (rotation * Math.PI) / 180 : rotation;
+}
+
 function toFurnitureStatus(status: string): FurnitureStatus {
   return status === "EXISTING" ? "existing" : "recommended";
+}
+
+function materialByCategory(category: FurnitureCategory) {
+  if (category === "desk" || category === "cabinet") {
+    return "wood" as const;
+  }
+
+  if (category === "lighting") {
+    return "metal" as const;
+  }
+
+  return "fabric" as const;
 }
 
 function colorByCategory(category: FurnitureCategory): string {

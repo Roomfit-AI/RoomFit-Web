@@ -1,8 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
 import { FiChevronDown, FiChevronUp, FiMoreHorizontal, FiPlus, FiRotateCcw, FiTrash2, FiZoomIn } from "react-icons/fi";
 
+import { getSampleRoomLayouts } from "../api/rooms";
 import { RoomViewer } from "../components/room/RoomViewer";
-import { initialRoomLayout, sampleRoomLayouts } from "../mock/interiorPlacementMock";
+import { sampleRoomLayouts } from "../mock/interiorPlacementMock";
+import { sampleRoom } from "../mock/sampleRoom";
 import type { Furniture, FurnitureCategory, RoomLayout, Vector2D } from "../types";
 
 const furnitureCatalog: Furniture[] = [
@@ -96,7 +98,7 @@ const specs: Record<FurnitureCategory, string> = {
 };
 
 export default function ManageFurniture() {
-  const selectedRoom = useMemo(() => getSelectedRoom(), []);
+  const [selectedRoom, setSelectedRoom] = useState<RoomLayout>(() => getSelectedRoom());
   const selectedRoomMeta = useMemo(() => getSelectedRoomMeta(selectedRoom), [selectedRoom]);
   const [furniture, setFurniture] = useState<Furniture[]>(() => cloneFurniture(selectedRoom.furniture));
   const [selectedFurnitureId, setSelectedFurnitureId] = useState<string | null>(null);
@@ -106,6 +108,33 @@ export default function ManageFurniture() {
 
   const activeCatalogIds = new Set(furniture.map(getCatalogIdFromFurniture).filter(Boolean));
   const availableFurniture = furnitureCatalog.filter((item) => !activeCatalogIds.has(item.id));
+
+  useEffect(() => {
+    if (localStorage.getItem("roomfit:selectedRoomLayout") || localStorage.getItem("roomfit:selectedRoomId")) {
+      return;
+    }
+
+    getSampleRoomLayouts()
+      .then((rooms) => {
+        const firstRoom = rooms[0];
+
+        if (!firstRoom) {
+          return;
+        }
+
+        setSelectedRoom(firstRoom);
+        setFurniture(cloneFurniture(firstRoom.furniture));
+        localStorage.setItem("roomfit:selectedRoomLayout", JSON.stringify(firstRoom));
+        localStorage.setItem("roomfit:selectedRoomId", firstRoom.id);
+        localStorage.setItem("roomfit:selectedRoomTitle", firstRoom.name);
+        localStorage.setItem("roomfit:selectedRoomType", "원룸");
+        localStorage.setItem("roomfit:selectedRoomSize", `${Math.round(firstRoom.width * firstRoom.depth)}㎡`);
+      })
+      .catch(() => {
+        setSelectedRoom(sampleRoom);
+        setFurniture(cloneFurniture(sampleRoom.furniture));
+      });
+  }, []);
 
   useEffect(() => {
     if (!isResizing) {
@@ -325,14 +354,14 @@ function getSelectedRoom(): RoomLayout {
   }
 
   const selectedRoomId = localStorage.getItem("roomfit:selectedRoomId");
-  return sampleRoomLayouts.find((room) => room.id === selectedRoomId) ?? initialRoomLayout;
+  return sampleRoomLayouts.find((room) => room.id === selectedRoomId) ?? sampleRoom;
 }
 
 function getSelectedRoomMeta(room: RoomLayout) {
   return {
     title: localStorage.getItem("roomfit:selectedRoomTitle") ?? room.name,
     type: localStorage.getItem("roomfit:selectedRoomType") ?? "원룸",
-    size: localStorage.getItem("roomfit:selectedRoomSize") ?? "6평",
+    size: localStorage.getItem("roomfit:selectedRoomSize") ?? `${Math.round(room.width * room.depth)}㎡`,
   };
 }
 

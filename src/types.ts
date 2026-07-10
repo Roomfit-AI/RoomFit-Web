@@ -81,6 +81,10 @@ export interface RoomLayout {
   description?: string;
   width: number;
   depth: number;
+  height?: number;
+  unit?: string;
+  source?: string;
+  createdAt?: string;
   floor?: {
     size: {
       width: number;
