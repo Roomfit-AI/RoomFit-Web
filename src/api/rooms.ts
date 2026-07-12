@@ -58,6 +58,12 @@ export interface SampleRoomCard {
   layout: RoomLayout;
 }
 
+export interface UploadedRoomCard extends SampleRoomCard {
+  source: string;
+  createdAt: string;
+  dimensions: string;
+}
+
 export async function getSampleRooms(): Promise<SampleRoomCard[]> {
   const response = await apiClient.get<ApiResponse<SampleRoomApiItem[]>>("/api/rooms/samples");
   return response.data.data.map(toSampleRoomCard);
@@ -66,6 +72,13 @@ export async function getSampleRooms(): Promise<SampleRoomCard[]> {
 export async function getSampleRoomLayouts(): Promise<RoomLayout[]> {
   const response = await apiClient.get<ApiResponse<SampleRoomApiItem[]>>("/api/rooms/samples");
   return response.data.data.map(toRoomLayout);
+}
+
+export async function getRecentUploadedRooms(limit = 10): Promise<UploadedRoomCard[]> {
+  const response = await apiClient.get<ApiResponse<SampleRoomApiItem[]>>("/api/rooms/uploads/recent", {
+    params: { limit },
+  });
+  return response.data.data.map(toUploadedRoomCard);
 }
 
 function toSampleRoomCard(item: SampleRoomApiItem, index: number): SampleRoomCard {
@@ -82,6 +95,23 @@ function toSampleRoomCard(item: SampleRoomApiItem, index: number): SampleRoomCar
   };
 }
 
+function toUploadedRoomCard(item: SampleRoomApiItem, index: number): UploadedRoomCard {
+  const layout = toRoomLayout(item);
+
+  return {
+    roomId: item.roomId,
+    title: item.name || `업로드 방 ${index + 1}`,
+    size: `${item.room.width}m × ${item.room.depth}m`,
+    dimensions: `${item.room.width}m × ${item.room.depth}m`,
+    tone: ["bright", "white", "wood", "light"][index % 4],
+    category: "업로드 방",
+    source: item.source,
+    createdAt: item.createdAt,
+    layoutId: layout.id,
+    layout,
+  };
+}
+
 function toRoomLayout(item: SampleRoomApiItem): RoomLayout {
   const width = item.room.width;
   const depth = item.room.depth;
@@ -92,7 +122,7 @@ function toRoomLayout(item: SampleRoomApiItem): RoomLayout {
   return {
     id: `api-room-${item.roomId}`,
     name: item.name,
-    description: `${width}m x ${depth}m ${item.room.unit} 샘플 방`,
+    description: `${width}m x ${depth}m ${item.room.unit} ${item.source === "ROOMPLAN" ? "업로드 방" : "샘플 방"}`,
     width,
     depth,
     height: item.room.height,
