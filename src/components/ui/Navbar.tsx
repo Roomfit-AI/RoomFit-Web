@@ -41,7 +41,7 @@ export default function Navbar() {
   return (
     <nav className="h-19 border-b border-[#e8e8e8] bg-[#fbfbfb]">
       <div className="flex h-full items-center justify-between px-10">
-        <h2 className="text-xl font-bold tracking-[0.02em] text-[#181818] sm:text-2xl">ROOMAI</h2>
+        <h2 className="text-xl font-bold tracking-[0.02em] text-[#181818] sm:text-2xl">ROOMFIT</h2>
 
         <div className="flex items-center gap-3">
           {!isHome && previousStep && (
