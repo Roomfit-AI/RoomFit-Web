@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { FiCheck, FiPlus } from "react-icons/fi";
 
 const categories = ["전체", "소파", "테이블", "의자", "수납장", "조명", "러그", "데코 / 소품", "식물"];
@@ -24,11 +24,29 @@ const furnitureItems = [
 
 export default function AddFurniture() {
   const [activeCategory, setActiveCategory] = useState("전체");
-  const [selectedIds, setSelectedIds] = useState(["sofa-modern", "poster", "plant"]);
+  const [selectedIds, setSelectedIds] = useState<string[]>(() => {
+    const raw = localStorage.getItem("roomfit:selectedAdditionalFurnitureIds");
+
+    if (!raw) {
+      return ["floor-lamp", "soft-rug"];
+    }
+
+    try {
+      const parsed = JSON.parse(raw);
+
+      return Array.isArray(parsed) ? parsed : ["floor-lamp", "soft-rug"];
+    } catch {
+      return ["floor-lamp", "soft-rug"];
+    }
+  });
   const visibleItems =
     activeCategory === "전체"
       ? furnitureItems
       : furnitureItems.filter((item) => item.category === activeCategory);
+
+  useEffect(() => {
+    localStorage.setItem("roomfit:selectedAdditionalFurnitureIds", JSON.stringify(selectedIds));
+  }, [selectedIds]);
 
   const toggleFurniture = (id: string) => {
     setSelectedIds((current) =>

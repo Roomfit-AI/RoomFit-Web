@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { FiBookOpen, FiBriefcase, FiCheck, FiCoffee, FiGrid, FiHeart, FiHome, FiMoon, FiPackage, FiSmile } from "react-icons/fi";
 
 const purposes = [
@@ -33,9 +33,21 @@ const palettes = [
 ];
 
 export default function Preference() {
-  const [selectedPurpose, setSelectedPurpose] = useState("rest");
-  const [selectedStyle, setSelectedStyle] = useState("minimal");
-  const [selectedPalette, setSelectedPalette] = useState("ivory");
+  const [selectedPurpose, setSelectedPurpose] = useState(() => {
+    return localStorage.getItem("roomfit:selectedPurpose") ?? "rest";
+  });
+  const [selectedStyle, setSelectedStyle] = useState(() => {
+    return localStorage.getItem("roomfit:selectedStyle") ?? "minimal";
+  });
+  const [selectedPalette, setSelectedPalette] = useState(() => {
+    return localStorage.getItem("roomfit:selectedPalette") ?? "ivory";
+  });
+
+  useEffect(() => {
+    localStorage.setItem("roomfit:selectedPurpose", selectedPurpose);
+    localStorage.setItem("roomfit:selectedStyle", selectedStyle);
+    localStorage.setItem("roomfit:selectedPalette", selectedPalette);
+  }, [selectedPurpose, selectedStyle, selectedPalette]);
 
   return (
     <main className="min-h-[calc(100vh-76px)] bg-[#fbfbfb] px-5 py-8 text-[#141414] sm:px-8 lg:px-10">

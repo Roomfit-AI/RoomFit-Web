@@ -183,6 +183,15 @@ export default function ManageFurniture() {
     setFurniture((current) => current.map((item) => (item.id === id ? { ...item, position } : item)));
   };
 
+  useEffect(() => {
+    const nextRoom = {
+      ...selectedRoom,
+      furniture,
+    };
+
+    localStorage.setItem("roomfit:selectedRoomLayout", JSON.stringify(nextRoom));
+  }, [selectedRoom, furniture]);
+
   return (
     <main className="min-h-[calc(100vh-76px)] bg-[#fbfbfb] text-[#141414]">
       <div
