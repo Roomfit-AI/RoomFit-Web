@@ -1,18 +1,27 @@
 import type { ReactNode } from "react";
-import { useEffect, useMemo, useState } from "react";
-import { FiBox, FiCheck, FiPlus, FiStar } from "react-icons/fi";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { FiBox, FiCheck, FiPlus, FiSmartphone, FiStar } from "react-icons/fi";
 
-import { getSampleRooms, type SampleRoomCard } from "../api/rooms";
+import {
+  getRecentUploadedRooms,
+  getSampleRooms,
+  type SampleRoomCard,
+  type UploadedRoomCard,
+} from "../api/rooms";
 
 const filters = ["전체", "원룸", "사무실"];
 
 export default function Rooms() {
   const [activeFilter, setActiveFilter] = useState("전체");
   const [roomSamples, setRoomSamples] = useState<SampleRoomCard[]>([]);
+  const [uploadedRooms, setUploadedRooms] = useState<UploadedRoomCard[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isUploadsLoading, setIsUploadsLoading] = useState(true);
+  const [uploadNotice, setUploadNotice] = useState(false);
+  const knownUploadIds = useRef<Set<number> | null>(null);
 
-  const [selectedRoomTitle, setSelectedRoomTitle] = useState(() => {
-    return localStorage.getItem("roomfit:selectedRoomTitle") ?? "";
+  const [selectedRoomId, setSelectedRoomId] = useState(() => {
+    return localStorage.getItem("roomfit:selectedRoomId") ?? "";
   });
 
   useEffect(() => {
@@ -40,6 +49,52 @@ export default function Rooms() {
     };
   }, []);
 
+  useEffect(() => {
+    let ignore = false;
+    let requestInFlight = false;
+
+    const loadUploadedRooms = async () => {
+      if (requestInFlight) return;
+      requestInFlight = true;
+
+      try {
+        const rooms = await getRecentUploadedRooms();
+        if (ignore) return;
+
+        const nextIds = new Set(rooms.map((room) => room.roomId));
+        if (
+          knownUploadIds.current !== null &&
+          rooms.some((room) => !knownUploadIds.current?.has(room.roomId))
+        ) {
+          setUploadNotice(true);
+        }
+
+        knownUploadIds.current = nextIds;
+        setUploadedRooms(rooms);
+      } catch {
+        // Keep the last successful list while the next poll retries.
+      } finally {
+        requestInFlight = false;
+        if (!ignore) setIsUploadsLoading(false);
+      }
+    };
+
+    void loadUploadedRooms();
+    const pollingId = window.setInterval(loadUploadedRooms, 3000);
+
+    return () => {
+      ignore = true;
+      window.clearInterval(pollingId);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!uploadNotice) return;
+
+    const timeoutId = window.setTimeout(() => setUploadNotice(false), 5000);
+    return () => window.clearTimeout(timeoutId);
+  }, [uploadNotice]);
+
   const visibleRooms = useMemo(() => {
     if (activeFilter === "전체") return roomSamples;
 
@@ -57,7 +112,7 @@ export default function Rooms() {
       JSON.stringify(room.layout)
     );
 
-    setSelectedRoomTitle(room.title);
+    setSelectedRoomId(room.layoutId);
   };
 
   return (
@@ -69,7 +124,7 @@ export default function Rooms() {
               1
             </span>
             <span className="text-lg font-semibold">
-              시작 / 샘플 방 선택
+              시작 / 공간 선택
             </span>
           </div>
 
@@ -80,16 +135,16 @@ export default function Rooms() {
           </h1>
 
           <p className="mt-7 text-base font-medium leading-[1.7] text-[#666666]">
-            원룸 샘플을 선택하거나
+            앱에서 업로드한 방이나
             <br />
-            직접 빈 방에서 시작할 수 있어요.
+            원룸 샘플을 선택할 수 있어요.
           </p>
 
           <div className="mt-20 space-y-9">
             <InfoRow
               icon={<FiBox className="h-6 w-6" />}
-              title="API 샘플 방 목록"
-              description="백엔드 샘플 데이터를 불러와 공간을 시작합니다."
+              title="업로드·샘플 방 목록"
+              description="선택한 공간에서 기존 편집 단계를 이어갑니다."
             />
 
             <InfoRow
@@ -100,84 +155,177 @@ export default function Rooms() {
           </div>
         </aside>
 
-        <section>
-          <div className="mb-9 flex flex-wrap items-center gap-4">
-            {filters.map((filter) => (
-              <button
-                key={filter}
-                type="button"
-                onClick={() => setActiveFilter(filter)}
-                className={`min-w-24 rounded-full border px-7 py-3 text-sm font-bold transition-colors ${
-                  filter === activeFilter
-                    ? "border-[#111111] bg-[#111111] text-white shadow-[0_10px_22px_rgba(0,0,0,0.13)]"
-                    : "border-[#e2e2e2] bg-white text-[#222222] hover:bg-[#f5f5f5]"
-                }`}
-              >
-                {filter}
-              </button>
-            ))}
-          </div>
+        <section className="space-y-12">
+          <section aria-labelledby="uploaded-rooms-title">
+            <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <h2 id="uploaded-rooms-title" className="text-xl font-extrabold">
+                  앱에서 업로드된 방
+                </h2>
+                <p className="mt-1 text-sm text-[#777777]">
+                  {uploadedRooms.length > 0 ? `${uploadedRooms.length}개의 최근 공간` : "최근 업로드"}
+                </p>
+              </div>
 
-          {isLoading ? (
-            <div className="flex h-80 items-center justify-center">
-              <span className="text-sm font-semibold text-[#777777]">
-                불러오는 중...
-              </span>
+              <FiSmartphone className="h-6 w-6 text-[#555555]" aria-hidden="true" />
             </div>
-          ) : (
-            <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-4">
-              {visibleRooms.map((room) => (
+
+            {uploadNotice && (
+              <div
+                role="status"
+                aria-live="polite"
+                className="mb-5 border-l-4 border-[#111111] bg-[#f1f1f1] px-4 py-3 text-sm font-semibold text-[#222222]"
+              >
+                앱에서 업로드한 방이 추가되었습니다.
+              </div>
+            )}
+
+            {isUploadsLoading ? (
+              <div className="flex min-h-28 items-center justify-center border-y border-[#ececec]">
+                <span className="text-sm font-semibold text-[#777777]">업로드 방을 확인하는 중...</span>
+              </div>
+            ) : uploadedRooms.length === 0 ? (
+              <div className="flex min-h-28 items-center justify-center border-y border-[#ececec] bg-white/50 px-5 text-center">
+                <span className="text-sm font-medium text-[#777777]">아직 앱에서 업로드된 방이 없습니다.</span>
+              </div>
+            ) : (
+              <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
+                {uploadedRooms.map((room) => (
+                  <button
+                    key={room.roomId}
+                    type="button"
+                    onClick={() => selectRoom(room)}
+                    aria-pressed={selectedRoomId === room.layoutId}
+                    className={`group relative rounded-lg border bg-white p-5 text-left transition-all hover:-translate-y-1 hover:shadow-[0_18px_35px_rgba(0,0,0,0.08)] ${
+                      selectedRoomId === room.layoutId
+                        ? "border-[#111111] shadow-[0_18px_35px_rgba(0,0,0,0.08)]"
+                        : "border-[#e5e5e5] hover:border-[#cfcfcf]"
+                    }`}
+                  >
+                    <div className="mb-4 flex min-h-6 items-center justify-between gap-3">
+                      {room.source === "ROOMPLAN" ? (
+                        <span className="inline-flex bg-[#151515] px-2.5 py-1 text-xs font-bold text-white">
+                          ROOMPLAN
+                        </span>
+                      ) : (
+                        <span />
+                      )}
+                      <span className="text-xs font-medium text-[#777777]">{formatUploadedAt(room.createdAt)}</span>
+                    </div>
+
+                    <RoomPreview tone={room.tone} />
+
+                    <strong className="mt-5 block text-base font-bold text-[#151515]">{room.title}</strong>
+                    <span className="mt-1 block text-sm font-medium text-[#777777]">{room.dimensions}</span>
+
+                    {selectedRoomId === room.layoutId && (
+                      <span className="absolute right-4 top-14 z-10 inline-flex items-center gap-1 rounded-full bg-[#111111] px-3 py-1 text-xs font-bold text-white">
+                        <FiCheck className="h-3.5 w-3.5" />
+                        선택됨
+                      </span>
+                    )}
+                  </button>
+                ))}
+              </div>
+            )}
+          </section>
+
+          <section aria-labelledby="sample-rooms-title">
+            <h2 id="sample-rooms-title" className="mb-5 text-xl font-extrabold">
+              샘플 방
+            </h2>
+
+            <div className="mb-9 flex flex-wrap items-center gap-4">
+              {filters.map((filter) => (
                 <button
-                  key={`${room.layoutId}-${room.title}`}
+                  key={filter}
                   type="button"
-                  onClick={() => selectRoom(room)}
-                  className={`group relative rounded-lg border bg-white p-5 text-left transition-all hover:-translate-y-1 hover:shadow-[0_18px_35px_rgba(0,0,0,0.08)] ${
-                    selectedRoomTitle === room.title
-                      ? "border-[#111111] shadow-[0_18px_35px_rgba(0,0,0,0.08)]"
-                      : "border-[#e5e5e5] hover:border-[#cfcfcf]"
+                  onClick={() => setActiveFilter(filter)}
+                  className={`min-w-24 rounded-full border px-7 py-3 text-sm font-bold transition-colors ${
+                    filter === activeFilter
+                      ? "border-[#111111] bg-[#111111] text-white shadow-[0_10px_22px_rgba(0,0,0,0.13)]"
+                      : "border-[#e2e2e2] bg-white text-[#222222] hover:bg-[#f5f5f5]"
                   }`}
                 >
-                  {selectedRoomTitle === room.title && (
-                    <span className="absolute right-4 top-4 z-10 inline-flex items-center gap-1 rounded-full bg-[#111111] px-3 py-1 text-xs font-bold text-white">
-                      <FiCheck className="h-3.5 w-3.5" />
-                      선택됨
-                    </span>
-                  )}
-
-                  <RoomPreview tone={room.tone} />
-
-                  <strong className="mt-5 block text-base font-bold text-[#151515]">
-                    {room.title}
-                  </strong>
-
-                  <span className="mt-1 block text-sm font-medium text-[#777777]">
-                    {room.category} · {room.size}
-                  </span>
+                  {filter}
                 </button>
               ))}
-
-              <button
-                type="button"
-                className="flex min-h-63.5 flex-col items-center justify-center rounded-lg border border-dashed border-[#d9d9d9] bg-white p-5 text-center transition-colors hover:bg-[#f6f6f6]"
-              >
-                <span className="grid h-16 w-16 place-items-center rounded-full border border-[#d7d7d7]">
-                  <FiPlus className="h-8 w-8" />
-                </span>
-
-                <strong className="mt-8 block text-base font-bold">
-                  직접 만들기
-                </strong>
-
-                <span className="mt-2 text-sm text-[#777777]">
-                  새 공간 만들기
-                </span>
-              </button>
             </div>
-          )}
+
+            {isLoading ? (
+              <div className="flex h-80 items-center justify-center">
+                <span className="text-sm font-semibold text-[#777777]">
+                  불러오는 중...
+                </span>
+              </div>
+            ) : (
+              <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-4">
+                {visibleRooms.map((room) => (
+                  <button
+                    key={`${room.layoutId}-${room.title}`}
+                    type="button"
+                    onClick={() => selectRoom(room)}
+                    aria-pressed={selectedRoomId === room.layoutId}
+                    className={`group relative rounded-lg border bg-white p-5 text-left transition-all hover:-translate-y-1 hover:shadow-[0_18px_35px_rgba(0,0,0,0.08)] ${
+                      selectedRoomId === room.layoutId
+                        ? "border-[#111111] shadow-[0_18px_35px_rgba(0,0,0,0.08)]"
+                        : "border-[#e5e5e5] hover:border-[#cfcfcf]"
+                    }`}
+                  >
+                    {selectedRoomId === room.layoutId && (
+                      <span className="absolute right-4 top-4 z-10 inline-flex items-center gap-1 rounded-full bg-[#111111] px-3 py-1 text-xs font-bold text-white">
+                        <FiCheck className="h-3.5 w-3.5" />
+                        선택됨
+                      </span>
+                    )}
+
+                    <RoomPreview tone={room.tone} />
+
+                    <strong className="mt-5 block text-base font-bold text-[#151515]">
+                      {room.title}
+                    </strong>
+
+                    <span className="mt-1 block text-sm font-medium text-[#777777]">
+                      {room.category} · {room.size}
+                    </span>
+                  </button>
+                ))}
+
+                <button
+                  type="button"
+                  className="flex min-h-63.5 flex-col items-center justify-center rounded-lg border border-dashed border-[#d9d9d9] bg-white p-5 text-center transition-colors hover:bg-[#f6f6f6]"
+                >
+                  <span className="grid h-16 w-16 place-items-center rounded-full border border-[#d7d7d7]">
+                    <FiPlus className="h-8 w-8" />
+                  </span>
+
+                  <strong className="mt-8 block text-base font-bold">
+                    직접 만들기
+                  </strong>
+
+                  <span className="mt-2 text-sm text-[#777777]">
+                    새 공간 만들기
+                  </span>
+                </button>
+              </div>
+            )}
+          </section>
         </section>
       </section>
     </main>
   );
+}
+
+function formatUploadedAt(createdAt: string) {
+  const date = new Date(createdAt);
+  if (Number.isNaN(date.getTime())) return "최근 업로드";
+
+  return new Intl.DateTimeFormat("ko-KR", {
+    month: "short",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(date);
 }
 
 function InfoRow({
