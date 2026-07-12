@@ -49,6 +49,7 @@ interface ApiResponse<T> {
 }
 
 export interface SampleRoomCard {
+  roomId: number;
   title: string;
   size: string;
   tone: string;
@@ -71,6 +72,7 @@ function toSampleRoomCard(item: SampleRoomApiItem, index: number): SampleRoomCar
   const layout = toRoomLayout(item);
 
   return {
+    roomId: item.roomId,
     title: item.name || `샘플 원룸 ${index + 1}`,
     size: `${Math.round(item.room.width * item.room.depth)}㎡`,
     tone: ["white", "wood", "cream", "bright", "deep"][index % 5],
@@ -319,4 +321,17 @@ function colorByCategory(category: FurnitureCategory): string {
   };
 
   return colors[category];
+}
+
+
+export type BackendFurnitureApiItem = SampleRoomApiItem["furniture"][number];
+
+export function applyBackendFurnitureToLayout(
+  layout: RoomLayout,
+  furniture: BackendFurnitureApiItem[],
+): RoomLayout {
+  return {
+    ...layout,
+    furniture: furniture.map((item) => toFurniture(item, layout.width, layout.depth)),
+  };
 }

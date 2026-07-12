@@ -48,6 +48,7 @@ export default function Rooms() {
 
   const selectRoom = (room: SampleRoomCard) => {
     localStorage.setItem("roomfit:selectedRoomId", room.layoutId);
+    localStorage.setItem("roomfit:backendRoomId", String(room.roomId));
     localStorage.setItem("roomfit:selectedRoomTitle", room.title);
     localStorage.setItem("roomfit:selectedRoomType", room.category);
     localStorage.setItem("roomfit:selectedRoomSize", room.size);
