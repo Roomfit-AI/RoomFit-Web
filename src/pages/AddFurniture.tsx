@@ -68,7 +68,7 @@ export default function AddFurniture() {
   return (
     <main className="min-h-[calc(100vh-76px)] bg-[#fbfbfb] px-5 py-8 text-[#141414] sm:px-8 lg:px-10">
       <section className="mx-auto max-w-7xl">
-        <div className="mb-7 flex items-center gap-4">
+        <div className="mb-12 flex items-center gap-4">
           <span className="grid h-9 w-9 place-items-center rounded-md bg-[#eeeeee] text-base font-bold">4</span>
           <span className="text-lg font-extrabold">가구 · 소품 선택</span>
         </div>
