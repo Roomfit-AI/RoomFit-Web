@@ -36,7 +36,7 @@ export default function EditorPlaceholder() {
   const [roomLayout, setRoomLayout] = useState<RoomLayout | null>(() => loadSelectedRoomLayout());
   const [selectedFurnitureId, setSelectedFurnitureId] = useState<string | null>(null);
   const [layoutId, setLayoutId] = useState<number | null>(null);
-  const [feedback, setFeedback] = useState("책상을 조금 더 넓게 쓰고 싶어");
+  const [feedback, setFeedback] = useState("");
   const [isRecommending, setIsRecommending] = useState(false);
   const [isApplyingFeedback, setIsApplyingFeedback] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
@@ -190,8 +190,7 @@ export default function EditorPlaceholder() {
         <section className="relative flex min-h-140 flex-col px-6 py-6 lg:px-8">
           <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
             <div className="flex min-w-0 flex-wrap items-center gap-3">
-              <span className="hidden">RoomFit Editor Demo</span>
-              <h1 className="min-w-0 truncate text-2xl font-extrabold">{roomLayout.name}</h1>
+              <h1 className="min-w-0 truncate text-2xl font-extrabold ml-2">{roomLayout.name}</h1>
               <span className="rounded-full bg-[#eeeeee] px-3 py-1 text-xs font-bold text-[#777777]">
                 가구 {roomLayout.furniture.length}개
               </span>
@@ -199,15 +198,6 @@ export default function EditorPlaceholder() {
                 {roomLayout.width}m × {roomLayout.depth}m
               </span>
             </div>
-
-            <button
-              type="button"
-              onClick={handleRecommend}
-              disabled={isRecommending}
-              className="shrink-0 rounded-lg bg-[#111111] px-5 py-3 text-sm font-extrabold text-white transition-colors hover:bg-[#333333] disabled:cursor-not-allowed disabled:bg-[#999999]"
-            >
-              {isRecommending ? "AI 추천 생성 중..." : "AI 추천 생성"}
-            </button>
           </div>
 
           <div className="manage-room flex-1">
@@ -233,28 +223,43 @@ export default function EditorPlaceholder() {
         <aside className="space-y-5 border-t border-[#eeeeee] bg-[#fbfbfb] p-5 lg:border-l lg:border-t-0">
           <section className="rounded-xl border border-[#e6e6e6] bg-white p-5">
             <h2 className="text-lg font-extrabold">AI 피드백</h2>
-            <p className="mt-2 text-sm font-medium leading-6 text-[#777777]">
-              자연어 피드백을 LLM이 intent로 해석하고, 백엔드 규칙 기반 로직이 배치에 반영합니다.
-            </p>
+            {!layoutId ? (
+              <div className="mt-4 rounded-lg border border-dashed border-[#d8d8d8] bg-[#f7f7f7] p-4">
+                <strong className="block text-sm font-extrabold text-[#333333]">먼저 AI 추천 배치를 생성해 주세요</strong>
+                <p className="mt-2 text-sm font-semibold leading-6 text-[#777777]">
+                  추천 배치가 만들어진 뒤에 원하는 변경사항을 피드백으로 반영할 수 있습니다.
+                </p>
+                <button
+                  type="button"
+                  onClick={handleRecommend}
+                  disabled={isRecommending}
+                  className="mt-4 w-full rounded-lg bg-[#111111] px-5 py-3 text-sm font-extrabold text-white transition-colors hover:bg-[#333333] disabled:cursor-not-allowed disabled:bg-[#999999]"
+                >
+                  {isRecommending ? "AI 추천 생성 중..." : "AI 추천 생성하기"}
+                </button>
+              </div>
+            ) : (
+              <>
+                <p className="mt-2 text-sm font-medium leading-6 text-[#777777]">
+                  자연어 피드백을 LLM이 intent로 해석하고, 백엔드 규칙 기반 로직이 배치에 반영합니다.
+                </p>
 
-            <textarea
-              value={feedback}
-              onChange={(event) => setFeedback(event.target.value)}
-              className="mt-4 min-h-28 w-full resize-none rounded-lg border border-[#dddddd] bg-[#fbfbfb] p-4 text-sm font-semibold outline-none focus:border-[#111111]"
-              placeholder="예: 책상을 조금 더 넓게 쓰고 싶어"
-            />
+                <textarea
+                  value={feedback}
+                  onChange={(event) => setFeedback(event.target.value)}
+                  className="mt-4 min-h-28 w-full resize-none rounded-lg border border-[#dddddd] bg-[#fbfbfb] p-4 text-sm font-semibold outline-none focus:border-[#111111]"
+                  placeholder="(예) 책상을 조금 더 넓게 쓰고 싶어"
+                />
 
-            <button
-              type="button"
-              onClick={handleFeedback}
-              disabled={isApplyingFeedback || !layoutId}
-              className="mt-3 w-full rounded-lg bg-[#111111] px-5 py-3 text-sm font-extrabold text-white transition-colors hover:bg-[#333333] disabled:cursor-not-allowed disabled:bg-[#bbbbbb]"
-            >
-              {isApplyingFeedback ? "피드백 반영 중..." : "피드백 반영"}
-            </button>
-
-            {!layoutId && (
-              <p className="mt-3 text-xs font-bold text-[#999999]">먼저 AI 추천 생성을 실행해야 피드백을 반영할 수 있습니다.</p>
+                <button
+                  type="button"
+                  onClick={handleFeedback}
+                  disabled={isApplyingFeedback}
+                  className="mt-3 w-full rounded-lg bg-[#111111] px-5 py-3 text-sm font-extrabold text-white transition-colors hover:bg-[#333333] disabled:cursor-not-allowed disabled:bg-[#bbbbbb]"
+                >
+                  {isApplyingFeedback ? "피드백 반영 중..." : "피드백 반영"}
+                </button>
+              </>
             )}
           </section>
 
@@ -330,7 +335,7 @@ function Score({ label, value }: { label: string; value: number }) {
   return (
     <div className="rounded-xl bg-[#f7f7f7] p-3">
       <span className="block text-xs font-bold text-[#777777]">{label}</span>
-      <strong className="mt-1 block text-lg font-extrabold">{value}</strong>
+      <strong className="mt-1 block text-lg text-center font-extrabold">{value}</strong>
     </div>
   );
 }
@@ -339,7 +344,7 @@ function CheckLine({ label, ok }: { label: string; ok: boolean }) {
   return (
     <div className="flex items-center justify-between">
       <span>{label}</span>
-      <span className={ok ? "text-[#16803a]" : "text-[#d35400]"}>{ok ? "PASS" : "WARN"}</span>
+      <span className={ok ? "text-[#16803a]" : "text-[#d35400]"}>{ok ? "양호" : "경고"}</span>
     </div>
   );
 }
