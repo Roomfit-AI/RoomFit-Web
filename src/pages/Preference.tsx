@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { FiBookOpen, FiBriefcase, FiCheck, FiCoffee, FiGrid, FiHeart, FiHome, FiMoon, FiPackage, FiSmile } from "react-icons/fi";
+import PageStepHeader from "../components/ui/PageStepHeader";
 
 const purposes = [
   { id: "rest", title: "휴식", description: "편안하게 쉴 수 있는 목적", icon: FiCoffee },
@@ -13,14 +14,6 @@ const purposes = [
   { id: "etc", title: "기타", description: "기타 목적", icon: FiMoon },
 ];
 
-const styles = [
-  { id: "minimal", title: "미니멀", tone: "white" },
-  { id: "natural", title: "내추럴", tone: "wood" },
-  { id: "modern", title: "모던", tone: "light" },
-  { id: "midcentury", title: "미드센추리", tone: "deep" },
-  { id: "classic", title: "클래식", tone: "cream" },
-];
-
 const palettes = [
   { id: "ivory", title: "화이트 / 아이보리", colors: ["#f8f5ee", "#1d1d1d"] },
   { id: "beige", title: "베이지 / 샌드", colors: ["#d9c8ad"] },
@@ -31,39 +24,42 @@ const palettes = [
   { id: "pink", title: "핑크 / 코랄", colors: ["#cfa293"] },
   { id: "black", title: "블랙 / 다크", colors: ["#101010"] },
 ];
+const preferenceVisitedKey = "roomfit:visited:preference";
 
 export default function Preference() {
   const [selectedPurpose, setSelectedPurpose] = useState(() => {
-    return localStorage.getItem("roomfit:selectedPurpose") ?? "rest";
-  });
-  const [selectedStyle, setSelectedStyle] = useState(() => {
-    return localStorage.getItem("roomfit:selectedStyle") ?? "minimal";
+    return getInitialPreferenceValue("roomfit:selectedPurpose");
   });
   const [selectedPalette, setSelectedPalette] = useState(() => {
-    return localStorage.getItem("roomfit:selectedPalette") ?? "ivory";
+    return getInitialPreferenceValue("roomfit:selectedPalette");
   });
 
   useEffect(() => {
-    localStorage.setItem("roomfit:selectedPurpose", selectedPurpose);
-    localStorage.setItem("roomfit:selectedStyle", selectedStyle);
-    localStorage.setItem("roomfit:selectedPalette", selectedPalette);
-  }, [selectedPurpose, selectedStyle, selectedPalette]);
+    if (selectedPurpose) {
+      localStorage.setItem("roomfit:selectedPurpose", selectedPurpose);
+    } else {
+      localStorage.removeItem("roomfit:selectedPurpose");
+    }
+
+    if (selectedPalette) {
+      localStorage.setItem("roomfit:selectedPalette", selectedPalette);
+    } else {
+      localStorage.removeItem("roomfit:selectedPalette");
+    }
+  }, [selectedPurpose, selectedPalette]);
 
   return (
     <main className="min-h-[calc(100vh-76px)] bg-[#fbfbfb] px-5 py-8 text-[#141414] sm:px-8 lg:px-10">
       <section className="mx-auto max-w-7xl">
-        <div className="mb-8 flex items-center gap-4">
-          <span className="grid h-9 w-9 place-items-center rounded-md bg-[#eeeeee] text-base font-bold">3</span>
-          <span className="text-lg font-extrabold">생활 목적 및 디자인 취향 선택</span>
-        </div>
+        <PageStepHeader step={3} title="라이프 스타일 및 선호하는 디자인 선택" className="mb-12" />
 
-        <header className="mb-9 text-center">
-          <h1 className="text-3xl font-extrabold tracking-normal sm:text-4xl">당신의 라이프스타일을 알려주세요</h1>
+        <header className="mb-12 text-center">
+          <h1 className="text-3xl font-extrabold tracking-normal sm:text-4xl">당신의 라이프스타일과 선호하는 색감을 알려주세요</h1>
           <p className="mt-3 text-sm font-semibold text-[#777777]">정확한 추천을 위해 생활 패턴을 입력해주세요.</p>
         </header>
 
         <section className="mb-10">
-          <h2 className="mb-4 text-base font-extrabold">1. 생활 목적 <span className="font-semibold text-[#777777]">(중복 선택 가능)</span></h2>
+          <h2 className="mb-4 text-base font-extrabold">라이프 스타일 <span className="font-semibold text-[#777777]">(중복 선택 가능)</span></h2>
           <div className="grid gap-4 md:grid-cols-3">
             {purposes.map((purpose) => {
               const Icon = purpose.icon;
@@ -94,36 +90,8 @@ export default function Preference() {
           </div>
         </section>
 
-        <section className="mb-10">
-          <h2 className="mb-4 text-base font-extrabold">2. 선호하는 디자인 분위기 <span className="font-semibold text-[#777777]">(1~2개 선택)</span></h2>
-          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-5">
-            {styles.map((style) => {
-              const selected = selectedStyle === style.id;
-
-              return (
-                <button
-                  key={style.id}
-                  type="button"
-                  onClick={() => setSelectedStyle(style.id)}
-                  className={`relative overflow-hidden rounded-lg border bg-white p-2 text-left transition-all hover:-translate-y-1 hover:shadow-[0_18px_35px_rgba(0,0,0,0.08)] ${
-                    selected ? "border-[#111111]" : "border-[#e5e5e5]"
-                  }`}
-                >
-                  {selected && (
-                    <span className="absolute right-3 top-3 z-10 grid h-6 w-6 place-items-center rounded-full bg-[#111111] text-white">
-                      <FiCheck className="h-4 w-4" />
-                    </span>
-                  )}
-                  <RoomStylePreview tone={style.tone} />
-                  <strong className="mt-3 block text-center text-sm font-extrabold">{style.title}</strong>
-                </button>
-              );
-            })}
-          </div>
-        </section>
-
         <section>
-          <h2 className="mb-5 text-base font-extrabold">3. 선호하는 색감 톤</h2>
+          <h2 className="mb-5 text-base font-extrabold">선호하는 색감 톤</h2>
           <div className="grid gap-5 sm:grid-cols-4 lg:grid-cols-8">
             {palettes.map((palette) => {
               const selected = selectedPalette === palette.id;
@@ -159,17 +127,13 @@ export default function Preference() {
   );
 }
 
-function RoomStylePreview({ tone }: { tone: string }) {
-  return (
-    <div className={`room-preview room-preview-${tone} h-36`}>
-      <span className="room-wall room-wall-left" />
-      <span className="room-wall room-wall-right" />
-      <span className="room-floor" />
-      <span className="room-window" />
-      <span className="room-bed" />
-      <span className="room-table" />
-      <span className="room-rug" />
-      <span className="room-plant" />
-    </div>
-  );
+function getInitialPreferenceValue(key: string) {
+  if (!sessionStorage.getItem(preferenceVisitedKey)) {
+    localStorage.removeItem("roomfit:selectedPurpose");
+    localStorage.removeItem("roomfit:selectedPalette");
+    sessionStorage.setItem(preferenceVisitedKey, "true");
+    return "";
+  }
+
+  return localStorage.getItem(key) ?? "";
 }

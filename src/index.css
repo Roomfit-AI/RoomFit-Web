@@ -180,6 +180,18 @@
     align-items: center;
   }
 
+  .confirm-room .viewer-shell {
+    position: relative;
+    width: 100%;
+    min-height: 440px;
+    height: clamp(440px, 48vw, 620px);
+    background: transparent;
+  }
+
+  .confirm-room .viewer-caption {
+    display: none;
+  }
+
   .furniture-thumb {
     display: block;
     box-shadow: 0 5px 10px rgba(0, 0, 0, 0.14);
