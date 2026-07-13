@@ -61,6 +61,13 @@ export interface Opening {
   position: Vector2D;
   dimensions: Size3D;
   rotationY: number;
+  // Which WallSegment.id this opening was snapped to (see snapToWall in
+  // api/rooms.ts). When set, Wall.tsx trusts it instead of re-deriving the
+  // match with its own distance threshold — two independent geometric checks
+  // could pick different walls near corners, cutting the hole into the wrong
+  // wall and leaving the door's real wall solid (looking like the door
+  // overlaps the wall).
+  wallId?: string;
   frame?: {
     color: string;
   };
@@ -118,8 +125,8 @@ export interface RoomLayout {
     environment: string;
   };
   walls: WallSegment[];
-  door: Opening;
-  window: Opening;
+  doors: Opening[];
+  windows: Opening[];
   furniture: Furniture[];
 }
 

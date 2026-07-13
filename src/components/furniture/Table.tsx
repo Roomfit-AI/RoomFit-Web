@@ -1,16 +1,54 @@
+import { RoundedBox } from "@react-three/drei";
 import Material, { materialFromConfig } from "../materials/Material";
 import type { Furniture } from "../../types";
+
+// RoundedBoxGeometry errors if radius exceeds half of any edge, so this caps
+// a desired radius to whatever the box's own thinnest dimension allows.
+function safeRadius(dims: number[], desired: number): number {
+  return Math.min(desired, Math.min(...dims) * 0.35);
+}
 
 export default function Table({ item }: { item: Furniture }) {
   const material = materialFromConfig(item.material, item.color);
   const radius = Math.min(item.dimensions.width, item.dimensions.depth) / 2;
 
+  // Rectangular desks (the common case for a scanned desk) — a tabletop on
+  // four legs instead of a solid block.
   if (item.geometry === "box" || item.dimensions.width !== item.dimensions.depth) {
+    const { width, depth, height } = item.dimensions;
+    const topThickness = Math.min(0.04, height * 0.12);
+    const legInset = 0.05;
+    const legThickness = 0.045;
+    const legHeight = height - topThickness;
+    const legX = width / 2 - legInset - legThickness / 2;
+    const legZ = depth / 2 - legInset - legThickness / 2;
+
+    const topDims: [number, number, number] = [width, topThickness, depth];
+
     return (
-      <mesh castShadow receiveShadow>
-        <boxGeometry args={[item.dimensions.width, item.dimensions.height, item.dimensions.depth]} />
-        <Material {...material} />
-      </mesh>
+      <group>
+        <RoundedBox
+          args={topDims}
+          radius={safeRadius(topDims, 0.02)}
+          smoothness={4}
+          castShadow
+          receiveShadow
+          position={[0, height / 2 - topThickness / 2, 0]}
+        >
+          <Material {...material} />
+        </RoundedBox>
+        {[
+          [legX, legZ],
+          [-legX, legZ],
+          [legX, -legZ],
+          [-legX, -legZ],
+        ].map(([x, z], index) => (
+          <mesh key={index} castShadow receiveShadow position={[x, -topThickness / 2, z]}>
+            <boxGeometry args={[legThickness, legHeight, legThickness]} />
+            <Material type="wood" color="#8d6037" roughness={0.58} />
+          </mesh>
+        ))}
+      </group>
     );
   }
 

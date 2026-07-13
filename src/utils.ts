@@ -116,10 +116,10 @@ export function validateLayout(room: RoomLayout, furniture: Furniture[]): Valida
   const solidFurniture = furniture.filter((item) => item.category !== "rug");
   const bounds = solidFurniture.map(getFurnitureBounds);
   const collisionPairs = findCollisions(bounds);
-  const doorZone = getOpeningZone(room.door, 0.45, "door-zone");
-  const windowZone = getOpeningZone(room.window, 0.34, "window-zone");
-  const doorBlocks = bounds.filter((bound) => intersects(bound, doorZone));
-  const windowBlocks = bounds.filter((bound) => intersects(bound, windowZone));
+  const doorZones = room.doors.map((door, index) => getOpeningZone(door, 0.45, `door-zone-${index}`));
+  const windowZones = room.windows.map((win, index) => getOpeningZone(win, 0.34, `window-zone-${index}`));
+  const doorBlocks = bounds.filter((bound) => doorZones.some((zone) => intersects(bound, zone)));
+  const windowBlocks = bounds.filter((bound) => windowZones.some((zone) => intersects(bound, zone)));
   const trafficWarnings = findTrafficWarnings(room, bounds);
 
   return [

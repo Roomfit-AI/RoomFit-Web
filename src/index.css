@@ -160,6 +160,26 @@
     display: none;
   }
 
+  .editor-page .viewer-shell {
+    position: relative;
+    width: 100%;
+    min-height: 520px;
+    height: calc(100vh - 240px);
+    background: transparent;
+  }
+
+  .editor-page .viewer-caption {
+    position: absolute;
+    bottom: 12px;
+    right: 12px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #888888;
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+
   .furniture-thumb {
     display: block;
     box-shadow: 0 5px 10px rgba(0, 0, 0, 0.14);
