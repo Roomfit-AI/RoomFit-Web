@@ -39,7 +39,7 @@ export default function Navbar() {
   };
 
   return (
-    <nav className="h-19 border-b border-[#e8e8e8] bg-[#fbfbfb]">
+    <nav className="fixed inset-x-0 top-0 z-30 h-19 border-b border-[#e8e8e8] bg-[#fbfbfb]">
       <div className="flex h-full items-center justify-between px-10">
         <button
           type="button"

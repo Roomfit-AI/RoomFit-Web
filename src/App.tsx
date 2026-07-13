@@ -14,14 +14,16 @@ export default function App() {
     <BrowserRouter>
       <Navbar />
 
-      <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/rooms" element={<Rooms />} />
-        <Route path="/manage-furniture" element={<ManageFurniture />} />
-        <Route path="/preference" element={<Preference />} />
-        <Route path="/add-furniture" element={<AddFurniture />} />
-        <Route path="/editor" element={<EditorPlaceholder />} />
-      </Routes>
+      <div className="pt-19">
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/rooms" element={<Rooms />} />
+          <Route path="/manage-furniture" element={<ManageFurniture />} />
+          <Route path="/preference" element={<Preference />} />
+          <Route path="/add-furniture" element={<AddFurniture />} />
+          <Route path="/editor" element={<EditorPlaceholder />} />
+        </Routes>
+      </div>
     </BrowserRouter>
   );
 }
