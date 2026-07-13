@@ -16,6 +16,7 @@ interface RoomViewerProps {
   onSelectFurniture: (id: string | null) => void;
   onMoveFurniture: (id: string, position: Vector2D) => void;
   onRotateFurniture?: (id: string) => void;
+  hideForegroundWalls?: boolean;
 }
 
 export function RoomViewer({
@@ -25,6 +26,7 @@ export function RoomViewer({
   onSelectFurniture,
   onMoveFurniture,
   onRotateFurniture,
+  hideForegroundWalls = false,
 }: RoomViewerProps) {
   const camera = room.camera ?? {
     type: "orthographic" as const,
@@ -60,7 +62,7 @@ export function RoomViewer({
           />
           <Lighting room={room} />
 
-          <RoomShell room={room} />
+          <RoomShell room={room} hideForegroundWalls={hideForegroundWalls} />
 
           {furniture.map((item) => (
             <FurnitureMesh
@@ -107,22 +109,52 @@ export function RoomViewer({
 
 export default RoomViewer;
 
-function RoomShell({ room }: { room: RoomLayout }) {
+function RoomShell({ room, hideForegroundWalls }: { room: RoomLayout; hideForegroundWalls: boolean }) {
+  const hiddenWallIds = hideForegroundWalls ? foregroundWallIds(room) : new Set<string>();
+  const visibleDoors = room.doors.filter((opening) => !opening.wallId || !hiddenWallIds.has(opening.wallId));
+  const visibleWindows = room.windows.filter((opening) => !opening.wallId || !hiddenWallIds.has(opening.wallId));
+
   return (
     <group>
       <Floor room={room} />
 
       {room.walls.map((wall) => (
-        <Wall key={wall.id} wall={wall} doors={room.doors} windows={room.windows} />
+        hiddenWallIds.has(wall.id) ? null : <Wall key={wall.id} wall={wall} doors={visibleDoors} windows={visibleWindows} />
       ))}
 
-      {room.windows.map((opening) => (
+      {visibleWindows.map((opening) => (
         <Window key={opening.id} opening={opening} wallHeight={room.height ?? 2.4} />
       ))}
-      {room.doors.map((opening) => (
+      {visibleDoors.map((opening) => (
         <Door key={opening.id} opening={opening} wallThickness={wallThicknessFor(opening.wallId, room.walls)} />
       ))}
     </group>
+  );
+}
+
+function foregroundWallIds(room: RoomLayout) {
+  const camera = room.camera ?? {
+    position: { x: 6.2, y: 5.2, z: 6.2 },
+    target: { x: 0, y: 0.6, z: 0 },
+  };
+  const viewX = camera.position.x - camera.target.x;
+  const viewZ = camera.position.z - camera.target.z;
+  const viewLength = Math.hypot(viewX, viewZ) || 1;
+  const dirX = viewX / viewLength;
+  const dirZ = viewZ / viewLength;
+  const roomCenterX = camera.target.x;
+  const roomCenterZ = camera.target.z;
+
+  return new Set(
+    room.walls
+      .filter((wall) => {
+        const centerX = (wall.start.x + wall.end.x) / 2;
+        const centerZ = (wall.start.z + wall.end.z) / 2;
+        const towardCamera = (centerX - roomCenterX) * dirX + (centerZ - roomCenterZ) * dirZ;
+
+        return towardCamera > 0.25;
+      })
+      .map((wall) => wall.id),
   );
 }
 
