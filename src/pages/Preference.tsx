@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { FiBookOpen, FiBriefcase, FiCheck, FiCoffee, FiGrid, FiHeart, FiHome, FiMoon, FiPackage, FiSmile } from "react-icons/fi";
+import PageStepHeader from "../components/ui/PageStepHeader";
 
 const purposes = [
   { id: "rest", title: "휴식", description: "편안하게 쉴 수 있는 목적", icon: FiCoffee },
@@ -40,10 +41,7 @@ export default function Preference() {
   return (
     <main className="min-h-[calc(100vh-76px)] bg-[#fbfbfb] px-5 py-8 text-[#141414] sm:px-8 lg:px-10">
       <section className="mx-auto max-w-7xl">
-        <div className="mb-12 flex items-center gap-4">
-          <span className="grid h-9 w-9 place-items-center rounded-md bg-[#eeeeee] text-base font-bold">3</span>
-          <span className="text-lg font-extrabold">라이프 스타일 및 선호하는 디자인 선택</span>
-        </div>
+        <PageStepHeader step={3} title="라이프 스타일 및 선호하는 디자인 선택" className="mb-12" />
 
         <header className="mb-12 text-center">
           <h1 className="text-3xl font-extrabold tracking-normal sm:text-4xl">당신의 라이프스타일과 선호하는 색감을 알려주세요</h1>

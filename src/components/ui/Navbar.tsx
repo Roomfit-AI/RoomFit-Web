@@ -22,6 +22,7 @@ export default function Navbar() {
   const currentStepIndex = navigationSteps.findIndex((step) => step.path === location.pathname);
   const safeStepIndex = currentStepIndex >= 0 ? currentStepIndex : 0;
   const isHome = safeStepIndex === 0;
+  const isLastStep = safeStepIndex === navigationSteps.length - 1;
   const previousStep = navigationSteps[safeStepIndex - 1];
   const nextStep = navigationSteps[safeStepIndex + 1];
 
@@ -34,6 +35,16 @@ export default function Navbar() {
   const goNext = () => {
     const currentStep = navigationSteps[safeStepIndex];
     currentStep.beforeNext?.();
+
+    if (isLastStep) {
+      const confirmedLayout = localStorage.getItem("roomfit:confirmedRoomLayout");
+
+      if (confirmedLayout) {
+        localStorage.setItem("roomfit:finalRoomLayout", confirmedLayout);
+      }
+
+      return;
+    }
 
     if (nextStep) {
       navigate(nextStep.path);
@@ -62,9 +73,9 @@ export default function Navbar() {
             </button>
           )}
 
-          {nextStep && (
+          {(nextStep || isLastStep) && (
             <Button onClick={goNext} className="hidden px-7 py-2.5 sm:inline-flex">
-              {isHome ? "시작하기" : "다음 단계"}
+              {isLastStep ? "확정하기" : isHome ? "시작하기" : "다음 단계"}
             </Button>
           )}
         </div>

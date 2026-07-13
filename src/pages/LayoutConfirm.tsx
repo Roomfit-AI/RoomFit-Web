@@ -1,6 +1,7 @@
 import { FiChevronDown, FiInfo, FiShoppingBag } from "react-icons/fi";
 
 import RoomViewer from "../components/room/RoomViewer";
+import PageStepHeader from "../components/ui/PageStepHeader";
 import { applyScenario } from "../config/scenarios";
 import { sampleRoom } from "../mock/sampleRoom";
 import type { RoomLayout } from "../types";
@@ -35,10 +36,7 @@ export default function LayoutConfirm() {
       <div className="mx-auto max-w-7xl">
         <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_360px] lg:items-center">
           <section className="min-w-0">
-            <div className="mb-8 flex items-center gap-4">
-              <span className="grid h-11 w-11 place-items-center rounded-lg border border-[#e5e5e5] bg-[#fafafa] text-xl font-extrabold">8</span>
-              <span className="text-xl font-extrabold">최종 배치 확정</span>
-            </div>
+            <PageStepHeader step={8} title="최종 배치 확정" className="mb-8" />
 
             <div>
               <h1 className="text-4xl font-extrabold leading-tight tracking-normal">최종 배치를 확정할까요?</h1>
