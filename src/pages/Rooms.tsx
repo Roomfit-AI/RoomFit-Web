@@ -1,8 +1,9 @@
-import type { ReactNode } from "react";
+import type { MouseEvent, ReactNode } from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { FiBox, FiCheck, FiPlus, FiSmartphone, FiStar } from "react-icons/fi";
+import { FiBox, FiCheck, FiLoader, FiPlus, FiSmartphone, FiStar, FiTrash2 } from "react-icons/fi";
 
 import {
+  deleteUploadedRoom,
   getRecentUploadedRooms,
   getSampleRooms,
   type SampleRoomCard,
@@ -10,6 +11,14 @@ import {
 } from "../api/rooms";
 
 const filters = ["전체", "원룸", "사무실"];
+const selectedRoomStorageKeys = [
+  "roomfit:backendRoomId",
+  "roomfit:selectedRoomId",
+  "roomfit:selectedRoomTitle",
+  "roomfit:selectedRoomType",
+  "roomfit:selectedRoomSize",
+  "roomfit:selectedRoomLayout",
+];
 
 export default function Rooms() {
   const [activeFilter, setActiveFilter] = useState("전체");
@@ -18,7 +27,10 @@ export default function Rooms() {
   const [isLoading, setIsLoading] = useState(true);
   const [isUploadsLoading, setIsUploadsLoading] = useState(true);
   const [uploadNotice, setUploadNotice] = useState(false);
+  const [deletingRoomId, setDeletingRoomId] = useState<number | null>(null);
+  const [deleteError, setDeleteError] = useState("");
   const knownUploadIds = useRef<Set<number> | null>(null);
+  const deletedUploadIds = useRef(new Set<number>());
 
   const [selectedRoomId, setSelectedRoomId] = useState(() => {
     return localStorage.getItem("roomfit:selectedRoomId") ?? "";
@@ -58,7 +70,9 @@ export default function Rooms() {
       requestInFlight = true;
 
       try {
-        const rooms = await getRecentUploadedRooms();
+        const rooms = (await getRecentUploadedRooms()).filter(
+          (room) => !deletedUploadIds.current.has(room.roomId),
+        );
         if (ignore) return;
 
         const nextIds = new Set(rooms.map((room) => room.roomId));
@@ -113,6 +127,34 @@ export default function Rooms() {
     );
 
     setSelectedRoomId(room.layoutId);
+  };
+
+  const removeUploadedRoom = async (
+    event: MouseEvent<HTMLButtonElement>,
+    room: UploadedRoomCard,
+  ) => {
+    event.stopPropagation();
+    if (!window.confirm("이 업로드 방을 삭제할까요?")) return;
+
+    setDeletingRoomId(room.roomId);
+    setDeleteError("");
+
+    try {
+      await deleteUploadedRoom(room.roomId);
+      deletedUploadIds.current.add(room.roomId);
+      knownUploadIds.current?.delete(room.roomId);
+      setUploadedRooms((current) => current.filter((item) => item.roomId !== room.roomId));
+
+      const selectedBackendRoomId = localStorage.getItem("roomfit:backendRoomId");
+      if (selectedRoomId === room.layoutId || selectedBackendRoomId === String(room.roomId)) {
+        selectedRoomStorageKeys.forEach((key) => localStorage.removeItem(key));
+        setSelectedRoomId("");
+      }
+    } catch (error) {
+      setDeleteError(error instanceof Error ? error.message : "업로드 방을 삭제하지 못했습니다.");
+    } finally {
+      setDeletingRoomId(null);
+    }
   };
 
   return (
@@ -180,6 +222,15 @@ export default function Rooms() {
               </div>
             )}
 
+            {deleteError && (
+              <div
+                role="alert"
+                className="mb-5 border-l-4 border-[#b42318] bg-[#fff4f2] px-4 py-3 text-sm font-semibold text-[#8a1c14]"
+              >
+                {deleteError}
+              </div>
+            )}
+
             {isUploadsLoading ? (
               <div className="flex min-h-28 items-center justify-center border-y border-[#ececec]">
                 <span className="text-sm font-semibold text-[#777777]">업로드 방을 확인하는 중...</span>
@@ -191,40 +242,60 @@ export default function Rooms() {
             ) : (
               <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
                 {uploadedRooms.map((room) => (
-                  <button
+                  <article
                     key={room.roomId}
-                    type="button"
-                    onClick={() => selectRoom(room)}
-                    aria-pressed={selectedRoomId === room.layoutId}
-                    className={`group relative rounded-lg border bg-white p-5 text-left transition-all hover:-translate-y-1 hover:shadow-[0_18px_35px_rgba(0,0,0,0.08)] ${
+                    className={`group relative overflow-hidden rounded-lg border bg-white text-left transition-all hover:-translate-y-1 hover:shadow-[0_18px_35px_rgba(0,0,0,0.08)] ${
                       selectedRoomId === room.layoutId
                         ? "border-[#111111] shadow-[0_18px_35px_rgba(0,0,0,0.08)]"
                         : "border-[#e5e5e5] hover:border-[#cfcfcf]"
-                    }`}
+                    } ${deletingRoomId === room.roomId ? "opacity-65" : ""}`}
                   >
-                    <div className="mb-4 flex min-h-6 items-center justify-between gap-3">
-                      {room.source === "ROOMPLAN" ? (
-                        <span className="inline-flex bg-[#151515] px-2.5 py-1 text-xs font-bold text-white">
-                          ROOMPLAN
+                    <button
+                      type="button"
+                      onClick={() => selectRoom(room)}
+                      aria-pressed={selectedRoomId === room.layoutId}
+                      disabled={deletingRoomId === room.roomId}
+                      className="block w-full p-5 text-left disabled:cursor-wait"
+                    >
+                      <div className="mb-4 flex min-h-6 items-center justify-between gap-3 pr-10">
+                        {room.source === "ROOMPLAN" ? (
+                          <span className="inline-flex bg-[#151515] px-2.5 py-1 text-xs font-bold text-white">
+                            ROOMPLAN
+                          </span>
+                        ) : (
+                          <span />
+                        )}
+                        <span className="text-xs font-medium text-[#777777]">{formatUploadedAt(room.createdAt)}</span>
+                      </div>
+
+                      <RoomPreview tone={room.tone} />
+
+                      <strong className="mt-5 block text-base font-bold text-[#151515]">{room.title}</strong>
+                      <span className="mt-1 block text-sm font-medium text-[#777777]">{room.dimensions}</span>
+
+                      {selectedRoomId === room.layoutId && (
+                        <span className="absolute right-4 top-14 z-10 inline-flex items-center gap-1 rounded-full bg-[#111111] px-3 py-1 text-xs font-bold text-white">
+                          <FiCheck className="h-3.5 w-3.5" />
+                          선택됨
                         </span>
-                      ) : (
-                        <span />
                       )}
-                      <span className="text-xs font-medium text-[#777777]">{formatUploadedAt(room.createdAt)}</span>
-                    </div>
+                    </button>
 
-                    <RoomPreview tone={room.tone} />
-
-                    <strong className="mt-5 block text-base font-bold text-[#151515]">{room.title}</strong>
-                    <span className="mt-1 block text-sm font-medium text-[#777777]">{room.dimensions}</span>
-
-                    {selectedRoomId === room.layoutId && (
-                      <span className="absolute right-4 top-14 z-10 inline-flex items-center gap-1 rounded-full bg-[#111111] px-3 py-1 text-xs font-bold text-white">
-                        <FiCheck className="h-3.5 w-3.5" />
-                        선택됨
-                      </span>
-                    )}
-                  </button>
+                    <button
+                      type="button"
+                      title="업로드 방 삭제"
+                      aria-label={`${room.title} 삭제`}
+                      disabled={deletingRoomId !== null}
+                      onClick={(event) => void removeUploadedRoom(event, room)}
+                      className="absolute right-3 top-3 z-20 grid h-9 w-9 place-items-center rounded-md border border-[#dddddd] bg-white text-[#555555] shadow-sm transition-colors hover:border-[#b42318] hover:text-[#b42318] disabled:cursor-wait disabled:opacity-50"
+                    >
+                      {deletingRoomId === room.roomId ? (
+                        <FiLoader className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <FiTrash2 className="h-4 w-4" />
+                      )}
+                    </button>
+                  </article>
                 ))}
               </div>
             )}
