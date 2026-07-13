@@ -6,6 +6,7 @@ import Rooms from "./pages/Rooms";
 import ManageFurniture from "./pages/ManageFurniture";
 import EditorPlaceholder from "./pages/EditorPlaceholder";
 import Preference from "./pages/Preference";
+import ReferenceImage from "./pages/ReferenceImage";
 import AddFurniture from "./pages/AddFurniture";
 import LayoutConfirm from "./pages/LayoutConfirm";
 
@@ -21,6 +22,7 @@ export default function App() {
           <Route path="/rooms" element={<Rooms />} />
           <Route path="/manage-furniture" element={<ManageFurniture />} />
           <Route path="/preference" element={<Preference />} />
+          <Route path="/reference-image" element={<ReferenceImage />} />
           <Route path="/add-furniture" element={<AddFurniture />} />
           <Route path="/editor" element={<EditorPlaceholder />} />
           <Route path="/layout-confirm" element={<LayoutConfirm />} />

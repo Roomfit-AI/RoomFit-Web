@@ -10,6 +10,7 @@ const navigationSteps = [
   },
   { path: "/manage-furniture", label: "가구 관리" },
   { path: "/preference", label: "취향 선택" },
+  { path: "/reference-image", label: "이미지 선택" },
   { path: "/add-furniture", label: "가구 선택" },
   { path: "/editor", label: "편집" },
   { path: "/layout-confirm", label: "결과 확인" },
