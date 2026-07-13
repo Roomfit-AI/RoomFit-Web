@@ -44,7 +44,7 @@ export default function Navbar() {
         <button
           type="button"
           onClick={() => navigate("/")}
-          className="text-xl font-bold tracking-[0.02em] text-[#181818] transition-opacity hover:opacity-70 sm:text-2xl"
+          className="text-xl font-bold tracking-[0.02em] text-[#181818] transition-opacity hover:opacity-70 sm:text-2xl cursor-pointer"
         >
           ROOMFIT
         </button>

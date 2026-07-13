@@ -46,45 +46,47 @@ export function RoomViewer({
         }}
         onPointerMissed={() => onSelectFurniture(null)}
       >
-        {/* A warmer, clearly-distinct ivory — the walls are already a near-white
-            "#f4f1ec", so a near-identical background made the room blend into
-            its own backdrop instead of standing apart from it. */}
-        <color attach="background" args={["#efe6d3"]} />
-        <OrthographicCamera
-          makeDefault
-          position={[camera.position.x, camera.position.y, camera.position.z]}
-          zoom={camera.zoom}
-          near={0.1}
-          far={100}
-        />
-        <Lighting room={room} />
 
-        <RoomShell room={room} />
-
-        {furniture.map((item) => (
-          <FurnitureMesh
-            key={item.id}
-            item={item}
-            isSelected={selectedFurnitureId === item.id}
-            canTransform
-            onSelect={onSelectFurniture}
-            onMove={onMoveFurniture}
+        <group position={[0, -1, 0]}>
+          {/* A warmer, clearly-distinct ivory — the walls are already a near-white
+              "#f4f1ec", so a near-identical background made the room blend into
+              its own backdrop instead of standing apart from it. */}
+          <OrthographicCamera
+            makeDefault
+            position={[camera.position.x, camera.position.y, camera.position.z]}
+            zoom={camera.zoom}
+            near={0.1}
+            far={100}
           />
-        ))}
+          <Lighting room={room} />
 
-        <ContactShadows opacity={0.24} scale={8} blur={3.2} far={5} position={[0, 0.015, 0]} />
-        <OrbitControls
-          makeDefault
-          enableDamping
-          target={[camera.target.x, camera.target.y, camera.target.z]}
-          minDistance={4.2}
-          maxDistance={10}
-          // Nearly top-down to nearly-horizontal — was locked to a narrow
-          // 37.5°-85° band that made it impossible to look straight down into
-          // the room (walls always blocked the view from any angle allowed).
-          minPolarAngle={0.05}
-          maxPolarAngle={1.5}
-        />
+          <RoomShell room={room} />
+
+          {furniture.map((item) => (
+            <FurnitureMesh
+              key={item.id}
+              item={item}
+              isSelected={selectedFurnitureId === item.id}
+              canTransform
+              onSelect={onSelectFurniture}
+              onMove={onMoveFurniture}
+            />
+          ))}
+
+          <ContactShadows opacity={0.24} scale={8} blur={3.2} far={5} position={[0, 0.015, 0]} />
+          <OrbitControls
+            makeDefault
+            enableDamping
+            target={[camera.target.x, camera.target.y, camera.target.z]}
+            minDistance={4.2}
+            maxDistance={10}
+            // Nearly top-down to nearly-horizontal — was locked to a narrow
+            // 37.5°-85° band that made it impossible to look straight down into
+            // the room (walls always blocked the view from any angle allowed).
+            minPolarAngle={0.05}
+            maxPolarAngle={1.5}
+          />
+        </group>
       </Canvas>
       <div className="viewer-caption">
         <span>가구를 클릭한 뒤 드래그해 이동할 수 있습니다.</span>

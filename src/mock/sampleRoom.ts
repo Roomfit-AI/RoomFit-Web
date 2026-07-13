@@ -71,8 +71,8 @@ export const sampleRoom: RoomLayout = {
       // (1.15 - 1.5 = -0.35) still clears the TV/stand cluster's right edge
       // (-0.65) with room to spare, and the right edge (2.65) stays clear of
       // the north-east corner.
-      position: { x: 1.15, z: -2.34 },
-      dimensions: { width: 3.0, depth: 0.18, height: 1.55 },
+      position: { x: -2.0, z: -2.34 },
+      dimensions: { width: 1.5, depth: 0.18, height: 1.55 },
       rotationY: 0,
       frame: {
         color: "#8a623d",
@@ -106,7 +106,7 @@ export const sampleRoom: RoomLayout = {
       // x (-0.65) — the window spans roughly x: -0.53..2.81 on this same
       // wall, and at the TV's own width that would overlap the window frame;
       // -1.4 is far enough west of it to clear.
-      position: { x: -1.4, z: -2.3 },
+      position: { x: 1.15, z: -2.3 },
       rotationY: 0,
       color: "#101010",
       material: {
@@ -129,7 +129,7 @@ export const sampleRoom: RoomLayout = {
       // fully clears the floor with a small margin.
       dimensions: { width: 1.5, depth: 0.36, height: 0.28 },
       // Flush against the back wall's inner face, same x as the TV above it.
-      position: { x: -1.4, z: -2.16 },
+      position: { x: 1.15, z: -2.16 },
       rotationY: 0,
       color: "#8a6847",
       material: {
@@ -153,7 +153,7 @@ export const sampleRoom: RoomLayout = {
       // thickness-plus-decor footprint (see FloatingShelf.tsx for how it
       // re-anchors to a fixed wall-mount height instead of floor height/2).
       dimensions: { width: 1.1, depth: 0.18, height: 0.3 },
-      position: { x: -1.4, z: -2.3 },
+      position: { x: 1.15, z: -2.3 },
       rotationY: 0,
       color: "#8a623d",
       material: {
@@ -175,7 +175,7 @@ export const sampleRoom: RoomLayout = {
       // x: -3.2; there's no actual west wall in this room's data, only
       // north/east, so this is as close to "against the left wall" as the
       // floor boundary allows).
-      position: { x: -2.88, z: -2.0 },
+      position: { x: -0.5, z: -2.0 },
       rotationY: 0,
       color: "#8b623a",
       material: {
@@ -282,7 +282,7 @@ export const sampleRoom: RoomLayout = {
       category: "lighting",
       geometry: "cylinder",
       dimensions: { width: 0.35, depth: 0.35, height: 1.85 },
-      position: { x: 2.0, z: -1.35 },
+      position: { x: 2.25, z: -1.5 },
       rotationY: -0.28,
       color: "#26211d",
       material: {
