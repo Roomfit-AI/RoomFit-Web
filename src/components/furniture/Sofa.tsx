@@ -1,5 +1,12 @@
+import { RoundedBox } from "@react-three/drei";
 import Material, { materialFromConfig } from "../materials/Material";
 import type { Furniture } from "../../types";
+
+// RoundedBoxGeometry errors if radius exceeds half of any edge, so this caps
+// a desired radius to whatever the box's own thinnest dimension allows.
+function safeRadius(dims: number[], desired: number): number {
+  return Math.min(desired, Math.min(...dims) * 0.35);
+}
 
 // Blends toward a fixed warm terracotta accent rather than just lightening
 // the base color — a same-hue-but-lighter cushion reads as one flat block of
@@ -28,39 +35,84 @@ export default function Sofa({ item }: { item: Furniture }) {
   const pillowColor = mixToAccent(material.color, 0.75);
   const legHeight = Math.min(0.1, height * 0.14);
 
+  const bodyDims: [number, number, number] = [width, height * 0.34, depth];
+  const backDims: [number, number, number] = [width, height * 0.7, depth * 0.16];
+  const armDims: [number, number, number] = [width * 0.08, height * 0.52, depth];
+  const cushionDims: [number, number, number] = [width / (cushionCount + 0.45), height * 0.18, depth * 0.68];
+  const pillowDims: [number, number, number] = [0.38, 0.28, 0.12];
+
   return (
     <group>
-      <mesh castShadow receiveShadow position={[0, -height * 0.22, 0]}>
-        <boxGeometry args={[width, height * 0.34, depth]} />
+      <RoundedBox
+        args={bodyDims}
+        radius={safeRadius(bodyDims, 0.035)}
+        smoothness={4}
+        castShadow
+        receiveShadow
+        position={[0, -height * 0.22, 0]}
+      >
         <Material {...material} />
-      </mesh>
-      <mesh castShadow receiveShadow position={[0, height * 0.12, -depth * 0.42]}>
-        <boxGeometry args={[width, height * 0.7, depth * 0.16]} />
+      </RoundedBox>
+      <RoundedBox
+        args={backDims}
+        radius={safeRadius(backDims, 0.035)}
+        smoothness={4}
+        castShadow
+        receiveShadow
+        position={[0, height * 0.12, -depth * 0.42]}
+      >
         <Material {...material} />
-      </mesh>
-      <mesh castShadow receiveShadow position={[-width * 0.48, height * 0.02, 0]}>
-        <boxGeometry args={[width * 0.08, height * 0.52, depth]} />
+      </RoundedBox>
+      <RoundedBox
+        args={armDims}
+        radius={safeRadius(armDims, 0.03)}
+        smoothness={4}
+        castShadow
+        receiveShadow
+        position={[-width * 0.48, height * 0.02, 0]}
+      >
         <Material {...material} />
-      </mesh>
-      <mesh castShadow receiveShadow position={[width * 0.48, height * 0.02, 0]}>
-        <boxGeometry args={[width * 0.08, height * 0.52, depth]} />
+      </RoundedBox>
+      <RoundedBox
+        args={armDims}
+        radius={safeRadius(armDims, 0.03)}
+        smoothness={4}
+        castShadow
+        receiveShadow
+        position={[width * 0.48, height * 0.02, 0]}
+      >
         <Material {...material} />
-      </mesh>
+      </RoundedBox>
       {Array.from({ length: cushionCount }, (_, index) => (
-        <mesh
+        <RoundedBox
           key={index}
+          args={cushionDims}
+          radius={safeRadius(cushionDims, 0.03)}
+          smoothness={4}
           castShadow
           receiveShadow
           position={[-width * 0.28 + index * (width * 0.28), height * 0.12, depth * 0.02]}
         >
-          <boxGeometry args={[width / (cushionCount + 0.45), height * 0.18, depth * 0.68]} />
           <Material type="fabric" color={cushionColor} roughness={0.8} />
-        </mesh>
+        </RoundedBox>
       ))}
-      <mesh castShadow position={[width * 0.18, height * 0.48, -depth * 0.2]} rotation={[0.18, 0.12, 0]}>
-        <boxGeometry args={[0.38, 0.28, 0.12]} />
+      <RoundedBox
+        args={pillowDims}
+        radius={safeRadius(pillowDims, 0.03)}
+        smoothness={4}
+        castShadow
+        // y was height*0.48 (then height*0.26) — the backrest's own top is
+        // at height*0.47 (see backDims/position above), and the pillow's
+        // tilt (rotation below) swings its top corner up by roughly its own
+        // half-height on top of its center y, so even height*0.26 was still
+        // poking out by a couple cm once that tilt was accounted for. Lower
+        // center + a gentler tilt keeps the whole tilted box under the
+        // backrest top with real margin.
+        position={[width * 0.18, height * 0.18, -depth * 0.2]}
+        rotation={[0.08, 0.08, 0]}
+      >
         <Material type="fabric" color={pillowColor} roughness={0.85} />
-      </mesh>
+      </RoundedBox>
 
       {/* Slim block legs — a low-profile, modern silhouette instead of the
           body sitting flush on the floor. */}

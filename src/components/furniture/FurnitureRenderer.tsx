@@ -2,6 +2,7 @@ import Material, { materialFromConfig } from "../materials/Material";
 import Bed from "./Bed";
 import Bookshelf from "./Bookshelf";
 import Chair from "./Chair";
+import FloatingShelf from "./FloatingShelf";
 import Lamp from "./Lamp";
 import ModelFurniture from "./ModelFurniture";
 import Plant from "./Plant";
@@ -57,6 +58,10 @@ export default function FurnitureRenderer({ item }: { item: Furniture }) {
 
   if (name.includes("tv") && !name.includes("stand")) {
     return <Television item={item} />;
+  }
+
+  if (item.name.includes("선반")) {
+    return <FloatingShelf item={item} />;
   }
 
   if (item.name.includes("책장") || name.includes("shelf")) {

@@ -1,6 +1,17 @@
 import { useEffect, useState } from "react";
 import { FiCheck, FiPlus } from "react-icons/fi";
 
+import { findScenario } from "../config/scenarios";
+
+function defaultFurnitureIds(): string[] {
+  const scenario = findScenario(
+    localStorage.getItem("roomfit:selectedPurpose"),
+    localStorage.getItem("roomfit:selectedStyle"),
+  );
+
+  return scenario?.addFurnitureIds ?? ["floor-lamp", "soft-rug"];
+}
+
 const categories = ["전체", "소파", "테이블", "의자", "수납장", "조명", "러그", "데코 / 소품", "식물"];
 
 const furnitureItems = [
@@ -28,15 +39,15 @@ export default function AddFurniture() {
     const raw = localStorage.getItem("roomfit:selectedAdditionalFurnitureIds");
 
     if (!raw) {
-      return ["floor-lamp", "soft-rug"];
+      return defaultFurnitureIds();
     }
 
     try {
       const parsed = JSON.parse(raw);
 
-      return Array.isArray(parsed) ? parsed : ["floor-lamp", "soft-rug"];
+      return Array.isArray(parsed) ? parsed : defaultFurnitureIds();
     } catch {
-      return ["floor-lamp", "soft-rug"];
+      return defaultFurnitureIds();
     }
   });
   const visibleItems =
