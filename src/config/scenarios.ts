@@ -277,7 +277,11 @@ function restyleForWork(item: Furniture): Furniture {
     case "desk":
       return withColor(item, "#d6d6d6", "white", "gray");
     case "chair":
-      return withColor(item, "#cfcfcf", "fabric", "gray");
+      // theme "gray" also makes Chair.tsx render the cushioned leather
+      // office-chair silhouette (pedestal + star base) instead of a plain
+      // 4-legged chair — a black leather tone reads as "modern computer
+      // chair" instead of a dining chair.
+      return { ...withColor(item, "#1c1c1c", "fabric", "gray"), material: { type: "fabric", color: "#1c1c1c", roughness: 0.32, metalness: 0.05 } };
     case "cabinet":
       return withColor(item, "#cfcfcf", "wood", "gray");
     case "rug":
@@ -293,14 +297,14 @@ export const scenarios: Scenario[] = [
     purpose: "rest",
     style: "natural",
     palette: "brown",
-    itemIds: ["scenario-rest-sofa", "scenario-rest-lamp", "scenario-rest-plant", "scenario-rest-rug"],
+    itemIds: ["scenario-rest-sofa", "scenario-rest-lamp", "scenario-rest-plant", "scenario-rest-table", "scenario-rest-rug"],
     addFurnitureIds: ["green-sofa", "floor-lamp", "plant"],
     remove: (item) => item.category === "desk" || item.category === "chair",
     restyle: restyleForRest,
     restyleWindow: (opening) =>
       opening.blind ? { ...opening, blind: { ...opening.blind, type: "curtain", color: "#e8e4da" } } : opening,
     build: (room) => {
-      const [sofaSpot, lampSpot, plantSpot] = findOpenSpots(room, 0.5, 3);
+      const [sofaSpot, lampSpot, plantSpot, tableSpot] = findOpenSpots(room, 0.5, 4);
       const extras: Furniture[] = [
         {
           id: "scenario-rest-sofa",
@@ -348,6 +352,22 @@ export const scenarios: Scenario[] = [
           status: "recommended",
           removable: true,
         },
+        {
+          id: "scenario-rest-table",
+          // Category "desk" routes to Table.tsx (see FurnitureRenderer) —
+          // a small side table, not an actual work desk.
+          name: "조그마한 원목 탁자",
+          category: "desk",
+          geometry: "box",
+          dimensions: { width: 0.46, depth: 0.46, height: 0.4 },
+          position: tableSpot,
+          rotationY: 0,
+          color: "#b98d5e",
+          material: { type: "wood", color: "#b98d5e", roughness: 0.5, metalness: 0 },
+          status: "recommended",
+          removable: true,
+          theme: "wood",
+        },
       ];
 
       // Only add a rug if this room doesn't already have one — an existing
@@ -377,20 +397,23 @@ export const scenarios: Scenario[] = [
     purpose: "work",
     style: "modern",
     palette: "gray",
-    itemIds: ["scenario-work-bookshelf"],
+    itemIds: ["scenario-work-bookshelf", "scenario-work-rug"],
     addFurnitureIds: ["shelf-open"],
     remove: () => false,
     restyle: restyleForWork,
+    // Blind stays a blind (not swapped to curtain like the rest scenario) —
+    // just recolored black, the one explicit "적재적소에 검은색" accent that
+    // isn't already covered by the chair's black leather/pedestal look.
+    restyleWindow: (opening) => (opening.blind ? { ...opening, blind: { ...opening.blind, color: "#1c1c1c" } } : opening),
     build: (room) => {
       const [shelfSpot] = findOpenSpots(room, 0.4, 1);
-
-      return [
+      const extras: Furniture[] = [
         {
           id: "scenario-work-bookshelf",
           // Name needs "책장" so FurnitureRenderer routes it to
           // Bookshelf.tsx, which reads item.theme === "gray" (see that
-          // component) for muted shelf boards/books instead of the default
-          // warm-wood look.
+          // component) for muted (not grayscale) shelf boards/books instead
+          // of the default warm-wood look.
           name: "미니멀 책장",
           category: "cabinet",
           geometry: "box",
@@ -404,6 +427,31 @@ export const scenarios: Scenario[] = [
           theme: "gray",
         },
       ];
+
+      // Only add a rug if this room doesn't already have one — an existing
+      // rug just gets restyled instead of doubling up.
+      if (!room.furniture.some((item) => item.category === "rug")) {
+        extras.push({
+          id: "scenario-work-rug",
+          // A darker charcoal (not the same light gray as the walls/desk) so
+          // it grounds the room instead of blending into the floor — the
+          // other deliberate dark-accent spot alongside the black blind and
+          // black leather chair.
+          name: "모던 러그",
+          category: "rug",
+          geometry: "plane",
+          dimensions: { width: room.width * 0.5, depth: room.depth * 0.4, height: 0.03 },
+          position: { x: 0, z: 0 },
+          rotationY: 0,
+          color: "#4a4a4a",
+          material: { type: "fabric", color: "#4a4a4a", roughness: 0.9, metalness: 0 },
+          status: "recommended",
+          removable: true,
+          theme: "gray",
+        });
+      }
+
+      return extras;
     },
   },
 ];
