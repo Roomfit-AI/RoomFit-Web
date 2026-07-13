@@ -66,16 +66,32 @@ export function FurnitureMesh({
   );
 
   if (isSelected && canTransform) {
+    // `meshGroup` is rendered as a *sibling*, not nested inside
+    // <TransformControls>, and `object={groupRef}` points it straight at our
+    // own group. Nesting it as `children` used to cause two compounding bugs:
+    // drei's TransformControls attaches to a wrapper <group> *it* creates
+    // around `children` when no `object` is given, not to `meshGroup` itself,
+    // so dragging moved that invisible wrapper while commitPosition() kept
+    // reading groupRef's (unmoved) position. And even after passing `object`,
+    // its attach effect still lists `children` in its dependency array — a
+    // new `meshGroup` element (a fresh reference every render, since it
+    // embeds the constantly-changing `item.position`) made that effect
+    // detach+reattach the gizmo on every single drag tick, resetting its
+    // internal drag state each time and cancelling out any net movement.
+    // With no children passed here, that dependency never changes and the
+    // gizmo attaches exactly once.
     return (
-      <TransformControls
-        mode="translate"
-        showY={false}
-        translationSnap={0.05}
-        onMouseUp={commitPosition}
-        onObjectChange={commitPosition}
-      >
+      <>
         {meshGroup}
-      </TransformControls>
+        <TransformControls
+          object={groupRef}
+          mode="translate"
+          showY={false}
+          translationSnap={0.05}
+          onMouseUp={commitPosition}
+          onObjectChange={commitPosition}
+        />
+      </>
     );
   }
 

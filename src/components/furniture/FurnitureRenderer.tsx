@@ -1,10 +1,14 @@
 import Material, { materialFromConfig } from "../materials/Material";
+import Bed from "./Bed";
 import Bookshelf from "./Bookshelf";
+import Chair from "./Chair";
 import Lamp from "./Lamp";
 import ModelFurniture from "./ModelFurniture";
 import Plant from "./Plant";
 import Sofa from "./Sofa";
+import Storage from "./Storage";
 import Table from "./Table";
+import Television from "./Television";
 import type { Furniture } from "../../types";
 
 export default function FurnitureRenderer({ item }: { item: Furniture }) {
@@ -32,12 +36,23 @@ export default function FurnitureRenderer({ item }: { item: Furniture }) {
     );
   }
 
+  if (item.category === "bed") {
+    return <Bed item={item} />;
+  }
+
   if (item.category === "desk") {
     return <Table item={item} />;
   }
 
   if (item.category === "chair") {
-    return <Sofa item={item} />;
+    // "chair" covers both real chairs and sofas (rooms.ts collapses both
+    // furniture types into this one category) — only render the wide
+    // cushioned Sofa for items actually labeled as one, a single-seat Chair
+    // otherwise, so a desk chair doesn't get mistaken for a couch.
+    if (name.includes("소파") || name.includes("sofa") || name.includes("couch")) {
+      return <Sofa item={item} />;
+    }
+    return <Chair item={item} />;
   }
 
   if (name.includes("tv") && !name.includes("stand")) {
@@ -46,6 +61,10 @@ export default function FurnitureRenderer({ item }: { item: Furniture }) {
 
   if (item.name.includes("책장") || name.includes("shelf")) {
     return <Bookshelf item={item} />;
+  }
+
+  if (item.category === "cabinet") {
+    return <Storage item={item} />;
   }
 
   if (item.geometry === "cylinder") {
@@ -62,20 +81,5 @@ export default function FurnitureRenderer({ item }: { item: Furniture }) {
       <boxGeometry args={[item.dimensions.width, item.dimensions.height, item.dimensions.depth]} />
       <Material {...material} />
     </mesh>
-  );
-}
-
-function Television({ item }: { item: Furniture }) {
-  return (
-    <group>
-      <mesh castShadow receiveShadow>
-        <boxGeometry args={[item.dimensions.width, item.dimensions.height, item.dimensions.depth]} />
-        <Material type="glass" color="#0d0d0d" roughness={0.24} metalness={0.18} />
-      </mesh>
-      <mesh position={[0, 0, item.dimensions.depth / 2 + 0.006]}>
-        <boxGeometry args={[item.dimensions.width * 0.88, item.dimensions.height * 0.78, 0.01]} />
-        <Material type="glass" color="#161616" roughness={0.08} metalness={0.28} />
-      </mesh>
-    </group>
   );
 }
