@@ -24,18 +24,28 @@ const palettes = [
   { id: "pink", title: "핑크 / 코랄", colors: ["#cfa293"] },
   { id: "black", title: "블랙 / 다크", colors: ["#101010"] },
 ];
+const preferenceVisitedKey = "roomfit:visited:preference";
 
 export default function Preference() {
   const [selectedPurpose, setSelectedPurpose] = useState(() => {
-    return localStorage.getItem("roomfit:selectedPurpose") ?? "rest";
+    return getInitialPreferenceValue("roomfit:selectedPurpose");
   });
   const [selectedPalette, setSelectedPalette] = useState(() => {
-    return localStorage.getItem("roomfit:selectedPalette") ?? "ivory";
+    return getInitialPreferenceValue("roomfit:selectedPalette");
   });
 
   useEffect(() => {
-    localStorage.setItem("roomfit:selectedPurpose", selectedPurpose);
-    localStorage.setItem("roomfit:selectedPalette", selectedPalette);
+    if (selectedPurpose) {
+      localStorage.setItem("roomfit:selectedPurpose", selectedPurpose);
+    } else {
+      localStorage.removeItem("roomfit:selectedPurpose");
+    }
+
+    if (selectedPalette) {
+      localStorage.setItem("roomfit:selectedPalette", selectedPalette);
+    } else {
+      localStorage.removeItem("roomfit:selectedPalette");
+    }
   }, [selectedPurpose, selectedPalette]);
 
   return (
@@ -115,4 +125,15 @@ export default function Preference() {
       </section>
     </main>
   );
+}
+
+function getInitialPreferenceValue(key: string) {
+  if (!sessionStorage.getItem(preferenceVisitedKey)) {
+    localStorage.removeItem("roomfit:selectedPurpose");
+    localStorage.removeItem("roomfit:selectedPalette");
+    sessionStorage.setItem(preferenceVisitedKey, "true");
+    return "";
+  }
+
+  return localStorage.getItem(key) ?? "";
 }

@@ -1,18 +1,8 @@
 import { useEffect, useState } from "react";
 import { FiCheck, FiPlus } from "react-icons/fi";
 
-import { findScenario } from "../config/scenarios";
-
-function defaultFurnitureIds(): string[] {
-  const scenario = findScenario(
-    localStorage.getItem("roomfit:selectedPurpose"),
-    localStorage.getItem("roomfit:selectedStyle"),
-  );
-
-  return scenario?.addFurnitureIds ?? ["floor-lamp", "soft-rug"];
-}
-
 const categories = ["전체", "소파", "테이블", "의자", "수납장", "조명", "러그", "데코 / 소품", "식물"];
+const addFurnitureVisitedKey = "roomfit:visited:add-furniture";
 
 const furnitureItems = [
   { id: "sofa-modern", category: "소파", name: "모던 패브릭 소파", visual: "sofa" },
@@ -36,18 +26,24 @@ const furnitureItems = [
 export default function AddFurniture() {
   const [activeCategory, setActiveCategory] = useState("전체");
   const [selectedIds, setSelectedIds] = useState<string[]>(() => {
+    if (!sessionStorage.getItem(addFurnitureVisitedKey)) {
+      localStorage.removeItem("roomfit:selectedAdditionalFurnitureIds");
+      sessionStorage.setItem(addFurnitureVisitedKey, "true");
+      return [];
+    }
+
     const raw = localStorage.getItem("roomfit:selectedAdditionalFurnitureIds");
 
     if (!raw) {
-      return defaultFurnitureIds();
+      return [];
     }
 
     try {
       const parsed = JSON.parse(raw);
 
-      return Array.isArray(parsed) ? parsed : defaultFurnitureIds();
+      return Array.isArray(parsed) ? parsed : [];
     } catch {
-      return defaultFurnitureIds();
+      return [];
     }
   });
   const visibleItems =

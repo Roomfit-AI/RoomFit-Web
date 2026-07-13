@@ -88,10 +88,4 @@ function ensureSelectedRoom() {
   if (localStorage.getItem("roomfit:selectedRoomId")) {
     return;
   }
-
-  localStorage.setItem("roomfit:selectedRoomId", "studio-1r-sample");
-  localStorage.setItem("roomfit:selectedRoomTitle", "오픈형 원룸");
-  localStorage.setItem("roomfit:selectedRoomType", "원룸");
-  localStorage.setItem("roomfit:selectedRoomSize", "6평");
-  localStorage.removeItem("roomfit:selectedRoomLayout");
 }

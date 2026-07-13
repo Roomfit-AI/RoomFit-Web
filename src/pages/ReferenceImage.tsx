@@ -9,14 +9,25 @@ const styles = [
   { id: "classic", title: "클래식", tone: "cream" },
   { id: "midcentury", title: "미드센추리", tone: "deep" },
 ];
+const referenceImageVisitedKey = "roomfit:visited:reference-image";
 
 export default function ReferenceImage() {
   const [selectedStyle, setSelectedStyle] = useState(() => {
-    return localStorage.getItem("roomfit:selectedStyle") ?? "minimal";
+    if (!sessionStorage.getItem(referenceImageVisitedKey)) {
+      localStorage.removeItem("roomfit:selectedStyle");
+      sessionStorage.setItem(referenceImageVisitedKey, "true");
+      return "";
+    }
+
+    return localStorage.getItem("roomfit:selectedStyle") ?? "";
   });
 
   useEffect(() => {
-    localStorage.setItem("roomfit:selectedStyle", selectedStyle);
+    if (selectedStyle) {
+      localStorage.setItem("roomfit:selectedStyle", selectedStyle);
+    } else {
+      localStorage.removeItem("roomfit:selectedStyle");
+    }
   }, [selectedStyle]);
 
   return (

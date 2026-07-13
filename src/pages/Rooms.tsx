@@ -19,6 +19,7 @@ const selectedRoomStorageKeys = [
   "roomfit:selectedRoomSize",
   "roomfit:selectedRoomLayout",
 ];
+const roomsVisitedKey = "roomfit:visited:rooms";
 
 export default function Rooms() {
   const [activeFilter, setActiveFilter] = useState("전체");
@@ -32,9 +33,7 @@ export default function Rooms() {
   const knownUploadIds = useRef<Set<number> | null>(null);
   const deletedUploadIds = useRef(new Set<number>());
 
-  const [selectedRoomId, setSelectedRoomId] = useState(() => {
-    return localStorage.getItem("roomfit:selectedRoomId") ?? "";
-  });
+  const [selectedRoomId, setSelectedRoomId] = useState(() => getInitialSelectedRoomId());
 
   useEffect(() => {
     let ignore = false;
@@ -398,6 +397,16 @@ function formatUploadedAt(createdAt: string) {
     hour: "2-digit",
     minute: "2-digit",
   }).format(date);
+}
+
+function getInitialSelectedRoomId() {
+  if (!sessionStorage.getItem(roomsVisitedKey)) {
+    selectedRoomStorageKeys.forEach((key) => localStorage.removeItem(key));
+    sessionStorage.setItem(roomsVisitedKey, "true");
+    return "";
+  }
+
+  return localStorage.getItem("roomfit:selectedRoomId") ?? "";
 }
 
 function InfoRow({
