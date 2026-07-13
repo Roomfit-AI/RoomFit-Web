@@ -108,7 +108,7 @@ export default function ManageFurniture() {
   const originalFurnitureRef = useRef<Furniture[]>(cloneFurniture(selectedRoom.furniture));
   const [selectedFurnitureId, setSelectedFurnitureId] = useState<string | null>(null);
   const [isCatalogOpen, setIsCatalogOpen] = useState(false);
-  const [hideForegroundWalls, setHideForegroundWalls] = useState(false);
+  const [hideEntranceWalls, setHideEntranceWalls] = useState(false);
   const [panelWidth, setPanelWidth] = useState(320);
   const [isResizing, setIsResizing] = useState(false);
 
@@ -228,8 +228,8 @@ export default function ManageFurniture() {
             <label className="flex cursor-pointer items-center gap-2 rounded-lg border border-[#dfdfdf] bg-white px-3 py-2 text-sm font-extrabold text-[#333333] transition-colors hover:bg-[#f6f6f6]">
               <input
                 type="checkbox"
-                checked={hideForegroundWalls}
-                onChange={(event) => setHideForegroundWalls(event.target.checked)}
+                checked={hideEntranceWalls}
+                onChange={(event) => setHideEntranceWalls(event.target.checked)}
                 className="h-4 w-4 accent-[#111111]"
               />
               내부 보기
@@ -243,7 +243,8 @@ export default function ManageFurniture() {
               selectedFurnitureId={selectedFurnitureId}
               onSelectFurniture={setSelectedFurnitureId}
               onMoveFurniture={moveFurniture}
-              hideForegroundWalls={hideForegroundWalls}
+              hideEntranceWalls={hideEntranceWalls}
+              alignCameraToEntrance
             />
           </div>
 
