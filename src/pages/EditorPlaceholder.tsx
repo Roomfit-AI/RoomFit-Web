@@ -37,7 +37,7 @@ export default function EditorPlaceholder() {
   const [selectedFurnitureId, setSelectedFurnitureId] = useState<string | null>(null);
   const [layoutId, setLayoutId] = useState<number | null>(null);
   const [feedback, setFeedback] = useState("");
-  const [hideForegroundWalls, setHideForegroundWalls] = useState(false);
+  const [hideEntranceWalls, setHideEntranceWalls] = useState(false);
   const [isRecommending, setIsRecommending] = useState(false);
   const [isApplyingFeedback, setIsApplyingFeedback] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
@@ -203,8 +203,8 @@ export default function EditorPlaceholder() {
             <label className="flex cursor-pointer items-center gap-2 rounded-lg border border-[#dfdfdf] bg-white px-3 py-2 text-sm font-extrabold text-[#333333] transition-colors hover:bg-[#f6f6f6]">
               <input
                 type="checkbox"
-                checked={hideForegroundWalls}
-                onChange={(event) => setHideForegroundWalls(event.target.checked)}
+                checked={hideEntranceWalls}
+                onChange={(event) => setHideEntranceWalls(event.target.checked)}
                 className="h-4 w-4 accent-[#111111]"
               />
               내부 보기
@@ -218,7 +218,7 @@ export default function EditorPlaceholder() {
               selectedFurnitureId={selectedFurnitureId}
               onSelectFurniture={setSelectedFurnitureId}
               onMoveFurniture={handleMoveFurniture}
-              hideForegroundWalls={hideForegroundWalls}
+              hideEntranceWalls={hideEntranceWalls}
             />
           </div>
 
