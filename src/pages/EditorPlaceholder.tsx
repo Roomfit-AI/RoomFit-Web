@@ -53,6 +53,14 @@ export default function EditorPlaceholder() {
     }
   }, []);
 
+  useEffect(() => {
+    if (!roomLayout) {
+      return;
+    }
+
+    localStorage.setItem("roomfit:confirmedRoomLayout", JSON.stringify(roomLayout));
+  }, [roomLayout]);
+
   const handleMoveFurniture = (id: string, position: Vector2D) => {
     setRoomLayout((current) => {
       if (!current) {
