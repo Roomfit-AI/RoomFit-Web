@@ -1,5 +1,12 @@
+import { RoundedBox } from "@react-three/drei";
 import Material, { materialFromConfig } from "../materials/Material";
 import type { Furniture } from "../../types";
+
+// RoundedBoxGeometry errors if radius exceeds half of any edge, so this caps
+// a desired radius to whatever the box's own thinnest dimension allows.
+function safeRadius(dims: number[], desired: number): number {
+  return Math.min(desired, Math.min(...dims) * 0.35);
+}
 
 // A single-seat chair — thin legs, a slim seat, one backrest panel — so it
 // reads distinctly from Sofa's wide cushioned silhouette instead of looking
@@ -20,23 +27,34 @@ export default function Chair({ item }: { item: Furniture }) {
 
   const toLocalY = (fromFloor: number) => fromFloor - height / 2;
 
+  const seatDims: [number, number, number] = [width, seatThickness, depth];
+  const backDims: [number, number, number] = [width * 0.9, backHeight, backThickness];
+
   return (
     <group>
       {/* Seat */}
-      <mesh castShadow receiveShadow position={[0, toLocalY(seatHeightFromFloor - seatThickness / 2), 0]}>
-        <boxGeometry args={[width, seatThickness, depth]} />
+      <RoundedBox
+        args={seatDims}
+        radius={safeRadius(seatDims, 0.02)}
+        smoothness={4}
+        castShadow
+        receiveShadow
+        position={[0, toLocalY(seatHeightFromFloor - seatThickness / 2), 0]}
+      >
         <Material {...material} />
-      </mesh>
+      </RoundedBox>
 
       {/* Backrest */}
-      <mesh
+      <RoundedBox
+        args={backDims}
+        radius={safeRadius(backDims, 0.02)}
+        smoothness={4}
         castShadow
         receiveShadow
         position={[0, toLocalY(seatHeightFromFloor + backHeight / 2), -depth / 2 + backThickness / 2]}
       >
-        <boxGeometry args={[width * 0.9, backHeight, backThickness]} />
         <Material {...material} />
-      </mesh>
+      </RoundedBox>
 
       {/* Legs */}
       {[

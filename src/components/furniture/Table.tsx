@@ -1,5 +1,12 @@
+import { RoundedBox } from "@react-three/drei";
 import Material, { materialFromConfig } from "../materials/Material";
 import type { Furniture } from "../../types";
+
+// RoundedBoxGeometry errors if radius exceeds half of any edge, so this caps
+// a desired radius to whatever the box's own thinnest dimension allows.
+function safeRadius(dims: number[], desired: number): number {
+  return Math.min(desired, Math.min(...dims) * 0.35);
+}
 
 export default function Table({ item }: { item: Furniture }) {
   const material = materialFromConfig(item.material, item.color);
@@ -16,12 +23,20 @@ export default function Table({ item }: { item: Furniture }) {
     const legX = width / 2 - legInset - legThickness / 2;
     const legZ = depth / 2 - legInset - legThickness / 2;
 
+    const topDims: [number, number, number] = [width, topThickness, depth];
+
     return (
       <group>
-        <mesh castShadow receiveShadow position={[0, height / 2 - topThickness / 2, 0]}>
-          <boxGeometry args={[width, topThickness, depth]} />
+        <RoundedBox
+          args={topDims}
+          radius={safeRadius(topDims, 0.02)}
+          smoothness={4}
+          castShadow
+          receiveShadow
+          position={[0, height / 2 - topThickness / 2, 0]}
+        >
           <Material {...material} />
-        </mesh>
+        </RoundedBox>
         {[
           [legX, legZ],
           [-legX, legZ],

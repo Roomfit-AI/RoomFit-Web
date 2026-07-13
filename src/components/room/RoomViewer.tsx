@@ -7,7 +7,6 @@ import Floor from "./Floor";
 import Lighting from "./Lighting";
 import Wall from "./Wall";
 import Window from "./Window";
-import Material from "../materials/Material";
 import type { Furniture, RoomLayout, Vector2D, WallSegment } from "../../types";
 
 interface RoomViewerProps {
@@ -107,12 +106,6 @@ export function RoomViewer({
 export default RoomViewer;
 
 function RoomShell({ room }: { room: RoomLayout }) {
-  // The marble/wood decor panels below are a fixed styling flourish sized for
-  // the original sample studio layout — on a real scanned room they don't
-  // correspond to anything real, and were physically covering the real window
-  // on the east wall. Only show them for sample/demo rooms.
-  const isRealScan = room.source === "ROOMPLAN";
-
   return (
     <group>
       <Floor room={room} />
@@ -121,7 +114,6 @@ function RoomShell({ room }: { room: RoomLayout }) {
         <Wall key={wall.id} wall={wall} doors={room.doors} windows={room.windows} />
       ))}
 
-      {!isRealScan && <DecorWall room={room} />}
       {room.windows.map((opening) => (
         <Window key={opening.id} opening={opening} wallHeight={room.height ?? 2.4} />
       ))}
@@ -139,39 +131,3 @@ function wallThicknessFor(wallId: string | undefined, walls: WallSegment[]): num
   return walls.find((wall) => wall.id === wallId)?.thickness ?? 0.12;
 }
 
-function DecorWall({ room }: { room: RoomLayout }) {
-  return (
-    <group>
-      <MarblePanel position={[-room.width / 2 + 0.8, 1.1, -room.depth / 2 + 0.07]} />
-      <WoodTrim position={[room.width / 2 - 0.07, 1.45, -0.25]} depth={room.depth - 0.45} />
-    </group>
-  );
-}
-
-function MarblePanel({ position }: { position: [number, number, number] }) {
-  return (
-    <group position={position}>
-      <mesh castShadow receiveShadow>
-        <boxGeometry args={[1.85, 1.35, 0.055]} />
-        <Material type="white" color="#e9e4dc" roughness={0.72} />
-      </mesh>
-      {[-0.55, 0.05, 0.55].map((offset, index) => (
-        <mesh key={index} position={[offset, 0, 0.032]} rotation={[0, 0, -0.55 + index * 0.24]}>
-          <boxGeometry args={[0.018, 1.55, 0.012]} />
-          <meshBasicMaterial color="#d2cbc1" transparent opacity={0.46} />
-        </mesh>
-      ))}
-    </group>
-  );
-}
-
-function WoodTrim({ position, depth }: { position: [number, number, number]; depth: number }) {
-  return (
-    <group position={position}>
-      <mesh castShadow receiveShadow>
-        <boxGeometry args={[0.12, 2.9, depth]} />
-        <Material type="wood" color="#8a623d" roughness={0.55} />
-      </mesh>
-    </group>
-  );
-}

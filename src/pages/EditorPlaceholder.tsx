@@ -1,8 +1,10 @@
 import { useEffect, useState } from "react";
+import { FiRotateCcw } from "react-icons/fi";
 
 import { applyLayoutFeedback, createDefaultAgentContext, recommendLayout, type InterpretedIntent, type LayoutValidationResult, type ScoreSummary } from "../api/layouts";
 import { applyBackendFurnitureToLayout } from "../api/rooms";
 import RoomViewer from "../components/room/RoomViewer";
+import { applyScenario } from "../config/scenarios";
 import type { RoomLayout, Vector2D } from "../types";
 
 function loadSelectedRoomLayout(): RoomLayout | null {
@@ -13,7 +15,11 @@ function loadSelectedRoomLayout(): RoomLayout | null {
   }
 
   try {
-    return JSON.parse(raw) as RoomLayout;
+    // Additive-only demo-mood furniture (see config/scenarios.ts) layered on
+    // top of whatever was saved from /manage-furniture — never touches
+    // sampleRoom.ts/Home.tsx, and never mutates or removes anything already
+    // in this room.
+    return applyScenario(JSON.parse(raw) as RoomLayout);
   } catch {
     return null;
   }
@@ -84,6 +90,22 @@ export default function EditorPlaceholder() {
         ),
       };
     });
+  };
+
+  // Resets to whatever is currently saved under roomfit:selectedRoomLayout
+  // (the furniture as last saved from /manage-furniture) rather than the
+  // room's original as-uploaded furniture — AI recommendations/feedback and
+  // manual drag/rotate edits made here never write back to that key, so
+  // re-reading it always gives the furniture-management baseline.
+  const handleResetFurniture = () => {
+    const saved = loadSelectedRoomLayout();
+
+    if (!saved) {
+      return;
+    }
+
+    setRoomLayout((current) => (current ? { ...current, furniture: saved.furniture } : current));
+    setSelectedFurnitureId(null);
   };
 
   const handleRecommend = async () => {
@@ -165,7 +187,7 @@ export default function EditorPlaceholder() {
   return (
     <main className="editor-page min-h-[calc(100vh-76px)] bg-[#fbfbfb] px-5 py-8 text-[#141414] sm:px-8 lg:px-10">
       <section className="mx-auto grid max-w-7xl gap-6 lg:grid-cols-[1fr_380px]">
-        <section className="overflow-hidden rounded-2xl border border-[#e6e6e6] bg-white p-4 shadow-sm">
+        <section className="relative overflow-hidden rounded-2xl border border-[#e6e6e6] bg-white p-4 shadow-sm">
           <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
             <div>
               <span className="text-xs font-bold uppercase tracking-[0.2em] text-[#888888]">RoomFit Editor Demo</span>
@@ -191,8 +213,16 @@ export default function EditorPlaceholder() {
             selectedFurnitureId={selectedFurnitureId}
             onSelectFurniture={setSelectedFurnitureId}
             onMoveFurniture={handleMoveFurniture}
-            onRotateFurniture={handleRotateFurniture}
           />
+
+          <div className="absolute bottom-7 left-1/2 flex -translate-x-1/2 items-center gap-3 rounded-xl border border-[#e8e8e8] bg-white px-4 py-3 shadow-[0_10px_25px_rgba(0,0,0,0.08)]">
+            <EditorToolButton
+              label="90° 회전"
+              icon={<span className="text-[11px] font-extrabold leading-none">90°</span>}
+              onClick={selectedFurnitureId ? () => handleRotateFurniture(selectedFurnitureId) : undefined}
+            />
+            <EditorToolButton label="초기화" icon={<FiRotateCcw />} onClick={handleResetFurniture} />
+          </div>
         </section>
 
         <aside className="space-y-5">
@@ -306,5 +336,28 @@ function CheckLine({ label, ok }: { label: string; ok: boolean }) {
       <span>{label}</span>
       <span className={ok ? "text-[#16803a]" : "text-[#d35400]"}>{ok ? "PASS" : "WARN"}</span>
     </div>
+  );
+}
+
+function EditorToolButton({
+  icon,
+  label,
+  onClick,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  onClick?: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      title={label}
+      aria-label={label}
+      onClick={onClick}
+      disabled={!onClick}
+      className="grid h-8 w-8 place-items-center rounded-full text-[#222222] hover:bg-[#f2f2f2] disabled:cursor-not-allowed disabled:opacity-40"
+    >
+      {icon}
+    </button>
   );
 }

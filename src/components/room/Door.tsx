@@ -1,11 +1,12 @@
 import type { Opening } from "../../types";
 
-// The wall already has a real cut for this opening (see Wall.tsx) — the casing
-// here is deliberately close to the wall's own color so the opening still
-// reads as "a doorway in a white wall," with the door leaf (wood-toned) set
-// back within it. Every layer is centered on z=0 (rather than offset toward
-// one face) and the handle is mirrored on both sides, so the door reads the
-// same whether you're looking at it from inside or outside the room.
+// Every layer is centered on z=0 (rather than offset toward one face) and
+// the handle is mirrored on both sides, so the door reads the same whether
+// you're looking at it from inside or outside the room. The casing used to
+// match the wall's own near-white color so the opening read as "a doorway
+// in a white wall," but that made the whole door hard to pick out from the
+// wall around it — it's a wood tone now, one shade lighter than the leaf,
+// so the frame and the door within it both clearly read as a door.
 //
 // `wallThickness` sizes the casing depth to always exceed the actual wall
 // it's cut into (by a fixed 2cm) — a fixed 0.05 casing depth used to sit
@@ -24,7 +25,7 @@ export default function Door({ opening, wallThickness = 0.12 }: { opening: Openi
     <group position={[opening.position.x, height / 2, opening.position.z]} rotation={[0, opening.rotationY, 0]}>
       <mesh receiveShadow>
         <boxGeometry args={[width + 0.05, height + 0.04, casingDepth]} />
-        <meshStandardMaterial color="#f2ede2" roughness={0.75} />
+        <meshStandardMaterial color="#b58a5c" roughness={0.6} />
       </mesh>
       <mesh castShadow>
         <boxGeometry args={[width - 0.04, height - 0.04, leafDepth]} />

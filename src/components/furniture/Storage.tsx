@@ -1,5 +1,12 @@
+import { RoundedBox } from "@react-three/drei";
 import Material, { materialFromConfig } from "../materials/Material";
 import type { Furniture } from "../../types";
+
+// RoundedBoxGeometry errors if radius exceeds half of any edge, so this caps
+// a desired radius to whatever the box's own thinnest dimension allows.
+function safeRadius(dims: number[], desired: number): number {
+  return Math.min(desired, Math.min(...dims) * 0.35);
+}
 
 // Generic storage furniture ("수납장" from a scan can be anything from a low
 // dresser to a tall wardrobe). Taller pieces get door panel(s); shorter ones
@@ -12,12 +19,13 @@ export default function Storage({ item }: { item: Furniture }) {
   const doorCount = isTall && width > 0.9 ? 2 : 1;
   const drawerCount = Math.max(2, Math.min(4, Math.round(height / 0.18)));
 
+  const bodyDims: [number, number, number] = [width, height, depth];
+
   return (
     <group>
-      <mesh castShadow receiveShadow>
-        <boxGeometry args={[width, height, depth]} />
+      <RoundedBox args={bodyDims} radius={safeRadius(bodyDims, 0.025)} smoothness={4} castShadow receiveShadow>
         <Material {...material} />
-      </mesh>
+      </RoundedBox>
 
       {isTall
         ? Array.from({ length: doorCount }, (_, index) => {

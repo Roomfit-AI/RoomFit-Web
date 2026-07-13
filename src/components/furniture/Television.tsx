@@ -1,25 +1,30 @@
 import Material from "../materials/Material";
 import type { Furniture } from "../../types";
 
-// A wall-mounted flat panel: thin matte bezel, an inset glossy screen with a
-// soft diagonal reflection highlight, and a slim mount bracket behind it —
-// the previous version was two near-black boxes (#0d0d0d / #161616) barely
+// A flat panel resting on a TV console (not wall-mounted): thin matte bezel,
+// an inset glossy screen with a soft diagonal reflection highlight, and a
+// small foot bar along the bottom edge instead of a wall-mount bracket — the
+// previous version was two near-black boxes (#0d0d0d / #161616) barely
 // offset from each other, which at a glance just read as one plain black box.
 //
 // FurnitureMesh always centers an item's group at floor + dimensions.height/2
 // (there's no separate "mounting height" field), so a TV item's own height
-// doubles as its full floor-to-top footprint. To actually read as
-// wall-mounted *above* a low TV stand next to it, rather than a panel sitting
-// on the floor behind the stand, the panel itself only fills the upper
-// portion of that footprint — the bottom ~34% is left empty, roughly
-// matching a typical TV stand's height, so the two can be positioned at the
-// same x/z and stack visually.
+// doubles as its full floor-to-top footprint. To actually read as sitting
+// *on top of* a low TV stand next to it, rather than a panel sitting on the
+// floor behind the stand, the panel itself only fills the upper portion of
+// that footprint — its bottom edge lands exactly at the reserved clearance
+// height, which is where the foot bar sits. The clearance is pinned to a
+// real stand height (0.36m — the sample TV stand is 0.28m tall, plus a
+// visible gap) rather than a fraction of the TV's own height: a fraction
+// landed barely above the stand with almost no gap, which didn't read as
+// "resting on top of it." Clamped so a much shorter TV item still keeps a
+// usable screen instead of the clearance eating most of its height.
 export default function Television({ item }: { item: Furniture }) {
   const { width, height, depth } = item.dimensions;
   const bezelDepth = Math.max(0.025, depth * 0.5);
   const screenInset = 0.05;
-  const standClearance = height * 0.34;
-  const panelHeight = height * 0.61;
+  const standClearance = Math.min(0.36, height * 0.5);
+  const panelHeight = height - standClearance - height * 0.05;
   const panelCenterY = -height / 2 + standClearance + panelHeight / 2;
 
   return (
@@ -44,10 +49,11 @@ export default function Television({ item }: { item: Furniture }) {
         <meshBasicMaterial color="#ffffff" transparent opacity={0.12} />
       </mesh>
 
-      {/* Slim wall-mount bracket, mostly hidden behind the panel. */}
-      <mesh position={[0, panelCenterY, -bezelDepth / 2 - 0.015]}>
-        <boxGeometry args={[width * 0.22, panelHeight * 0.5, 0.03]} />
-        <Material type="metal" color="#1c1c1c" roughness={0.5} metalness={0.6} />
+      {/* Foot bar along the bottom edge — this TV rests on the stand below
+          it rather than being wall-mounted. */}
+      <mesh castShadow receiveShadow position={[0, panelCenterY - panelHeight / 2 - 0.008, bezelDepth * 0.2]}>
+        <boxGeometry args={[width * 0.55, 0.016, bezelDepth * 1.6]} />
+        <Material type="metal" color="#1c1c1c" roughness={0.4} metalness={0.6} />
       </mesh>
     </group>
   );
