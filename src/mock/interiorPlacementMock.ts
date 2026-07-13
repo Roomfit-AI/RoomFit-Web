@@ -49,20 +49,24 @@ const studioBase: RoomLayout = {
     { id: "south", start: { x: 3.1, z: 2.2 }, end: { x: -3.1, z: 2.2 } },
     { id: "west", start: { x: -3.1, z: 2.2 }, end: { x: -3.1, z: -2.2 } },
   ],
-  door: {
-    id: "door-main",
-    label: "현관",
-    position: { x: -2.35, z: 2.18 },
-    dimensions: { width: 1.0, depth: 0.22, height: 2.1 },
-    rotationY: 0,
-  },
-  window: {
-    id: "window-main",
-    label: "창문",
-    position: { x: 2.1, z: -2.18 },
-    dimensions: { width: 1.8, depth: 0.18, height: 1.2 },
-    rotationY: 0,
-  },
+  doors: [
+    {
+      id: "door-main",
+      label: "현관",
+      position: { x: -2.35, z: 2.18 },
+      dimensions: { width: 1.0, depth: 0.22, height: 2.1 },
+      rotationY: 0,
+    },
+  ],
+  windows: [
+    {
+      id: "window-main",
+      label: "창문",
+      position: { x: 2.1, z: -2.18 },
+      dimensions: { width: 1.8, depth: 0.18, height: 1.2 },
+      rotationY: 0,
+    },
+  ],
   furniture: [
     {
       id: "existing-bed",
@@ -98,11 +102,13 @@ export const sampleRoomLayouts: RoomLayout[] = [
     id: "studio-long-window",
     name: "창가 긴 책상형",
     description: "창문 폭이 넓어 공부 공간을 창가에 두기 좋은 샘플입니다.",
-    window: {
-      ...studioBase.window,
-      position: { x: 1.2, z: -2.18 },
-      dimensions: { width: 2.3, depth: 0.18, height: 1.2 },
-    },
+    windows: [
+      {
+        ...studioBase.windows[0],
+        position: { x: 1.2, z: -2.18 },
+        dimensions: { width: 2.3, depth: 0.18, height: 1.2 },
+      },
+    ],
     furniture: studioBase.furniture.map((item) =>
       item.category === "desk" ? { ...item, position: { x: 2.05, z: 0.9 } } : item,
     ),

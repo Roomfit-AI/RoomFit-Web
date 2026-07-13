@@ -2,12 +2,13 @@ import { ContactShadows, OrbitControls, OrthographicCamera } from "@react-three/
 import { Canvas } from "@react-three/fiber";
 import * as THREE from "three";
 import { FurnitureMesh } from "./FurnitureMesh";
+import Door from "./Door";
 import Floor from "./Floor";
 import Lighting from "./Lighting";
 import Wall from "./Wall";
 import Window from "./Window";
 import Material from "../materials/Material";
-import type { Furniture, RoomLayout, Vector2D } from "../../types";
+import type { Furniture, RoomLayout, Vector2D, WallSegment } from "../../types";
 
 interface RoomViewerProps {
   room: RoomLayout;
@@ -15,6 +16,7 @@ interface RoomViewerProps {
   selectedFurnitureId: string | null;
   onSelectFurniture: (id: string | null) => void;
   onMoveFurniture: (id: string, position: Vector2D) => void;
+  onRotateFurniture?: (id: string) => void;
 }
 
 export function RoomViewer({
@@ -23,6 +25,7 @@ export function RoomViewer({
   selectedFurnitureId,
   onSelectFurniture,
   onMoveFurniture,
+  onRotateFurniture,
 }: RoomViewerProps) {
   const camera = room.camera ?? {
     type: "orthographic" as const,
@@ -44,7 +47,10 @@ export function RoomViewer({
         }}
         onPointerMissed={() => onSelectFurniture(null)}
       >
-        <color attach="background" args={["#faf9f6"]} />
+        {/* A warmer, clearly-distinct ivory — the walls are already a near-white
+            "#f4f1ec", so a near-identical background made the room blend into
+            its own backdrop instead of standing apart from it. */}
+        <color attach="background" args={["#efe6d3"]} />
         <OrthographicCamera
           makeDefault
           position={[camera.position.x, camera.position.y, camera.position.z]}
@@ -74,12 +80,24 @@ export function RoomViewer({
           target={[camera.target.x, camera.target.y, camera.target.z]}
           minDistance={4.2}
           maxDistance={10}
-          minPolarAngle={Math.PI / 4.8}
-          maxPolarAngle={Math.PI / 2.12}
+          // Nearly top-down to nearly-horizontal — was locked to a narrow
+          // 37.5°-85° band that made it impossible to look straight down into
+          // the room (walls always blocked the view from any angle allowed).
+          minPolarAngle={0.05}
+          maxPolarAngle={1.5}
         />
       </Canvas>
       <div className="viewer-caption">
         <span>가구를 클릭한 뒤 드래그해 이동할 수 있습니다.</span>
+        {selectedFurnitureId && onRotateFurniture && (
+          <button
+            type="button"
+            onClick={() => onRotateFurniture(selectedFurnitureId)}
+            className="rounded-full bg-[#111111] px-3 py-1 text-[11px] font-extrabold text-white transition-colors hover:bg-[#333333]"
+          >
+            ⟳ 90° 회전
+          </button>
+        )}
         <strong>{selectedFurnitureId ? "선택됨" : "둘러보기"}</strong>
       </div>
     </div>
@@ -89,18 +107,36 @@ export function RoomViewer({
 export default RoomViewer;
 
 function RoomShell({ room }: { room: RoomLayout }) {
+  // The marble/wood decor panels below are a fixed styling flourish sized for
+  // the original sample studio layout — on a real scanned room they don't
+  // correspond to anything real, and were physically covering the real window
+  // on the east wall. Only show them for sample/demo rooms.
+  const isRealScan = room.source === "ROOMPLAN";
+
   return (
     <group>
       <Floor room={room} />
 
       {room.walls.map((wall) => (
-        <Wall key={wall.id} wall={wall} />
+        <Wall key={wall.id} wall={wall} doors={room.doors} windows={room.windows} />
       ))}
 
-      <DecorWall room={room} />
-      <Window opening={room.window} />
+      {!isRealScan && <DecorWall room={room} />}
+      {room.windows.map((opening) => (
+        <Window key={opening.id} opening={opening} wallHeight={room.height ?? 2.4} />
+      ))}
+      {room.doors.map((opening) => (
+        <Door key={opening.id} opening={opening} wallThickness={wallThicknessFor(opening.wallId, room.walls)} />
+      ))}
     </group>
   );
+}
+
+// Falls back to the default wall thickness (matches Wall.tsx's own default)
+// when an opening has no wallId (older/hand-authored data) or its wall
+// somehow isn't found.
+function wallThicknessFor(wallId: string | undefined, walls: WallSegment[]): number {
+  return walls.find((wall) => wall.id === wallId)?.thickness ?? 0.12;
 }
 
 function DecorWall({ room }: { room: RoomLayout }) {

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { FiChevronDown, FiChevronUp, FiMoreHorizontal, FiPlus, FiRotateCcw, FiTrash2, FiZoomIn } from "react-icons/fi";
 
 import { getSampleRoomLayouts } from "../api/rooms";
@@ -101,6 +101,11 @@ export default function ManageFurniture() {
   const [selectedRoom, setSelectedRoom] = useState<RoomLayout>(() => getSelectedRoom());
   const selectedRoomMeta = useMemo(() => getSelectedRoomMeta(selectedRoom), [selectedRoom]);
   const [furniture, setFurniture] = useState<Furniture[]>(() => cloneFurniture(selectedRoom.furniture));
+  // The as-uploaded baseline for the "초기화" button. Kept out of localStorage
+  // on purpose — the persist effect below overwrites `roomfit:selectedRoomLayout`
+  // with the *current* (edited) furniture on every change, so that key can't
+  // also serve as "what it looked like originally" once anything's been moved.
+  const originalFurnitureRef = useRef<Furniture[]>(cloneFurniture(selectedRoom.furniture));
   const [selectedFurnitureId, setSelectedFurnitureId] = useState<string | null>(null);
   const [isCatalogOpen, setIsCatalogOpen] = useState(false);
   const [panelWidth, setPanelWidth] = useState(320);
@@ -124,6 +129,7 @@ export default function ManageFurniture() {
 
         setSelectedRoom(firstRoom);
         setFurniture(cloneFurniture(firstRoom.furniture));
+        originalFurnitureRef.current = cloneFurniture(firstRoom.furniture);
         localStorage.setItem("roomfit:selectedRoomLayout", JSON.stringify(firstRoom));
         localStorage.setItem("roomfit:selectedRoomId", firstRoom.id);
         localStorage.setItem("roomfit:selectedRoomTitle", firstRoom.name);
@@ -133,6 +139,7 @@ export default function ManageFurniture() {
       .catch(() => {
         setSelectedRoom(sampleRoom);
         setFurniture(cloneFurniture(sampleRoom.furniture));
+        originalFurnitureRef.current = cloneFurniture(sampleRoom.furniture);
       });
   }, []);
 
@@ -183,6 +190,17 @@ export default function ManageFurniture() {
     setFurniture((current) => current.map((item) => (item.id === id ? { ...item, position } : item)));
   };
 
+  const resetFurniture = () => {
+    setFurniture(cloneFurniture(originalFurnitureRef.current));
+    setSelectedFurnitureId(null);
+  };
+
+  const rotateFurniture = (id: string) => {
+    setFurniture((current) =>
+      current.map((item) => (item.id === id ? { ...item, rotationY: item.rotationY + Math.PI / 2 } : item)),
+    );
+  };
+
   useEffect(() => {
     const nextRoom = {
       ...selectedRoom,
@@ -217,7 +235,12 @@ export default function ManageFurniture() {
 
           <div className="absolute bottom-7 left-1/2 flex -translate-x-1/2 items-center gap-3 rounded-xl border border-[#e8e8e8] bg-white px-4 py-3 shadow-[0_10px_25px_rgba(0,0,0,0.08)]">
             <ToolButton label="선택" icon={<span className="text-lg">↖</span>} />
-            <ToolButton label="초기화" icon={<FiRotateCcw />} />
+            <ToolButton
+              label="90° 회전"
+              icon={<span className="text-[11px] font-extrabold leading-none">90°</span>}
+              onClick={selectedFurnitureId ? () => rotateFurniture(selectedFurnitureId) : undefined}
+            />
+            <ToolButton label="초기화" icon={<FiRotateCcw />} onClick={resetFurniture} />
             <ToolButton label="중앙 보기" icon={<span className="text-lg">⊙</span>} />
             <ToolButton label="확대" icon={<FiZoomIn />} />
           </div>
@@ -331,13 +354,23 @@ function FurnitureRow({
   );
 }
 
-function ToolButton({ icon, label }: { icon: React.ReactNode; label: string }) {
+function ToolButton({
+  icon,
+  label,
+  onClick,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  onClick?: () => void;
+}) {
   return (
     <button
       type="button"
       title={label}
       aria-label={label}
-      className="grid h-8 w-8 place-items-center rounded-full text-[#222222] hover:bg-[#f2f2f2]"
+      onClick={onClick}
+      disabled={!onClick}
+      className="grid h-8 w-8 place-items-center rounded-full text-[#222222] hover:bg-[#f2f2f2] disabled:cursor-not-allowed disabled:opacity-40"
     >
       {icon}
     </button>

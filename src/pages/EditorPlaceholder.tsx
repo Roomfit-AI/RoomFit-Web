@@ -66,6 +66,26 @@ export default function EditorPlaceholder() {
     });
   };
 
+  const handleRotateFurniture = (id: string) => {
+    setRoomLayout((current) => {
+      if (!current) {
+        return current;
+      }
+
+      return {
+        ...current,
+        furniture: current.furniture.map((item) =>
+          item.id === id
+            ? {
+                ...item,
+                rotationY: item.rotationY + Math.PI / 2,
+              }
+            : item,
+        ),
+      };
+    });
+  };
+
   const handleRecommend = async () => {
     if (!roomLayout) {
       setErrorMessage("먼저 /rooms에서 샘플 방을 선택해 주세요.");
@@ -143,9 +163,9 @@ export default function EditorPlaceholder() {
   const warnings = validationResult?.warnings ?? [];
 
   return (
-    <main className="min-h-[calc(100vh-76px)] bg-[#fbfbfb] px-5 py-8 text-[#141414] sm:px-8 lg:px-10">
+    <main className="editor-page min-h-[calc(100vh-76px)] bg-[#fbfbfb] px-5 py-8 text-[#141414] sm:px-8 lg:px-10">
       <section className="mx-auto grid max-w-7xl gap-6 lg:grid-cols-[1fr_380px]">
-        <section className="min-h-[640px] overflow-hidden rounded-2xl border border-[#e6e6e6] bg-white p-4 shadow-sm">
+        <section className="overflow-hidden rounded-2xl border border-[#e6e6e6] bg-white p-4 shadow-sm">
           <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
             <div>
               <span className="text-xs font-bold uppercase tracking-[0.2em] text-[#888888]">RoomFit Editor Demo</span>
@@ -171,6 +191,7 @@ export default function EditorPlaceholder() {
             selectedFurnitureId={selectedFurnitureId}
             onSelectFurniture={setSelectedFurnitureId}
             onMoveFurniture={handleMoveFurniture}
+            onRotateFurniture={handleRotateFurniture}
           />
         </section>
 

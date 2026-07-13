@@ -1,7 +1,7 @@
 import { isAxiosError } from "axios";
 
 import { apiClient } from "./client";
-import type { Furniture, FurnitureCategory, FurnitureStatus, RoomLayout, WallSegment } from "../types";
+import type { Furniture, FurnitureCategory, FurnitureStatus, Opening, RoomLayout, WallSegment } from "../types";
 
 export interface SampleRoomApiItem {
   roomId: number;
@@ -12,6 +12,13 @@ export interface SampleRoomApiItem {
     height: number;
     unit: string;
   };
+  walls?: Array<{
+    id: string;
+    start: { x: number; z: number };
+    end: { x: number; z: number };
+    height: number;
+    thickness: number;
+  }>;
   openings: Array<{
     id: string;
     type: "door" | "window" | string;
@@ -128,9 +135,13 @@ function toUploadedRoomCard(item: SampleRoomApiItem, index: number): UploadedRoo
 function toRoomLayout(item: SampleRoomApiItem): RoomLayout {
   const width = item.room.width;
   const depth = item.room.depth;
-  const walls = createWalls(width, depth);
-  const doorOpening = item.openings.find((opening) => opening.type === "door");
-  const windowOpening = item.openings.find((opening) => opening.type === "window");
+  // Real scanned wall segments if the backend has them; otherwise fall back to
+  // an idealized rectangle synthesized from width/depth (older uploads/samples
+  // won't have `walls` yet).
+  const walls =
+    item.walls && item.walls.length > 0
+      ? item.walls.map((wall) => toWallSegment(wall, width, depth))
+      : createWalls(width, depth);
 
   return {
     id: `api-room-${item.roomId}`,
@@ -144,7 +155,7 @@ function toRoomLayout(item: SampleRoomApiItem): RoomLayout {
     createdAt: item.createdAt,
     floor: {
       size: { width, depth },
-      material: { color: "#eee6dc", roughness: 0.86 },
+      material: { color: "#c2996a", roughness: 0.68 },
     },
     camera: {
       type: "orthographic",
@@ -165,8 +176,8 @@ function toRoomLayout(item: SampleRoomApiItem): RoomLayout {
       environment: "bright-neutral-studio",
     },
     walls,
-    door: toOpening(doorOpening, "door-main", "현관", width, depth),
-    window: toOpening(windowOpening, "window-main", "창문", width, depth),
+    doors: toOpenings(item.openings, "door", "현관", width, depth, walls),
+    windows: toOpenings(item.openings, "window", "창문", width, depth, walls),
     furniture: item.furniture.map((furniture) => toFurniture(furniture, width, depth)),
   };
 }
@@ -197,48 +208,214 @@ function createWall(id: string, start: { x: number; z: number }, end: { x: numbe
   };
 }
 
-function toOpening(
-  opening: SampleRoomApiItem["openings"][number] | undefined,
-  fallbackId: string,
+// Backend wall segments are in the room's corner-origin space (0..width,
+// 0..depth) — same convention as furniture positions — so they need the same
+// center-origin shift the scene expects.
+function toWallSegment(
+  wall: NonNullable<SampleRoomApiItem["walls"]>[number],
+  roomWidth: number,
+  roomDepth: number,
+): WallSegment {
+  return {
+    id: wall.id,
+    start: { x: wall.start.x - roomWidth / 2, z: wall.start.z - roomDepth / 2 },
+    end: { x: wall.end.x - roomWidth / 2, z: wall.end.z - roomDepth / 2 },
+    height: wall.height || 2.4,
+    thickness: wall.thickness || 0.12,
+    material: {
+      color: "#f6f3ee",
+      roughness: 0.82,
+    },
+  };
+}
+
+// Picks every opening of `type` (a room can have more than one door or
+// window) rather than just the first — the old `.find()`-based version
+// silently dropped every opening past the first match of each type. Falls
+// back to a single synthesized opening only when none exist at all, so demo
+// rooms without real opening data still render something reasonable.
+function toOpenings(
+  openings: SampleRoomApiItem["openings"],
+  type: "door" | "window",
   label: string,
   roomWidth: number,
   roomDepth: number,
-): RoomLayout["door"] {
-  const normalized = opening ?? {
-    id: fallbackId,
-    type: label === "현관" ? "door" : "window",
-    wall: label === "현관" ? "south" : "north",
-    offset: label === "현관" ? roomWidth * 0.25 : roomWidth * 0.65,
-    width: label === "현관" ? 0.8 : 1.4,
-    height: label === "현관" ? 2.1 : 1.2,
-    sillHeight: label === "현관" ? null : 0.9,
+  walls: WallSegment[],
+): Opening[] {
+  const matches = openings.filter((opening) => opening.type === type);
+
+  if (matches.length === 0) {
+    return [toOpening(defaultOpening(type, roomWidth), label, roomWidth, roomDepth, walls)];
+  }
+
+  return matches.map((opening, index) => toOpening(opening, label, roomWidth, roomDepth, walls, index));
+}
+
+// The backend only ever sends a symbolic wall side ("north"/"east"/...) plus a
+// scalar offset — never a real position or rotation (confirmed end-to-end:
+// iOS's extractOpenings() computes a real x/z from RoomPlan but collapses it
+// to that scalar before sending; the DTO/domain/response types have no
+// position or rotation field for openings, unlike furniture). openingPosition()
+// below reconstructs a position by assuming a perfect axis-aligned rectangle,
+// which real scanned rooms rarely are. Snapping to the nearest actual wall
+// segment (and reusing that segment's own angle) keeps the opening always
+// exactly coplanar with the wall Wall.tsx renders, instead of floating at a
+// mismatched angle — which is what made doors/windows render as thin wedges
+// (a ~0.05m-thick box seen edge-on) instead of flush rectangles.
+//
+// `halfWidth` additionally keeps the opening's *whole footprint* — not just
+// its center point — inside the chosen wall segment. Doors in particular are
+// very often close to a room corner (a real front door), and clamping only
+// the center let a door's near edge sit past the wall's own endpoint: Wall.tsx
+// only cuts the hole within that segment's own length, so the overhanging
+// sliver of the door had no hole to sit in and rendered as if jammed straight
+// into the (still-solid) neighboring wall.
+//
+// `side` (the "north"/"south"/"east"/"west" label the backend already
+// resolved this opening against — see wallSideAndOffset() on the iOS side)
+// restricts the nearest-point search to wall segments running along that
+// side's own axis (north/south run along X, east/west run along Z). Real
+// scans are rarely a perfect rectangle: near a corner, a *perpendicular*
+// wall segment's line can pass closer to the idealized point than the
+// opening's true wall does, so a plain nearest-point search picks a wall at
+// roughly the wrong angle. The opening still renders (position/width are
+// fine), but its rotation no longer matches the wall plane it's cut into —
+// which reads as the door slicing through the wall at an angle from most
+// camera angles, closing to a clean rectangle only from very few.
+function snapToWall(
+  position: { x: number; z: number },
+  walls: WallSegment[],
+  halfWidth = 0,
+  side?: string,
+): { position: { x: number; z: number }; rotationY: number; wallId?: string } {
+  const expectAlongX = side === "north" || side === "south" ? true : side === "east" || side === "west" ? false : undefined;
+
+  type Candidate = { dist: number; x: number; z: number; rotationY: number; wallId: string };
+  let best: Candidate | null = null;
+  let bestAny: Candidate | null = null;
+
+  for (const wall of walls) {
+    const dx = wall.end.x - wall.start.x;
+    const dz = wall.end.z - wall.start.z;
+    const len = Math.sqrt(dx * dx + dz * dz);
+    if (len < 0.01) {
+      continue;
+    }
+
+    const dirX = dx / len;
+    const dirZ = dz / len;
+    const rawAlong = (position.x - wall.start.x) * dirX + (position.z - wall.start.z) * dirZ;
+    const minAlong = Math.min(halfWidth, len / 2);
+    const maxAlong = Math.max(len - halfWidth, len / 2);
+    const along = Math.min(Math.max(rawAlong, minAlong), maxAlong);
+    const nearX = wall.start.x + dirX * along;
+    const nearZ = wall.start.z + dirZ * along;
+    const dist = Math.hypot(position.x - nearX, position.z - nearZ);
+    const candidate: Candidate = { dist, x: nearX, z: nearZ, rotationY: -Math.atan2(dz, dx), wallId: wall.id };
+
+    if (!bestAny || dist < bestAny.dist) {
+      bestAny = candidate;
+    }
+
+    const wallAlongX = Math.abs(dx) >= Math.abs(dz);
+    if (expectAlongX !== undefined && wallAlongX !== expectAlongX) {
+      continue;
+    }
+
+    if (!best || dist < best.dist) {
+      best = candidate;
+    }
+  }
+
+  // Fall back to the plain nearest wall (ignoring orientation) if none of
+  // the axis-matching ones panned out — better a slightly-off match than an
+  // opening with no wall at all.
+  const chosen = best ?? bestAny;
+
+  if (!chosen) {
+    return { position, rotationY: 0 };
+  }
+
+  return { position: { x: chosen.x, z: chosen.z }, rotationY: chosen.rotationY, wallId: chosen.wallId };
+}
+
+function defaultOpening(type: "door" | "window", roomWidth: number): SampleRoomApiItem["openings"][number] {
+  return {
+    id: type === "door" ? "door-main" : "window-main",
+    type,
+    wall: type === "door" ? "south" : "north",
+    offset: type === "door" ? roomWidth * 0.25 : roomWidth * 0.65,
+    width: type === "door" ? 0.8 : 1.4,
+    height: type === "door" ? 2.1 : 1.2,
+    sillHeight: type === "door" ? null : 0.9,
   };
+}
+
+function toOpening(
+  opening: SampleRoomApiItem["openings"][number],
+  label: string,
+  roomWidth: number,
+  roomDepth: number,
+  walls: WallSegment[],
+  index = 0,
+): Opening {
+  const idealizedPosition = openingPosition(opening.wall, opening.offset, roomWidth, roomDepth);
+  const snapped = snapToWall(idealizedPosition, walls, opening.width / 2, opening.wall);
 
   return {
-    id: normalized.id,
-    label,
-    position: openingPosition(normalized.wall, normalized.offset, roomWidth, roomDepth),
+    id: opening.id,
+    label: index === 0 ? label : `${label} ${index + 1}`,
+    position: snapped.position,
     dimensions: {
-      width: normalized.width,
+      width: opening.width,
       depth: 0.18,
-      height: normalized.height,
+      height: opening.height,
     },
-    rotationY: normalized.wall === "east" || normalized.wall === "west" ? Math.PI / 2 : 0,
+    rotationY: snapped.rotationY,
+    wallId: snapped.wallId,
     frame: {
       color: "#8a623d",
     },
     glass: {
-      transmission: normalized.type === "window" ? 0.28 : 0,
-      opacity: normalized.type === "window" ? 0.24 : 1,
+      transmission: opening.type === "window" ? 0.28 : 0,
+      opacity: opening.type === "window" ? 0.24 : 1,
     },
     blind:
-      normalized.type === "window"
+      opening.type === "window"
         ? {
             enabled: true,
             type: "wood",
             slats: 14,
           }
         : undefined,
+  };
+}
+
+// Real RoomPlan detections occasionally report an oversized dimension for a
+// piece of furniture (e.g. a "storage" item scanned as 2.55m deep in a 3.5m
+// wide room). Once that gets rotated 90°/270°, the long dimension swaps onto
+// the world axis its raw position sits close to the edge of, and half the
+// object ends up outside the room entirely — a chunk of furniture floating
+// past the wall. Clamp the rotated bounding box to stay inside the room, the
+// same safety net iOS's own clampFootprintCenter() applies before export.
+function clampFootprint(
+  position: { x: number; z: number },
+  rotationY: number,
+  width: number,
+  depth: number,
+  roomWidth: number,
+  roomDepth: number,
+): { x: number; z: number } {
+  const cos = Math.abs(Math.cos(rotationY));
+  const sin = Math.abs(Math.sin(rotationY));
+  const halfExtentX = Math.min((cos * width + sin * depth) / 2, roomWidth / 2);
+  const halfExtentZ = Math.min((sin * width + cos * depth) / 2, roomDepth / 2);
+  const halfRoomWidth = roomWidth / 2;
+  const halfRoomDepth = roomDepth / 2;
+
+  return {
+    x: Math.min(Math.max(position.x, -halfRoomWidth + halfExtentX), halfRoomWidth - halfExtentX),
+    z: Math.min(Math.max(position.z, -halfRoomDepth + halfExtentZ), halfRoomDepth - halfExtentZ),
   };
 }
 
@@ -269,6 +446,8 @@ function toFurniture(
   const category = toFurnitureCategory(item.type);
   const materialType = materialByCategory(category);
   const color = colorByCategory(category);
+  const rotationY = normalizeRotation(item.rotation);
+  const rawPosition = { x: item.position.x - roomWidth / 2, z: item.position.z - roomDepth / 2 };
 
   return {
     id: item.id,
@@ -280,11 +459,8 @@ function toFurniture(
       depth: item.depth,
       height: item.height,
     },
-    position: {
-      x: item.position.x - roomWidth / 2,
-      z: item.position.z - roomDepth / 2,
-    },
-    rotationY: normalizeRotation(item.rotation),
+    position: clampFootprint(rawPosition, rotationY, item.width, item.depth, roomWidth, roomDepth),
+    rotationY,
     color,
     material: {
       type: materialType,
@@ -333,8 +509,15 @@ function geometryByType(type: string, category: FurnitureCategory) {
   return "box" as const;
 }
 
+// iOS reports rotation as a positive-degrees-clockwise angle (yaw measured via
+// atan2(z, x) relative to the room frame). Three.js's `rotation.y` turns a
+// positive angle the opposite way around (+Z toward +X, not +X toward +Z), so
+// applying the raw value spun every 90°/270° item backwards — 0°/180° pieces
+// happened to look fine since negating them is a no-op. Negate after
+// converting to radians to match Three.js's rotation sense.
 function normalizeRotation(rotation: number): number {
-  return Math.abs(rotation) > Math.PI * 2 ? (rotation * Math.PI) / 180 : rotation;
+  const radians = Math.abs(rotation) > Math.PI * 2 ? (rotation * Math.PI) / 180 : rotation;
+  return -radians;
 }
 
 function toFurnitureStatus(status: string): FurnitureStatus {

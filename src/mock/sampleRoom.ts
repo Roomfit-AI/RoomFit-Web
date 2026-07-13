@@ -12,8 +12,8 @@ export const sampleRoom: RoomLayout = {
       depth: 4.8,
     },
     material: {
-      color: "#eee6dc",
-      roughness: 0.86,
+      color: "#c2996a",
+      roughness: 0.68,
     },
   },
   camera: {
@@ -62,32 +62,28 @@ export const sampleRoom: RoomLayout = {
       },
     },
   ],
-  door: {
-    id: "preview-door",
-    label: "현관",
-    position: { x: -2.55, z: 2.35 },
-    dimensions: { width: 0.9, depth: 0.18, height: 2.1 },
-    rotationY: 0,
-  },
-  window: {
-    id: "preview-window",
-    label: "창문",
-    position: { x: 1.15, z: -2.34 },
-    dimensions: { width: 3.35, depth: 0.18, height: 1.55 },
-    rotationY: 0,
-    frame: {
-      color: "#8a623d",
+  doors: [],
+  windows: [
+    {
+      id: "preview-window",
+      label: "창문",
+      position: { x: 1.15, z: -2.34 },
+      dimensions: { width: 3.35, depth: 0.18, height: 1.55 },
+      rotationY: 0,
+      frame: {
+        color: "#8a623d",
+      },
+      glass: {
+        transmission: 0.28,
+        opacity: 0.24,
+      },
+      blind: {
+        enabled: true,
+        type: "wood",
+        slats: 18,
+      },
     },
-    glass: {
-      transmission: 0.28,
-      opacity: 0.24,
-    },
-    blind: {
-      enabled: true,
-      type: "wood",
-      slats: 18,
-    },
-  },
+  ],
   furniture: [
     {
       id: "preview-tv",
@@ -95,7 +91,11 @@ export const sampleRoom: RoomLayout = {
       category: "cabinet",
       geometry: "box",
       dimensions: { width: 1.55, depth: 0.08, height: 0.9 },
-      position: { x: -2.45, z: -2.28 },
+      // Same x as the TV stand below it, and flush against the back wall's
+      // inner face (wall center -2.4 + half its 0.12 thickness) — previously
+      // sat further out (z: -2.28) than the stand (z: -1.95), so the thin
+      // wall-mounted panel rendered *behind* the stand instead of above it.
+      position: { x: -2.4, z: -2.3 },
       rotationY: 0,
       color: "#101010",
       material: {
@@ -113,7 +113,8 @@ export const sampleRoom: RoomLayout = {
       category: "cabinet",
       geometry: "rounded-box",
       dimensions: { width: 1.8, depth: 0.36, height: 0.28 },
-      position: { x: -2.35, z: -1.95 },
+      // Flush against the back wall's inner face, same x as the TV above it.
+      position: { x: -2.4, z: -2.16 },
       rotationY: 0,
       color: "#8a6847",
       material: {
@@ -149,8 +150,9 @@ export const sampleRoom: RoomLayout = {
       category: "chair",
       geometry: "rounded-box",
       dimensions: { width: 1.34, depth: 0.95, height: 0.72 },
-      position: { x: 0.65, z: -0.55 },
-      rotationY: -0.18,
+      // Against the east ("right-wall") wall, facing west into the room.
+      position: { x: 2.65, z: 0.5 },
+      rotationY: -Math.PI / 2,
       color: "#f2ece2",
       material: {
         type: "fabric",
@@ -167,14 +169,22 @@ export const sampleRoom: RoomLayout = {
       category: "chair",
       geometry: "rounded-box",
       dimensions: { width: 2.85, depth: 0.9, height: 0.76 },
-      position: { x: 1.65, z: 1.15 },
-      rotationY: 0,
-      color: "#f4eee5",
+      // Anchored to the rug's south edge, facing north toward the coffee
+      // table/rug center — part of a loose conversational arc with the
+      // lounge chair on the rug's west edge, instead of two pieces of
+      // seating that happened to sit near the same rug by coincidence.
+      position: { x: 0.45, z: 1.55 },
+      rotationY: Math.PI,
+      // Modern leather look — a cool graphite rather than flat black, so it
+      // reads as a considered charcoal instead of a featureless dark mass.
+      // Warm terracotta cushions (see Sofa.tsx) play off the wood floor and
+      // give it real color contrast instead of staying monochrome.
+      color: "#33383c",
       material: {
         type: "fabric",
-        color: "#f4eee5",
-        roughness: 0.92,
-        metalness: 0,
+        color: "#33383c",
+        roughness: 0.4,
+        metalness: 0.08,
       },
       status: "existing",
       removable: true,
