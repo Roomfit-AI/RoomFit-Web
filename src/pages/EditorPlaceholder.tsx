@@ -185,35 +185,40 @@ export default function EditorPlaceholder() {
   const warnings = validationResult?.warnings ?? [];
 
   return (
-    <main className="editor-page min-h-[calc(100vh-76px)] bg-[#fbfbfb] px-5 py-8 text-[#141414] sm:px-8 lg:px-10">
-      <section className="mx-auto grid max-w-7xl gap-6 lg:grid-cols-[1fr_380px]">
-        <section className="relative overflow-hidden rounded-2xl border border-[#e6e6e6] bg-white p-4 shadow-sm">
+    <main className="min-h-[calc(100vh-76px)] bg-[#fbfbfb] text-[#141414]">
+      <section className="grid min-h-[calc(100vh-76px)] grid-cols-1 lg:grid-cols-[minmax(0,1fr)_380px]">
+        <section className="relative flex min-h-140 flex-col px-6 py-6 lg:px-8">
           <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-            <div>
-              <span className="text-xs font-bold uppercase tracking-[0.2em] text-[#888888]">RoomFit Editor Demo</span>
-              <h1 className="mt-1 text-2xl font-extrabold">{roomLayout.name}</h1>
-              <p className="mt-1 text-sm font-semibold text-[#777777]">
-                {roomLayout.width}m × {roomLayout.depth}m · {roomLayout.furniture.length} furniture
-              </p>
+            <div className="flex min-w-0 flex-wrap items-center gap-3">
+              <span className="hidden">RoomFit Editor Demo</span>
+              <h1 className="min-w-0 truncate text-2xl font-extrabold">{roomLayout.name}</h1>
+              <span className="rounded-full bg-[#eeeeee] px-3 py-1 text-xs font-bold text-[#777777]">
+                가구 {roomLayout.furniture.length}개
+              </span>
+              <span className="rounded-full bg-[#eeeeee] px-3 py-1 text-xs font-bold text-[#777777]">
+                {roomLayout.width}m × {roomLayout.depth}m
+              </span>
             </div>
 
             <button
               type="button"
               onClick={handleRecommend}
               disabled={isRecommending}
-              className="rounded-xl bg-[#111111] px-5 py-3 text-sm font-extrabold text-white transition-colors disabled:cursor-not-allowed disabled:bg-[#999999]"
+              className="shrink-0 rounded-lg bg-[#111111] px-5 py-3 text-sm font-extrabold text-white transition-colors hover:bg-[#333333] disabled:cursor-not-allowed disabled:bg-[#999999]"
             >
               {isRecommending ? "AI 추천 생성 중..." : "AI 추천 생성"}
             </button>
           </div>
 
-          <RoomViewer
-            room={roomLayout}
-            furniture={roomLayout.furniture}
-            selectedFurnitureId={selectedFurnitureId}
-            onSelectFurniture={setSelectedFurnitureId}
-            onMoveFurniture={handleMoveFurniture}
-          />
+          <div className="manage-room flex-1">
+            <RoomViewer
+              room={roomLayout}
+              furniture={roomLayout.furniture}
+              selectedFurnitureId={selectedFurnitureId}
+              onSelectFurniture={setSelectedFurnitureId}
+              onMoveFurniture={handleMoveFurniture}
+            />
+          </div>
 
           <div className="absolute bottom-7 left-1/2 flex -translate-x-1/2 items-center gap-3 rounded-xl border border-[#e8e8e8] bg-white px-4 py-3 shadow-[0_10px_25px_rgba(0,0,0,0.08)]">
             <EditorToolButton
@@ -225,8 +230,8 @@ export default function EditorPlaceholder() {
           </div>
         </section>
 
-        <aside className="space-y-5">
-          <section className="rounded-2xl border border-[#e6e6e6] bg-white p-5 shadow-sm">
+        <aside className="space-y-5 border-t border-[#eeeeee] bg-[#fbfbfb] p-5 lg:border-l lg:border-t-0">
+          <section className="rounded-xl border border-[#e6e6e6] bg-white p-5">
             <h2 className="text-lg font-extrabold">AI 피드백</h2>
             <p className="mt-2 text-sm font-medium leading-6 text-[#777777]">
               자연어 피드백을 LLM이 intent로 해석하고, 백엔드 규칙 기반 로직이 배치에 반영합니다.
@@ -235,7 +240,7 @@ export default function EditorPlaceholder() {
             <textarea
               value={feedback}
               onChange={(event) => setFeedback(event.target.value)}
-              className="mt-4 min-h-28 w-full resize-none rounded-xl border border-[#dddddd] bg-[#fbfbfb] p-4 text-sm font-semibold outline-none focus:border-[#111111]"
+              className="mt-4 min-h-28 w-full resize-none rounded-lg border border-[#dddddd] bg-[#fbfbfb] p-4 text-sm font-semibold outline-none focus:border-[#111111]"
               placeholder="예: 책상을 조금 더 넓게 쓰고 싶어"
             />
 
@@ -243,7 +248,7 @@ export default function EditorPlaceholder() {
               type="button"
               onClick={handleFeedback}
               disabled={isApplyingFeedback || !layoutId}
-              className="mt-3 w-full rounded-xl bg-[#111111] px-5 py-3 text-sm font-extrabold text-white transition-colors disabled:cursor-not-allowed disabled:bg-[#bbbbbb]"
+              className="mt-3 w-full rounded-lg bg-[#111111] px-5 py-3 text-sm font-extrabold text-white transition-colors hover:bg-[#333333] disabled:cursor-not-allowed disabled:bg-[#bbbbbb]"
             >
               {isApplyingFeedback ? "피드백 반영 중..." : "피드백 반영"}
             </button>
@@ -254,7 +259,7 @@ export default function EditorPlaceholder() {
           </section>
 
           {interpretedIntent && (
-            <section className="rounded-2xl border border-[#dfe8ff] bg-[#f7f9ff] p-5">
+            <section className="rounded-xl border border-[#dfe8ff] bg-[#f7f9ff] p-5">
               <h2 className="text-lg font-extrabold">LLM 해석 결과</h2>
               <dl className="mt-4 space-y-3 text-sm">
                 <InfoItem label="source" value={interpretedIntent.source ?? "-"} />
@@ -266,7 +271,7 @@ export default function EditorPlaceholder() {
           )}
 
           {scoreSummary && (
-            <section className="rounded-2xl border border-[#e6e6e6] bg-white p-5 shadow-sm">
+            <section className="rounded-xl border border-[#e6e6e6] bg-white p-5">
               <h2 className="text-lg font-extrabold">배치 점수</h2>
               <div className="mt-4 grid grid-cols-2 gap-3 text-sm">
                 <Score label="충돌" value={scoreSummary.collisionScore} />
@@ -278,7 +283,7 @@ export default function EditorPlaceholder() {
           )}
 
           {validationResult && (
-            <section className="rounded-2xl border border-[#e6e6e6] bg-white p-5 shadow-sm">
+            <section className="rounded-xl border border-[#e6e6e6] bg-white p-5">
               <h2 className="text-lg font-extrabold">검증 결과</h2>
               <div className="mt-4 space-y-2 text-sm font-semibold">
                 <CheckLine label="충돌 없음" ok={validationResult.collisionFree} />
@@ -302,7 +307,7 @@ export default function EditorPlaceholder() {
           )}
 
           {errorMessage && (
-            <section className="rounded-2xl border border-[#ffd8d8] bg-[#fff5f5] p-5 text-sm font-bold text-[#c0392b]">
+            <section className="rounded-xl border border-[#ffd8d8] bg-[#fff5f5] p-5 text-sm font-bold text-[#c0392b]">
               {errorMessage}
             </section>
           )}
