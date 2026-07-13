@@ -11,6 +11,13 @@ function safeRadius(dims: number[], desired: number): number {
 export default function Table({ item }: { item: Furniture }) {
   const material = materialFromConfig(item.material, item.color);
   const radius = Math.min(item.dimensions.width, item.dimensions.depth) / 2;
+  // item.theme (set only by a demo scenario restyle — see
+  // config/scenarios.ts) picks the leg tone explicitly. Undefined ("기본")
+  // always keeps the original wood-brown legs regardless of the tabletop's
+  // own (often near-white, scan-derived) color — deriving the leg color from
+  // that made an unstyled desk's legs turn accidentally gray before any
+  // scenario was ever applied.
+  const legColor = item.theme === "gray" ? "#9a9a9a" : item.theme === "wood" ? "#6b4a2c" : "#8d6037";
 
   // Rectangular desks (the common case for a scanned desk) — a tabletop on
   // four legs instead of a solid block.
@@ -45,7 +52,7 @@ export default function Table({ item }: { item: Furniture }) {
         ].map(([x, z], index) => (
           <mesh key={index} castShadow receiveShadow position={[x, -topThickness / 2, z]}>
             <boxGeometry args={[legThickness, legHeight, legThickness]} />
-            <Material type="wood" color="#8d6037" roughness={0.58} />
+            <Material type="wood" color={legColor} roughness={0.58} />
           </mesh>
         ))}
       </group>
@@ -60,11 +67,11 @@ export default function Table({ item }: { item: Furniture }) {
       </mesh>
       <mesh castShadow receiveShadow>
         <cylinderGeometry args={[0.08, 0.11, item.dimensions.height, 32]} />
-        <Material type="wood" color="#8d6037" roughness={0.58} />
+        <Material type="wood" color={legColor} roughness={0.58} />
       </mesh>
       <mesh castShadow receiveShadow position={[0, -item.dimensions.height / 2 + 0.04, 0]}>
         <cylinderGeometry args={[radius * 0.45, radius * 0.45, 0.08, 40]} />
-        <Material type="wood" color="#8d6037" roughness={0.58} />
+        <Material type="wood" color={legColor} roughness={0.58} />
       </mesh>
     </group>
   );

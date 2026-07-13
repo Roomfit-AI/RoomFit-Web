@@ -1,12 +1,17 @@
 import { useEffect, useState } from "react";
-import { FiRotateCcw } from "react-icons/fi";
+import { FiRotateCcw, FiTrash2 } from "react-icons/fi";
 
 import { applyLayoutFeedback, createDefaultAgentContext, recommendLayout, type InterpretedIntent, type LayoutValidationResult, type ScoreSummary } from "../api/layouts";
 import { applyBackendFurnitureToLayout } from "../api/rooms";
 import RoomViewer from "../components/room/RoomViewer";
-import { applyScenario } from "../config/scenarios";
+import { applyScenario, currentScenario } from "../config/scenarios";
 import type { RoomLayout, Vector2D } from "../types";
 
+// The room as saved from /manage-furniture, unmodified — demo-mood
+// restyling/additions (see config/scenarios.ts) only happen when "AI 추천
+// 생성" is clicked (see handleRecommend below), not at load time, so the
+// editor opens showing exactly what was saved and the mood reveal has
+// something to visibly change *from*.
 function loadSelectedRoomLayout(): RoomLayout | null {
   const raw = localStorage.getItem("roomfit:selectedRoomLayout");
 
@@ -15,11 +20,7 @@ function loadSelectedRoomLayout(): RoomLayout | null {
   }
 
   try {
-    // Additive-only demo-mood furniture (see config/scenarios.ts) layered on
-    // top of whatever was saved from /manage-furniture — never touches
-    // sampleRoom.ts/Home.tsx, and never mutates or removes anything already
-    // in this room.
-    return applyScenario(JSON.parse(raw) as RoomLayout);
+    return JSON.parse(raw) as RoomLayout;
   } catch {
     return null;
   }
@@ -35,6 +36,11 @@ function loadBackendRoomId(): number {
 export default function EditorPlaceholder() {
   const [roomLayout, setRoomLayout] = useState<RoomLayout | null>(() => loadSelectedRoomLayout());
   const [selectedFurnitureId, setSelectedFurnitureId] = useState<string | null>(null);
+  // Up to 3 walls at once — clicking a 4th drops the oldest, so the room
+  // never goes fully see-through (a 5-wall room always keeps at least one
+  // standing). "벽 다시 보이기" clears them all together rather than one at a
+  // time, since there's no per-wall control in the UI.
+  const [hiddenWallIds, setHiddenWallIds] = useState<string[]>([]);
   const [layoutId, setLayoutId] = useState<number | null>(null);
   const [feedback, setFeedback] = useState("책상을 조금 더 넓게 쓰고 싶어");
   const [isRecommending, setIsRecommending] = useState(false);
@@ -92,6 +98,17 @@ export default function EditorPlaceholder() {
     });
   };
 
+  const handleDeleteFurniture = (id: string) => {
+    setRoomLayout((current) => {
+      if (!current) {
+        return current;
+      }
+
+      return { ...current, furniture: current.furniture.filter((item) => item.id !== id) };
+    });
+    setSelectedFurnitureId(null);
+  };
+
   // Resets to whatever is currently saved under roomfit:selectedRoomLayout
   // (the furniture as last saved from /manage-furniture) rather than the
   // room's original as-uploaded furniture — AI recommendations/feedback and
@@ -111,6 +128,27 @@ export default function EditorPlaceholder() {
   const handleRecommend = async () => {
     if (!roomLayout) {
       setErrorMessage("먼저 /rooms에서 샘플 방을 선택해 주세요.");
+      return;
+    }
+
+    // The two scripted demo moods (see config/scenarios.ts) take over here
+    // instead of the real backend call — the backend has no concept of
+    // "rest/minimal/gray" or "work/natural/wood," so for a room whose saved
+    // preference matches one of them, restyle+add locally and skip the
+    // network round trip entirely.
+    const scenario = currentScenario();
+
+    if (scenario) {
+      setIsRecommending(true);
+      setErrorMessage("");
+      setInterpretedIntent(null);
+
+      // A brief pause so "AI 추천 생성 중..." is actually visible before the
+      // furniture reveal, instead of an instant swap.
+      await new Promise((resolve) => setTimeout(resolve, 700));
+
+      setRoomLayout((current) => (current ? applyScenario(current, scenario) : current));
+      setIsRecommending(false);
       return;
     }
 
@@ -170,6 +208,10 @@ export default function EditorPlaceholder() {
     }
   };
 
+  const handleSelectWall = (id: string) => {
+    setHiddenWallIds((current) => (current.includes(id) ? current : [...current, id].slice(-3)));
+  };
+
   if (!roomLayout) {
     return (
       <main className="grid min-h-[calc(100vh-76px)] place-items-center bg-[#fbfbfb] px-5 text-center text-[#141414]">
@@ -213,6 +255,9 @@ export default function EditorPlaceholder() {
             selectedFurnitureId={selectedFurnitureId}
             onSelectFurniture={setSelectedFurnitureId}
             onMoveFurniture={handleMoveFurniture}
+            hiddenWallIds={hiddenWallIds}
+            onSelectWall={handleSelectWall}
+            onShowWall={() => setHiddenWallIds([])}
           />
 
           <div className="absolute bottom-7 left-1/2 flex -translate-x-1/2 items-center gap-3 rounded-xl border border-[#e8e8e8] bg-white px-4 py-3 shadow-[0_10px_25px_rgba(0,0,0,0.08)]">
@@ -221,7 +266,15 @@ export default function EditorPlaceholder() {
               icon={<span className="text-[11px] font-extrabold leading-none">90°</span>}
               onClick={selectedFurnitureId ? () => handleRotateFurniture(selectedFurnitureId) : undefined}
             />
+            <EditorToolButton
+              label="가구 삭제"
+              icon={<FiTrash2 />}
+              onClick={selectedFurnitureId ? () => handleDeleteFurniture(selectedFurnitureId) : undefined}
+            />
             <EditorToolButton label="초기화" icon={<FiRotateCcw />} onClick={handleResetFurniture} />
+            {hiddenWallIds.length > 0 && (
+              <EditorToolButton label="벽 다시 보이기" icon={<span className="text-[11px]">🧱</span>} onClick={() => setHiddenWallIds([])} />
+            )}
           </div>
         </section>
 

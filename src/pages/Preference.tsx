@@ -37,7 +37,10 @@ export default function Preference() {
     return localStorage.getItem("roomfit:selectedPurpose") ?? "rest";
   });
   const [selectedStyle, setSelectedStyle] = useState(() => {
-    return localStorage.getItem("roomfit:selectedStyle") ?? "minimal";
+    // Matches demo scenario 1 (see config/scenarios.ts: rest/natural/wood) so
+    // the default selection here already lines up with the scripted "AI 추천
+    // 생성" reveal in /editor instead of requiring a manual re-pick.
+    return localStorage.getItem("roomfit:selectedStyle") ?? "natural";
   });
   const [selectedPalette, setSelectedPalette] = useState(() => {
     return localStorage.getItem("roomfit:selectedPalette") ?? "ivory";

@@ -14,6 +14,11 @@ function safeRadius(dims: number[], desired: number): number {
 export default function Chair({ item }: { item: Furniture }) {
   const { width, depth, height } = item.dimensions;
   const material = materialFromConfig(item.material, item.color);
+  // item.theme (set only by a demo scenario restyle — see
+  // config/scenarios.ts) picks the leg tone explicitly. Undefined ("기본")
+  // always keeps the original wood-brown legs regardless of the seat's own
+  // (often near-white, scan-derived) color.
+  const legColor = item.theme === "gray" ? "#9a9a9a" : item.theme === "wood" ? "#6b4a2c" : "#8d6037";
 
   const seatThickness = Math.min(0.04, height * 0.08);
   const seatHeightFromFloor = height * 0.52;
@@ -65,7 +70,7 @@ export default function Chair({ item }: { item: Furniture }) {
       ].map(([x, z], index) => (
         <mesh key={index} castShadow receiveShadow position={[x, toLocalY(legHeight / 2), z]}>
           <boxGeometry args={[legThickness, legHeight, legThickness]} />
-          <Material type="wood" color="#8d6037" roughness={0.58} />
+          <Material type="wood" color={legColor} roughness={0.58} />
         </mesh>
       ))}
     </group>

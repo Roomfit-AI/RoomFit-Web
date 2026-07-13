@@ -16,6 +16,13 @@ interface RoomViewerProps {
   onSelectFurniture: (id: string | null) => void;
   onMoveFurniture: (id: string, position: Vector2D) => void;
   onRotateFurniture?: (id: string) => void;
+  // Lets walls be clicked to hide them (e.g. to see into the room from an
+  // angle they'd otherwise block) — see EditorPlaceholder.tsx's "벽 숨기기"
+  // handling. Undefined onSelectWall means walls aren't clickable at all
+  // (e.g. on the read-only Home preview). Up to 3 can be hidden at once.
+  hiddenWallIds?: string[];
+  onSelectWall?: (id: string) => void;
+  onShowWall?: () => void;
 }
 
 export function RoomViewer({
@@ -25,6 +32,9 @@ export function RoomViewer({
   onSelectFurniture,
   onMoveFurniture,
   onRotateFurniture,
+  hiddenWallIds,
+  onSelectWall,
+  onShowWall,
 }: RoomViewerProps) {
   const camera = room.camera ?? {
     type: "orthographic" as const,
@@ -59,7 +69,7 @@ export function RoomViewer({
         />
         <Lighting room={room} />
 
-        <RoomShell room={room} />
+        <RoomShell room={room} hiddenWallIds={hiddenWallIds} onSelectWall={onSelectWall} />
 
         {furniture.map((item) => (
           <FurnitureMesh
@@ -97,6 +107,15 @@ export function RoomViewer({
             ⟳ 90° 회전
           </button>
         )}
+        {hiddenWallIds && hiddenWallIds.length > 0 && (
+          <button
+            type="button"
+            onClick={onShowWall}
+            className="rounded-full border border-[#111111] bg-white px-3 py-1 text-[11px] font-extrabold text-[#111111] transition-colors hover:bg-[#f2f2f2]"
+          >
+            벽 다시 보이기
+          </button>
+        )}
         <strong>{selectedFurnitureId ? "선택됨" : "둘러보기"}</strong>
       </div>
     </div>
@@ -105,13 +124,28 @@ export function RoomViewer({
 
 export default RoomViewer;
 
-function RoomShell({ room }: { room: RoomLayout }) {
+function RoomShell({
+  room,
+  hiddenWallIds,
+  onSelectWall,
+}: {
+  room: RoomLayout;
+  hiddenWallIds?: string[];
+  onSelectWall?: (id: string) => void;
+}) {
   return (
     <group>
       <Floor room={room} />
 
       {room.walls.map((wall) => (
-        <Wall key={wall.id} wall={wall} doors={room.doors} windows={room.windows} />
+        <Wall
+          key={wall.id}
+          wall={wall}
+          doors={room.doors}
+          windows={room.windows}
+          hidden={hiddenWallIds?.includes(wall.id) ?? false}
+          onSelect={onSelectWall && (() => onSelectWall(wall.id))}
+        />
       ))}
 
       {room.windows.map((opening) => (
