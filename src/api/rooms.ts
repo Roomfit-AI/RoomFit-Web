@@ -1,3 +1,5 @@
+import { isAxiosError } from "axios";
+
 import { apiClient } from "./client";
 import type { Furniture, FurnitureCategory, FurnitureStatus, RoomLayout, WallSegment } from "../types";
 
@@ -79,6 +81,17 @@ export async function getRecentUploadedRooms(limit = 10): Promise<UploadedRoomCa
     params: { limit },
   });
   return response.data.data.map(toUploadedRoomCard);
+}
+
+export async function deleteUploadedRoom(roomId: number): Promise<void> {
+  try {
+    await apiClient.delete<ApiResponse<null>>(`/api/rooms/uploads/${roomId}`);
+  } catch (error) {
+    if (isAxiosError<{ error?: { message?: string } }>(error)) {
+      throw new Error(error.response?.data.error?.message ?? "업로드 방을 삭제하지 못했습니다.");
+    }
+    throw new Error("업로드 방을 삭제하지 못했습니다.");
+  }
 }
 
 function toSampleRoomCard(item: SampleRoomApiItem, index: number): SampleRoomCard {
