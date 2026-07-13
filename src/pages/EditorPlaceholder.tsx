@@ -219,6 +219,7 @@ export default function EditorPlaceholder() {
               onSelectFurniture={setSelectedFurnitureId}
               onMoveFurniture={handleMoveFurniture}
               hideEntranceWalls={hideEntranceWalls}
+              alignCameraToEntrance
             />
           </div>
 
