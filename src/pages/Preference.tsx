@@ -62,7 +62,7 @@ export default function Preference() {
         </header>
 
         <section className="mb-10">
-          <h2 className="mb-4 text-base font-extrabold">라이프 스타일 <span className="font-semibold text-[#777777]">(중복 선택 가능)</span></h2>
+          <h2 className="mb-4 text-base font-extrabold">라이프 스타일</h2>
           <div className="grid gap-4 md:grid-cols-3">
             {purposes.map((purpose) => {
               const Icon = purpose.icon;
