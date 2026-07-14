@@ -6,6 +6,8 @@ interface WallProps {
   wall: WallSegment;
   doors?: Opening[];
   windows?: Opening[];
+  hidden?: boolean;
+  onSelect?: () => void;
 }
 
 interface Rect {
@@ -108,12 +110,12 @@ function matchOpenings(
   return matches;
 }
 
-export default function Wall({ wall, doors = [], windows = [] }: WallProps) {
+export default function Wall({ wall, doors = [], windows = [], hidden = false, onSelect }: WallProps) {
   const dx = wall.end.x - wall.start.x;
   const dz = wall.end.z - wall.start.z;
   const length = Math.sqrt(dx * dx + dz * dz);
 
-  if (length < 0.01) {
+  if (length < 0.01 || hidden) {
     return null;
   }
 
@@ -167,6 +169,13 @@ export default function Wall({ wall, doors = [], windows = [] }: WallProps) {
             castShadow
             receiveShadow
             position={[(piece.x0 + piece.x1) / 2 - length / 2, (piece.y0 + piece.y1) / 2, 0]}
+            onPointerDown={
+              onSelect &&
+              ((event) => {
+                event.stopPropagation();
+                onSelect();
+              })
+            }
           >
             <boxGeometry args={[pieceWidth, pieceHeight, thickness]} />
             <Material type="white" color={wall.material?.color ?? "#f4f1ec"} roughness={wall.material?.roughness ?? 0.82} />

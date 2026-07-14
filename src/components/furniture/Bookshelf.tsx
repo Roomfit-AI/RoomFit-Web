@@ -9,6 +9,12 @@ function safeRadius(dims: number[], desired: number): number {
 }
 
 const BOOK_COLORS = ["#8a4b3a", "#3d5a80", "#6b8f56", "#c9a227", "#7a4869", "#4a5a4a"];
+// 모던/그레이 시나리오가 이 컴포넌트를 재사용하는 자리 (see config/scenarios.ts
+// restyleForWork) — 처음엔 순수 그레이스케일만 썼더니 "일부러 맞춘 느낌"이 너무
+// 강했음 (사용자 피드백). 톤 자체는 여전히 차분하게 맞추되, 채도 낮은 여러 색
+// (더스티블루/세이지/그레이지/차콜/샌드)을 섞어 실제 책장처럼 보이게 한다 —
+// 무지개색은 아니지만 완전 단색도 아닌, 저채도 다양성.
+const BOOK_COLORS_GRAY = ["#7d8ba1", "#8a9a86", "#a89684", "#5a5a5a", "#b6ac9a", "#6e7d8c", "#9c8d7a", "#4f5b52"];
 
 // A real open-shelf carcass — back panel, two side panels, and horizontal
 // shelf boards spanning the full depth (plus vertical dividers once the unit
@@ -18,6 +24,9 @@ const BOOK_COLORS = ["#8a4b3a", "#3d5a80", "#6b8f56", "#c9a227", "#7a4869", "#4a
 // either a cluster of upright "books" or a small decor object.
 export default function Bookshelf({ item }: { item: Furniture }) {
   const material = materialFromConfig(item.material, item.color);
+  const theme = item.theme;
+  const shelfBoardColor = theme === "gray" ? "#e2e2e2" : "#5d3f25";
+  const bookColors = theme === "gray" ? BOOK_COLORS_GRAY : BOOK_COLORS;
   const { width, depth, height } = item.dimensions;
   const boardThickness = Math.min(0.025, depth * 0.2);
   const sideThickness = Math.min(0.03, width * 0.04);
@@ -67,7 +76,7 @@ export default function Bookshelf({ item }: { item: Furniture }) {
         return (
           <mesh key={`shelf-${i}`} castShadow receiveShadow position={[0, y, 0]}>
             <boxGeometry args={[innerWidth, boardThickness, depth - 0.01]} />
-            <Material type="wood" color="#5d3f25" roughness={0.6} />
+            <Material type={theme === "gray" ? "white" : "wood"} color={shelfBoardColor} roughness={0.6} />
           </mesh>
         );
       })}
@@ -79,7 +88,7 @@ export default function Bookshelf({ item }: { item: Furniture }) {
           return (
             <mesh key={`div-${i}`} castShadow receiveShadow position={[x, 0, 0]}>
               <boxGeometry args={[boardThickness, height, depth - 0.01]} />
-              <Material type="wood" color="#5d3f25" roughness={0.6} />
+              <Material type={theme === "gray" ? "white" : "wood"} color={shelfBoardColor} roughness={0.6} />
             </mesh>
           );
         })}
@@ -97,7 +106,7 @@ export default function Bookshelf({ item }: { item: Furniture }) {
             return (
               <mesh key={`${row}-${col}`} castShadow position={[cellCenterX, cellBottomY + decorHeight / 2, 0]}>
                 <cylinderGeometry args={[decorRadius, decorRadius * 1.25, decorHeight, 16]} />
-                <Material type="accent" color={row % 2 ? "#6f7d54" : "#8a6542"} roughness={0.75} />
+                <Material type="accent" color={theme === "gray" ? (row % 2 ? "#7d8ba1" : "#5a5a5a") : row % 2 ? "#6f7d54" : "#8a6542"} roughness={0.75} />
               </mesh>
             );
           }
@@ -116,7 +125,7 @@ export default function Bookshelf({ item }: { item: Furniture }) {
                     <boxGeometry args={[Math.max(0.02, bookSlot * 0.8), bookHeight, bookDepth]} />
                     <Material
                       type="fabric"
-                      color={BOOK_COLORS[(row * 3 + col + book) % BOOK_COLORS.length]}
+                      color={bookColors[(row * 3 + col + book) % bookColors.length]}
                       roughness={0.65}
                     />
                   </mesh>

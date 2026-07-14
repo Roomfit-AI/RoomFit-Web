@@ -41,6 +41,13 @@ export interface Furniture {
   material: FurnitureMaterialType | MaterialConfig;
   status: FurnitureStatus;
   removable: boolean;
+  // Set by a demo scenario restyle (see config/scenarios.ts) for pieces that
+  // have a frame/leg element rendered separately from `color`/`material`
+  // (Bed/Table/Chair). Undefined means "기본" — the original hardcoded
+  // frame/leg tone, independent of the piece's own (often near-white, scan-
+  // derived) color — so an unstyled bed doesn't get an accidentally gray
+  // frame just because its mattress fabric happens to be light.
+  theme?: "gray" | "wood";
 }
 
 export interface WallSegment {
@@ -77,8 +84,12 @@ export interface Opening {
   };
   blind?: {
     enabled: boolean;
-    type: "wood";
+    // "curtain" is only ever set by a demo scenario restyle (see
+    // config/scenarios.ts via Curtain.tsx) — the default/original rendering
+    // always has "wood" and goes through Blind.tsx, untouched by scenarios.
+    type: "wood" | "curtain";
     slats: number;
+    color?: string;
   };
 }
 
