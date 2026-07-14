@@ -1,5 +1,6 @@
 import { RoundedBox } from "@react-three/drei";
-import Material, { materialFromConfig } from "../materials/Material";
+import Material from "../materials/Material";
+import { materialFromConfig } from "../materials/materialConfig";
 import type { Furniture } from "../../types";
 
 // RoundedBoxGeometry errors if radius exceeds half of any edge, so this caps

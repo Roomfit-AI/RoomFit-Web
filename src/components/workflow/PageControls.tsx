@@ -1,5 +1,5 @@
 import { categoryLabels, purposeOptions, styleOptions } from "../../mock/interiorPlacementMock";
-import type { AgentContext, FurnitureCategory, ValidationResult } from "../../types";
+import type { AgentContext, ValidationResult } from "../../types";
 
 export function InlineBack({ onPrevious }: { onPrevious: () => void }) {
   return (
@@ -57,19 +57,6 @@ export function AgentPayloadPreview({ context }: { context: AgentContext | null 
       <span>참고 이미지: {context.selectedInspirations.map((image) => image.title).join(", ")}</span>
     </div>
   );
-}
-
-export function getProductDescription(category: FurnitureCategory): string {
-  const descriptions: Record<FurnitureCategory, string> = {
-    bed: "로우 프레임 침대",
-    desk: "화이트 스터디 데스크",
-    chair: "슬림 작업 의자",
-    cabinet: "모듈 수납장",
-    rug: "저채도 패브릭 러그",
-    lighting: "집중형 플로어 조명",
-  };
-
-  return descriptions[category];
 }
 
 function translatePurpose(purpose: AgentContext["preference"]["purpose"]): string {

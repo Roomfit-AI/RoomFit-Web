@@ -1,5 +1,6 @@
 import { RoundedBox } from "@react-three/drei";
-import Material, { materialFromConfig } from "../materials/Material";
+import Material from "../materials/Material";
+import { materialFromConfig } from "../materials/materialConfig";
 import type { Furniture } from "../../types";
 
 // RoundedBoxGeometry errors if radius exceeds half of any edge, so this caps
@@ -16,7 +17,7 @@ function safeRadius(dims: number[], desired: number): number {
 export default function FloatingShelf({ item }: { item: Furniture }) {
   const material = materialFromConfig(item.material, item.color);
   const { width, depth, height } = item.dimensions;
-  const mountHeight = 1.5;
+  const mountHeight = item.mountHeight ?? 1.5;
   const baseY = mountHeight - height / 2;
   const shelfThickness = 0.045;
   const shelfDims: [number, number, number] = [width, shelfThickness, depth];

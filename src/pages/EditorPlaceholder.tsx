@@ -7,6 +7,7 @@ import RoomViewer from "../components/room/RoomViewer";
 import { applyLocalFeedback } from "../config/localFeedback";
 import { buildScenarioValidation } from "../config/localValidation";
 import { applyScenario, currentScenario } from "../config/scenarios";
+import { createHobbyCoralRecommendation, isHobbyCoralRecommendationSelected } from "../mock/hobbyCoralRecommendation";
 import type { Furniture, RoomLayout, Vector2D } from "../types";
 
 const naturalWoodRestRoomExistingFurnitureIds = new Set(["bed-1", "desk-1", "chair-1"]);
@@ -231,14 +232,6 @@ export default function EditorPlaceholder() {
   const [interpretedIntent, setInterpretedIntent] = useState<InterpretedIntent | null>(null);
 
   useEffect(() => {
-    const layout = loadSelectedRoomLayout();
-
-    if (layout) {
-      setRoomLayout(layout);
-    }
-  }, []);
-
-  useEffect(() => {
     if (!roomLayout) {
       return;
     }
@@ -316,6 +309,24 @@ export default function EditorPlaceholder() {
   const handleRecommend = async () => {
     if (!roomLayout) {
       setErrorMessage("먼저 /rooms에서 샘플 방을 선택해 주세요.");
+      return;
+    }
+
+    if (isHobbyCoralRecommendationSelected()) {
+      setIsRecommending(true);
+      setErrorMessage("");
+      setInterpretedIntent(null);
+
+      await new Promise((resolve) => setTimeout(resolve, 700));
+
+      const nextRoom = createHobbyCoralRecommendation(roomLayout);
+      const { scoreSummary, validationResult } = buildScenarioValidation();
+
+      setRoomLayout(nextRoom);
+      setLayoutId(LOCAL_SCENARIO_LAYOUT_ID);
+      setScoreSummary(scoreSummary);
+      setValidationResult(validationResult);
+      setIsRecommending(false);
       return;
     }
 

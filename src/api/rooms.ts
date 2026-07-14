@@ -103,9 +103,9 @@ export async function deleteUploadedRoom(roomId: number): Promise<void> {
     await apiClient.delete<ApiResponse<null>>(`/api/rooms/uploads/${roomId}`);
   } catch (error) {
     if (isAxiosError<{ error?: { message?: string } }>(error)) {
-      throw new Error(error.response?.data.error?.message ?? "업로드 방을 삭제하지 못했습니다.");
+      throw new Error(error.response?.data.error?.message ?? "업로드 방을 삭제하지 못했습니다.", { cause: error });
     }
-    throw new Error("업로드 방을 삭제하지 못했습니다.");
+    throw new Error("업로드 방을 삭제하지 못했습니다.", { cause: error });
   }
 }
 
