@@ -184,7 +184,7 @@ function applyNaturalWoodRestRoom(layout: RoomLayout, sourceFurniture: Furniture
 }
 
 function isCollectorRoom(room: RoomLayout): boolean {
-  return room.name === "미드센추리 컬렉터 룸" || room.name === "미드센추리 컬렉터 스튜디오";
+  return room.name === "미드센추리 컬렉터 룸" || room.name === "샘플룸2";
 }
 
 function applyRecommendedRoomLayout(currentRoom: RoomLayout, recommendedLayout: RoomLayout): RoomLayout {
