@@ -1,4 +1,5 @@
-import Material, { materialFromConfig } from "../materials/Material";
+import Material from "../materials/Material";
+import { materialFromConfig } from "../materials/materialConfig";
 import Bed from "./Bed";
 import Bookshelf from "./Bookshelf";
 import Chair from "./Chair";

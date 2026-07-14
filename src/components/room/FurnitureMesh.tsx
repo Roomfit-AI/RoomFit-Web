@@ -22,7 +22,7 @@ export function FurnitureMesh({
   onSelect,
   onMove,
 }: FurnitureMeshProps) {
-  const groupRef = useRef<THREE.Group>(null);
+  const groupRef = useRef<THREE.Group>(null!);
   const heightOffset = item.dimensions.height / 2;
 
   useEffect(() => {

@@ -5,7 +5,9 @@ import { applyLayoutFeedback, createDefaultAgentContext, recommendLayout, type I
 import { applyBackendFurnitureToLayout } from "../api/rooms";
 import RoomViewer from "../components/room/RoomViewer";
 import { applyLocalFeedback } from "../config/localFeedback";
+import { buildScenarioValidation } from "../config/localValidation";
 import { applyScenario, currentScenario } from "../config/scenarios";
+import { createHobbyCoralRecommendation, isHobbyCoralRecommendationSelected } from "../mock/hobbyCoralRecommendation";
 import type { Furniture, RoomLayout, Vector2D } from "../types";
 
 const naturalWoodRestRoomExistingFurnitureIds = new Set(["bed-1", "desk-1", "chair-1"]);
@@ -243,14 +245,6 @@ export default function EditorPlaceholder() {
   const [interpretedIntent, setInterpretedIntent] = useState<InterpretedIntent | null>(null);
 
   useEffect(() => {
-    const layout = loadSelectedRoomLayout();
-
-    if (layout) {
-      setRoomLayout(layout);
-    }
-  }, []);
-
-  useEffect(() => {
     if (!roomLayout) {
       return;
     }
@@ -331,6 +325,24 @@ export default function EditorPlaceholder() {
       return;
     }
 
+    if (isHobbyCoralRecommendationSelected()) {
+      setIsRecommending(true);
+      setErrorMessage("");
+      setInterpretedIntent(null);
+
+      await new Promise((resolve) => setTimeout(resolve, 700));
+
+      const nextRoom = createHobbyCoralRecommendation(roomLayout);
+      const { scoreSummary, validationResult } = buildScenarioValidation();
+
+      setRoomLayout(nextRoom);
+      setLayoutId(LOCAL_SCENARIO_LAYOUT_ID);
+      setScoreSummary(scoreSummary);
+      setValidationResult(validationResult);
+      setIsRecommending(false);
+      return;
+    }
+
     // The two scripted demo moods (see config/scenarios.ts) take over here
     // instead of the real backend call — the backend has no concept of
     // "rest/minimal/gray" or "work/natural/wood," so for a room whose saved
@@ -348,16 +360,22 @@ export default function EditorPlaceholder() {
       // furniture reveal, instead of an instant swap.
       await new Promise((resolve) => setTimeout(resolve, 700));
 
-      setRoomLayout((current) => {
-        if (!current) {
-          return current;
-        }
+      // The hardcoded "natural wood rest room" layout below is tuned to one
+      // specific sample room's fixed dimensions/coordinates (see
+      // naturalWoodRestRoomFurniture above) — it only makes sense for that
+      // sample room, not for a real ROOMPLAN scan whose geometry can be
+      // anything. Scanned rooms always go through the generic, room-size-
+      // aware applyScenario pipeline instead.
+      const nextRoom =
+        scenario.id === "rest-natural-wood" && roomLayout.source !== "ROOMPLAN"
+          ? applyNaturalWoodRestRoom(roomLayout, roomLayout.furniture)
+          : applyScenario(roomLayout, scenario);
+      const { scoreSummary, validationResult } = buildScenarioValidation();
 
-        return scenario.id === "rest-natural-wood"
-          ? applyNaturalWoodRestRoom(current, current.furniture)
-          : applyScenario(current, scenario);
-      });
+      setRoomLayout(nextRoom);
       setLayoutId(LOCAL_SCENARIO_LAYOUT_ID);
+      setScoreSummary(scoreSummary);
+      setValidationResult(validationResult);
       setIsRecommending(false);
       return;
     }
@@ -411,8 +429,12 @@ export default function EditorPlaceholder() {
       if ("error" in result) {
         setErrorMessage(result.error);
       } else {
+        const { scoreSummary, validationResult } = buildScenarioValidation();
+
         setRoomLayout(result.room);
         setInterpretedIntent(result.intent);
+        setScoreSummary(scoreSummary);
+        setValidationResult(validationResult);
       }
 
       setIsApplyingFeedback(false);
@@ -485,6 +507,7 @@ export default function EditorPlaceholder() {
               onMoveFurniture={handleMoveFurniture}
               hideEntranceWalls={hideEntranceWalls}
               alignCameraToEntrance
+              showEditingHelpers
             />
           </div>
 

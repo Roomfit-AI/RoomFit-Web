@@ -24,7 +24,11 @@ function createLeafShape() {
 // double-sided leaves. The plant stays within the size specified by the
 // furniture data instead of scaling a fixed tiny vase into an oversized prop.
 export default function Plant({ item }: { item: Furniture }) {
-  const isFloorPlant = item.name.includes("바닥") || item.name.includes("플로어");
+  // "몬스테라" pieces (see config/scenarios.ts's sofa-corner extra) are
+  // placed directly on the floor, same as "바닥"/"플로어" — without it here
+  // too, this branch's tabletop restHeight (0.4) would float the pot in
+  // mid-air instead of sitting on the ground.
+  const isFloorPlant = item.name.includes("바닥") || item.name.includes("플로어") || item.name.includes("몬스테라");
   const plantHeight = Math.min(Math.max(item.dimensions.height, 0.32), 1.25);
   const restHeight = isFloorPlant ? 0 : 0.4;
   const potHeight = isFloorPlant ? plantHeight * 0.24 : 0.12;

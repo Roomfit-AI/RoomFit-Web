@@ -46,6 +46,10 @@ export interface SampleRoomApiItem {
   }>;
   source: string;
   createdAt: string;
+  // Base64-encoded JPEG snapshot the iOS app takes at scan completion (see
+  // RoomScanController.swift's exportJSONData). Undefined for sample rooms
+  // and any upload predating this field.
+  thumbnailBase64?: string | null;
 }
 
 interface ApiResponse<T> {
@@ -65,6 +69,10 @@ export interface SampleRoomCard {
   category: string;
   layoutId: string;
   layout: RoomLayout;
+  // data: URI built from the backend's thumbnailBase64 (see SampleRoomApiItem)
+  // — undefined when the room has no real snapshot, so callers fall back to
+  // the tone-based illustration.
+  thumbnailUrl?: string;
 }
 
 export interface UploadedRoomCard extends SampleRoomCard {
@@ -115,10 +123,14 @@ export async function deleteUploadedRoom(roomId: number): Promise<void> {
     await apiClient.delete<ApiResponse<null>>(`/api/rooms/uploads/${roomId}`);
   } catch (error) {
     if (isAxiosError<{ error?: { message?: string } }>(error)) {
-      throw new Error(error.response?.data.error?.message ?? "업로드 방을 삭제하지 못했습니다.");
+      throw new Error(error.response?.data.error?.message ?? "업로드 방을 삭제하지 못했습니다.", { cause: error });
     }
-    throw new Error("업로드 방을 삭제하지 못했습니다.");
+    throw new Error("업로드 방을 삭제하지 못했습니다.", { cause: error });
   }
+}
+
+function toThumbnailUrl(item: SampleRoomApiItem): string | undefined {
+  return item.thumbnailBase64 ? `data:image/jpeg;base64,${item.thumbnailBase64}` : undefined;
 }
 
 function toSampleRoomCard(item: SampleRoomApiItem, index: number): SampleRoomCard {
@@ -132,6 +144,7 @@ function toSampleRoomCard(item: SampleRoomApiItem, index: number): SampleRoomCar
     category: "원룸",
     layoutId: layout.id,
     layout,
+    thumbnailUrl: toThumbnailUrl(item),
   };
 }
 
@@ -149,6 +162,7 @@ function toUploadedRoomCard(item: SampleRoomApiItem, index: number): UploadedRoo
     createdAt: item.createdAt,
     layoutId: layout.id,
     layout,
+    thumbnailUrl: toThumbnailUrl(item),
   };
 }
 
