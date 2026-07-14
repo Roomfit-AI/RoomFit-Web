@@ -41,6 +41,7 @@ export interface Furniture {
   material: FurnitureMaterialType | MaterialConfig;
   status: FurnitureStatus;
   removable: boolean;
+  mountHeight?: number;
   // Set by a demo scenario restyle (see config/scenarios.ts) for pieces that
   // have a frame/leg element rendered separately from `color`/`material`
   // (Bed/Table/Chair). Undefined means "기본" — the original hardcoded

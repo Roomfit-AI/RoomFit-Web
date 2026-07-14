@@ -1,5 +1,6 @@
 import { RoundedBox } from "@react-three/drei";
-import Material, { materialFromConfig } from "../materials/Material";
+import Material from "../materials/Material";
+import { materialFromConfig } from "../materials/materialConfig";
 import type { Furniture } from "../../types";
 
 // RoundedBoxGeometry errors if radius exceeds half of any edge, so this caps
@@ -19,6 +20,7 @@ export default function Storage({ item }: { item: Furniture }) {
   const isTall = height > 1.1;
   const doorCount = isTall && width > 0.9 ? 2 : 1;
   const drawerCount = Math.max(2, Math.min(4, Math.round(height / 0.18)));
+  const hasLouverDoors = item.name.includes("루버");
   // item.theme (set only by a demo scenario restyle — see
   // config/scenarios.ts) changes the hardware, not just the color: 미니멀
   // drops handles entirely for a flush, handleless look; 네추럴 gets bigger,
@@ -54,6 +56,17 @@ export default function Storage({ item }: { item: Furniture }) {
                     <meshStandardMaterial color={handleColor} roughness={0.3} metalness={0.5} />
                   </mesh>
                 )}
+                {hasLouverDoors &&
+                  Array.from({ length: 6 }, (_, slatIndex) => (
+                    <mesh
+                      key={slatIndex}
+                      position={[0, -height * 0.32 + slatIndex * ((height * 0.64) / 5), 0.018]}
+                      receiveShadow
+                    >
+                      <boxGeometry args={[doorWidth * 0.78, 0.018, 0.012]} />
+                      <meshStandardMaterial color="#a87743" roughness={0.62} />
+                    </mesh>
+                  ))}
               </group>
             );
           })

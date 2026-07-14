@@ -106,6 +106,7 @@ export default function ManageFurniture() {
   // with the *current* (edited) furniture on every change, so that key can't
   // also serve as "what it looked like originally" once anything's been moved.
   const originalFurnitureRef = useRef<Furniture[]>(cloneFurniture(selectedRoom.furniture));
+  const addedFurnitureSequenceRef = useRef(0);
   const [selectedFurnitureId, setSelectedFurnitureId] = useState<string | null>(null);
   const [isCatalogOpen, setIsCatalogOpen] = useState(false);
   const [hideEntranceWalls, setHideEntranceWalls] = useState(false);
@@ -172,9 +173,10 @@ export default function ManageFurniture() {
   }, [isResizing]);
 
   const addFurniture = (item: Furniture) => {
+    addedFurnitureSequenceRef.current += 1;
     const nextItem = {
       ...item,
-      id: `added-${item.id}-${Date.now()}`,
+      id: `added-${item.id}-${addedFurnitureSequenceRef.current}`,
       position: findOpenPosition(furniture.length),
     };
 
@@ -245,6 +247,7 @@ export default function ManageFurniture() {
               onMoveFurniture={moveFurniture}
               hideEntranceWalls={hideEntranceWalls}
               alignCameraToEntrance
+              showEditingHelpers
             />
           </div>
 
