@@ -4,6 +4,7 @@ import Bookshelf from "./Bookshelf";
 import Chair from "./Chair";
 import FloatingShelf from "./FloatingShelf";
 import Lamp from "./Lamp";
+import MidCenturyCollectorFurniture from "./MidCenturyCollectorFurniture";
 import ModelFurniture from "./ModelFurniture";
 import Plant from "./Plant";
 import Sofa from "./Sofa";
@@ -22,6 +23,10 @@ export default function FurnitureRenderer({ item }: { item: Furniture }) {
 
   if (name.includes("plant") || item.name.includes("화병")) {
     return <Plant item={item} />;
+  }
+
+  if (item.id.startsWith("collector-")) {
+    return <MidCenturyCollectorFurniture item={item} />;
   }
 
   if (item.category === "lighting") {

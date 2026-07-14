@@ -73,6 +73,26 @@ export interface UploadedRoomCard extends SampleRoomCard {
   dimensions: string;
 }
 
+type CollectorAppearance = Pick<Furniture, "color" | "material" | "geometry">;
+
+// The backend deliberately keeps its generic furniture schema. These stable
+// sample-only IDs supply the visual palette without adding API-only fields.
+const collectorAppearanceById: Record<string, CollectorAppearance> = {
+  "collector-bed": { color: "#F7F1E8", material: { type: "fabric", color: "#F7F1E8", roughness: 0.9, metalness: 0 }, geometry: "box" },
+  "collector-bedside": { color: "#B64535", material: { type: "wood", color: "#B64535", roughness: 0.48, metalness: 0 }, geometry: "box" },
+  "collector-floor-plant": { color: "#2F6B3F", material: { type: "accent", color: "#2F6B3F", roughness: 0.8, metalness: 0 }, geometry: "cylinder" },
+  "collector-desk": { color: "#8C5632", material: { type: "wood", color: "#8C5632", roughness: 0.55, metalness: 0 }, geometry: "box" },
+  "collector-desk-chair": { color: "#8C5632", material: { type: "wood", color: "#8C5632", roughness: 0.55, metalness: 0 }, geometry: "box" },
+  "collector-blue-cabinet": { color: "#1E63C6", material: { type: "wood", color: "#1E63C6", roughness: 0.42, metalness: 0.08 }, geometry: "box" },
+  "collector-glass-shelf": { color: "#E8EEF1", material: { type: "glass", color: "#E8EEF1", roughness: 0.08, metalness: 0.35 }, geometry: "box" },
+  "collector-console": { color: "#F7F1E8", material: { type: "white", color: "#F7F1E8", roughness: 0.68, metalness: 0 }, geometry: "box" },
+  "collector-red-shelf": { color: "#B64535", material: { type: "wood", color: "#B64535", roughness: 0.46, metalness: 0 }, geometry: "box" },
+  "collector-lounge-chair": { color: "#D98272", material: { type: "fabric", color: "#D98272", roughness: 0.82, metalness: 0 }, geometry: "rounded-box" },
+  "collector-cane-chair": { color: "#C99A68", material: { type: "wood", color: "#C99A68", roughness: 0.66, metalness: 0 }, geometry: "box" },
+  "collector-rug": { color: "#F7F1E8", material: { type: "fabric", color: "#F7F1E8", roughness: 0.94, metalness: 0 }, geometry: "cylinder" },
+  "collector-coffee-table": { color: "#E8EEF1", material: { type: "glass", color: "#E8EEF1", roughness: 0.08, metalness: 0.35 }, geometry: "cylinder" },
+};
+
 export async function getSampleRooms(): Promise<SampleRoomCard[]> {
   const response = await apiClient.get<ApiResponse<SampleRoomApiItem[]>>("/api/rooms/samples");
   return response.data.data.map(toSampleRoomCard);
@@ -445,7 +465,8 @@ function toFurniture(
 ): Furniture {
   const category = toFurnitureCategory(item.type);
   const materialType = materialByCategory(category);
-  const color = colorByCategory(category);
+  const collectorAppearance = collectorAppearanceById[item.id];
+  const color = collectorAppearance?.color ?? colorByCategory(category);
   const rotationY = normalizeRotation(item.rotation);
   const rawPosition = { x: item.position.x - roomWidth / 2, z: item.position.z - roomDepth / 2 };
 
@@ -453,7 +474,7 @@ function toFurniture(
     id: item.id,
     name: item.label,
     category,
-    geometry: geometryByType(item.type, category),
+    geometry: collectorAppearance?.geometry ?? geometryByType(item.type, category),
     dimensions: {
       width: item.width,
       depth: item.depth,
@@ -462,7 +483,7 @@ function toFurniture(
     position: clampFootprint(rawPosition, rotationY, item.width, item.depth, roomWidth, roomDepth),
     rotationY,
     color,
-    material: {
+    material: collectorAppearance?.material ?? {
       type: materialType,
       color,
       roughness: category === "rug" ? 0.96 : materialType === "wood" ? 0.55 : 0.9,
