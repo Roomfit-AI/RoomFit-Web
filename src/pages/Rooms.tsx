@@ -19,6 +19,7 @@ const selectedRoomStorageKeys = [
   "roomfit:selectedRoomSize",
   "roomfit:selectedRoomLayout",
 ];
+const roomsVisitedKey = "roomfit:visited:rooms";
 
 export default function Rooms() {
   const [activeFilter, setActiveFilter] = useState("전체");
@@ -32,9 +33,7 @@ export default function Rooms() {
   const knownUploadIds = useRef<Set<number> | null>(null);
   const deletedUploadIds = useRef(new Set<number>());
 
-  const [selectedRoomId, setSelectedRoomId] = useState(() => {
-    return localStorage.getItem("roomfit:selectedRoomId") ?? "";
-  });
+  const [selectedRoomId, setSelectedRoomId] = useState(() => getInitialSelectedRoomId());
 
   useEffect(() => {
     let ignore = false;
@@ -258,13 +257,13 @@ export default function Rooms() {
                       className="block w-full p-5 text-left disabled:cursor-wait"
                     >
                       <div className="mb-4 flex min-h-6 items-center justify-between gap-3 pr-10">
-                        {room.source === "ROOMPLAN" ? (
+                        {/* {room.source === "ROOMPLAN" ? (
                           <span className="inline-flex bg-[#151515] px-2.5 py-1 text-xs font-bold text-white">
                             ROOMPLAN
                           </span>
                         ) : (
                           <span />
-                        )}
+                        )} */}
                         <span className="text-xs font-medium text-[#777777]">{formatUploadedAt(room.createdAt)}</span>
                       </div>
 
@@ -274,7 +273,7 @@ export default function Rooms() {
                       <span className="mt-1 block text-sm font-medium text-[#777777]">{room.dimensions}</span>
 
                       {selectedRoomId === room.layoutId && (
-                        <span className="absolute right-4 top-14 z-10 inline-flex items-center gap-1 rounded-full bg-[#111111] px-3 py-1 text-xs font-bold text-white">
+                        <span className="absolute right-4 top-5 z-10 inline-flex items-center gap-1 rounded-full bg-[#111111] px-3 py-1.5 text-xs font-bold text-white">
                           <FiCheck className="h-3.5 w-3.5" />
                           선택됨
                         </span>
@@ -287,7 +286,7 @@ export default function Rooms() {
                       aria-label={`${room.title} 삭제`}
                       disabled={deletingRoomId !== null}
                       onClick={(event) => void removeUploadedRoom(event, room)}
-                      className="absolute right-3 top-3 z-20 grid h-9 w-9 place-items-center rounded-md border border-[#dddddd] bg-white text-[#555555] shadow-sm transition-colors hover:border-[#b42318] hover:text-[#b42318] disabled:cursor-wait disabled:opacity-50"
+                      className="absolute right-5 bottom-7 z-20 grid h-9 w-9 place-items-center rounded-md bg-white text-[#555555] transition-colors hover:border-[#b42318] hover:text-[#b42318] disabled:cursor-wait disabled:opacity-50"
                     >
                       {deletingRoomId === room.roomId ? (
                         <FiLoader className="h-4 w-4 animate-spin" />
@@ -330,21 +329,21 @@ export default function Rooms() {
                 </span>
               </div>
             ) : (
-              <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-4">
+              <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
                 {visibleRooms.map((room) => (
                   <button
                     key={`${room.layoutId}-${room.title}`}
                     type="button"
                     onClick={() => selectRoom(room)}
                     aria-pressed={selectedRoomId === room.layoutId}
-                    className={`group relative rounded-lg border bg-white p-5 text-left transition-all hover:-translate-y-1 hover:shadow-[0_18px_35px_rgba(0,0,0,0.08)] ${
+                    className={`group relative overflow-hidden rounded-lg border bg-white p-5 text-left transition-all hover:-translate-y-1 hover:shadow-[0_18px_35px_rgba(0,0,0,0.08)] ${
                       selectedRoomId === room.layoutId
                         ? "border-[#111111] shadow-[0_18px_35px_rgba(0,0,0,0.08)]"
                         : "border-[#e5e5e5] hover:border-[#cfcfcf]"
                     }`}
                   >
                     {selectedRoomId === room.layoutId && (
-                      <span className="absolute right-4 top-4 z-10 inline-flex items-center gap-1 rounded-full bg-[#111111] px-3 py-1 text-xs font-bold text-white">
+                      <span className="absolute right-4 top-5 z-10 inline-flex items-center gap-1 rounded-full bg-[#111111] px-3 py-1.5 text-xs font-bold text-white">
                         <FiCheck className="h-3.5 w-3.5" />
                         선택됨
                       </span>
@@ -366,6 +365,7 @@ export default function Rooms() {
                   type="button"
                   className="flex min-h-63.5 flex-col items-center justify-center rounded-lg border border-dashed border-[#d9d9d9] bg-white p-5 text-center transition-colors hover:bg-[#f6f6f6]"
                 >
+                
                   <span className="grid h-16 w-16 place-items-center rounded-full border border-[#d7d7d7]">
                     <FiPlus className="h-8 w-8" />
                   </span>
@@ -397,6 +397,16 @@ function formatUploadedAt(createdAt: string) {
     hour: "2-digit",
     minute: "2-digit",
   }).format(date);
+}
+
+function getInitialSelectedRoomId() {
+  if (!sessionStorage.getItem(roomsVisitedKey)) {
+    selectedRoomStorageKeys.forEach((key) => localStorage.removeItem(key));
+    sessionStorage.setItem(roomsVisitedKey, "true");
+    return "";
+  }
+
+  return localStorage.getItem("roomfit:selectedRoomId") ?? "";
 }
 
 function InfoRow({

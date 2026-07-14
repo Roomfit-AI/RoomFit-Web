@@ -23,6 +23,25 @@ const features = [
   },
 ];
 
+const homePreviewRoom = {
+  ...sampleRoom,
+  camera: {
+    ...sampleRoom.camera,
+    type: "orthographic" as const,
+    position: {
+      x: -6.4,
+      y: 5.2,
+      z: 6.2,
+    },
+    target: {
+      x: 0.15,
+      y: 0.7,
+      z: -0.1,
+    },
+    zoom: 82,
+  },
+};
+
 export function Home() {
   return (
     <main className="min-h-screen bg-[#fbfbfb] text-[#141414]">
@@ -48,8 +67,8 @@ export function Home() {
 
         <div className="hero-room min-h-75 lg:min-h-105">
           <RoomViewer
-            room={sampleRoom}
-            furniture={sampleRoom.furniture}
+            room={homePreviewRoom}
+            furniture={homePreviewRoom.furniture}
             selectedFurnitureId={null}
             onSelectFurniture={() => undefined}
             onMoveFurniture={() => undefined}

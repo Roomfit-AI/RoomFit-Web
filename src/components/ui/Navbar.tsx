@@ -10,8 +10,10 @@ const navigationSteps = [
   },
   { path: "/manage-furniture", label: "가구 관리" },
   { path: "/preference", label: "취향 선택" },
+  { path: "/reference-image", label: "이미지 선택" },
   { path: "/add-furniture", label: "가구 선택" },
   { path: "/editor", label: "편집" },
+  { path: "/layout-confirm", label: "결과 확인" },
 ];
 
 export default function Navbar() {
@@ -20,6 +22,7 @@ export default function Navbar() {
   const currentStepIndex = navigationSteps.findIndex((step) => step.path === location.pathname);
   const safeStepIndex = currentStepIndex >= 0 ? currentStepIndex : 0;
   const isHome = safeStepIndex === 0;
+  const isLastStep = safeStepIndex === navigationSteps.length - 1;
   const previousStep = navigationSteps[safeStepIndex - 1];
   const nextStep = navigationSteps[safeStepIndex + 1];
 
@@ -33,18 +36,28 @@ export default function Navbar() {
     const currentStep = navigationSteps[safeStepIndex];
     currentStep.beforeNext?.();
 
+    if (isLastStep) {
+      const confirmedLayout = localStorage.getItem("roomfit:confirmedRoomLayout");
+
+      if (confirmedLayout) {
+        localStorage.setItem("roomfit:finalRoomLayout", confirmedLayout);
+      }
+
+      return;
+    }
+
     if (nextStep) {
       navigate(nextStep.path);
     }
   };
 
   return (
-    <nav className="h-19 border-b border-[#e8e8e8] bg-[#fbfbfb]">
+    <nav className="fixed inset-x-0 top-0 z-30 h-19 border-b border-[#e8e8e8] bg-[#fbfbfb]">
       <div className="flex h-full items-center justify-between px-10">
         <button
           type="button"
           onClick={() => navigate("/")}
-          className="text-xl font-bold tracking-[0.02em] text-[#181818] transition-opacity hover:opacity-70 sm:text-2xl"
+          className="text-xl font-bold tracking-[0.02em] text-[#181818] transition-opacity hover:opacity-70 sm:text-2xl cursor-pointer"
         >
           ROOMFIT
         </button>
@@ -60,9 +73,9 @@ export default function Navbar() {
             </button>
           )}
 
-          {nextStep && (
+          {(nextStep || isLastStep) && (
             <Button onClick={goNext} className="hidden px-7 py-2.5 sm:inline-flex">
-              {isHome ? "시작하기" : "다음 단계"}
+              {isLastStep ? "확정하기" : isHome ? "시작하기" : "다음 단계"}
             </Button>
           )}
         </div>
@@ -75,10 +88,4 @@ function ensureSelectedRoom() {
   if (localStorage.getItem("roomfit:selectedRoomId")) {
     return;
   }
-
-  localStorage.setItem("roomfit:selectedRoomId", "studio-1r-sample");
-  localStorage.setItem("roomfit:selectedRoomTitle", "오픈형 원룸");
-  localStorage.setItem("roomfit:selectedRoomType", "원룸");
-  localStorage.setItem("roomfit:selectedRoomSize", "6평");
-  localStorage.removeItem("roomfit:selectedRoomLayout");
 }

@@ -164,7 +164,7 @@
     position: relative;
     width: 100%;
     min-height: 520px;
-    height: calc(100vh - 240px);
+    height: 100%;
     background: transparent;
   }
 
@@ -178,6 +178,18 @@
     display: flex;
     gap: 8px;
     align-items: center;
+  }
+
+  .confirm-room .viewer-shell {
+    position: relative;
+    width: 100%;
+    min-height: 440px;
+    height: clamp(440px, 48vw, 620px);
+    background: transparent;
+  }
+
+  .confirm-room .viewer-caption {
+    display: none;
   }
 
   .furniture-thumb {

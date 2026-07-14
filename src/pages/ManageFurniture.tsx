@@ -107,9 +107,8 @@ export default function ManageFurniture() {
   // also serve as "what it looked like originally" once anything's been moved.
   const originalFurnitureRef = useRef<Furniture[]>(cloneFurniture(selectedRoom.furniture));
   const [selectedFurnitureId, setSelectedFurnitureId] = useState<string | null>(null);
-  // Up to 3 walls at once — see EditorPlaceholder.tsx's identical handling.
-  const [hiddenWallIds, setHiddenWallIds] = useState<string[]>([]);
   const [isCatalogOpen, setIsCatalogOpen] = useState(false);
+  const [hideEntranceWalls, setHideEntranceWalls] = useState(false);
   const [panelWidth, setPanelWidth] = useState(320);
   const [isResizing, setIsResizing] = useState(false);
 
@@ -203,10 +202,6 @@ export default function ManageFurniture() {
     );
   };
 
-  const selectWall = (id: string) => {
-    setHiddenWallIds((current) => (current.includes(id) ? current : [...current, id].slice(-3)));
-  };
-
   useEffect(() => {
     const nextRoom = {
       ...selectedRoom,
@@ -223,10 +218,22 @@ export default function ManageFurniture() {
         style={{ "--furniture-panel-width": `${panelWidth}px` } as React.CSSProperties}
       >
         <section className="relative flex min-h-140 flex-col px-6 py-6 lg:px-8">
-          <div className="mb-4 flex items-center gap-3">
-            <h1 className="text-2xl font-extrabold">{selectedRoomMeta.title}</h1>
-            <span className="rounded-full bg-[#eeeeee] px-3 py-1 text-xs font-bold text-[#777777]">{selectedRoomMeta.type}</span>
-            <span className="rounded-full bg-[#eeeeee] px-3 py-1 text-xs font-bold text-[#777777]">{selectedRoomMeta.size}</span>
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+            <div className="flex min-w-0 items-center gap-3">
+              <h1 className="ml-2 text-2xl font-extrabold">{selectedRoomMeta.title}</h1>
+              <span className="rounded-full bg-[#eeeeee] px-3 py-1 text-xs font-bold text-[#777777]">{selectedRoomMeta.type}</span>
+              <span className="rounded-full bg-[#eeeeee] px-3 py-1 text-xs font-bold text-[#777777]">{selectedRoomMeta.size}</span>
+            </div>
+
+            <label className="flex cursor-pointer items-center gap-2 rounded-lg border border-[#dfdfdf] bg-white px-3 py-2 text-sm font-extrabold text-[#333333] transition-colors hover:bg-[#f6f6f6]">
+              <input
+                type="checkbox"
+                checked={hideEntranceWalls}
+                onChange={(event) => setHideEntranceWalls(event.target.checked)}
+                className="h-4 w-4 accent-[#111111]"
+              />
+              내부 보기
+            </label>
           </div>
 
           <div className="manage-room flex-1">
@@ -236,9 +243,8 @@ export default function ManageFurniture() {
               selectedFurnitureId={selectedFurnitureId}
               onSelectFurniture={setSelectedFurnitureId}
               onMoveFurniture={moveFurniture}
-              hiddenWallIds={hiddenWallIds}
-              onSelectWall={selectWall}
-              onShowWall={() => setHiddenWallIds([])}
+              hideEntranceWalls={hideEntranceWalls}
+              alignCameraToEntrance
             />
           </div>
 
@@ -252,9 +258,6 @@ export default function ManageFurniture() {
             <ToolButton label="초기화" icon={<FiRotateCcw />} onClick={resetFurniture} />
             <ToolButton label="중앙 보기" icon={<span className="text-lg">⊙</span>} />
             <ToolButton label="확대" icon={<FiZoomIn />} />
-            {hiddenWallIds.length > 0 && (
-              <ToolButton label="벽 다시 보이기" icon={<span className="text-[11px]">🧱</span>} onClick={() => setHiddenWallIds([])} />
-            )}
           </div>
         </section>
 
