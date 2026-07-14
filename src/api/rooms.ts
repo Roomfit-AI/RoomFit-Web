@@ -95,7 +95,28 @@ export async function getRecentUploadedRooms(limit = 10): Promise<UploadedRoomCa
   const response = await apiClient.get<ApiResponse<SampleRoomApiItem[]>>("/api/rooms/uploads/recent", {
     params: { limit },
   });
-  return response.data.data.map(toUploadedRoomCard);
+  const cards = response.data.data.map(toUploadedRoomCard);
+
+  // Temporary client-side patch: the backend's room store is in-memory only
+  // (see RoomFit-Backend's RoomRepository) and resets on every server
+  // restart, so a freshly-reset room can land without a thumbnail even
+  // though it's a re-scan of a room that used to have one. The backend's
+  // own data is never touched here — this only borrows a thumbnailUrl for
+  // display. Prefer the next-most-recent upload sharing the same name
+  // (`cards` is sorted newest-first, so that's literally "the previous
+  // version of this room"); if none exists (e.g. right after a reset, where
+  // this may be the only entry left with that name), fall back to whatever
+  // other room still has a real thumbnail so the card never shows blank.
+  return cards.map((card) => {
+    if (card.thumbnailUrl) {
+      return card;
+    }
+    const others = cards.filter((other) => other !== card);
+    const previousVersion = others.find((other) => other.title === card.title && other.thumbnailUrl);
+    const anyOtherThumbnail = others.find((other) => other.thumbnailUrl);
+    const borrowed = previousVersion ?? anyOtherThumbnail;
+    return borrowed ? { ...card, thumbnailUrl: borrowed.thumbnailUrl } : card;
+  });
 }
 
 export async function deleteUploadedRoom(roomId: number): Promise<void> {

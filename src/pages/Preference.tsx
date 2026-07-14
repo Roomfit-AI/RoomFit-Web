@@ -14,15 +14,18 @@ const purposes = [
   { id: "etc", title: "기타", description: "기타 목적", icon: FiMoon },
 ];
 
+// Two-word titles ("A / B") get one color per word, split half-and-half in
+// the swatch below — a single title-word (그레이) keeps a single color
+// instead of forcing an arbitrary second shade that isn't in the label.
 const palettes = [
-  { id: "ivory", title: "화이트 / 아이보리", colors: ["#f8f5ee", "#1d1d1d"] },
-  { id: "beige", title: "베이지 / 샌드", colors: ["#d9c8ad"] },
+  { id: "ivory", title: "화이트 / 아이보리", colors: ["#ffffff", "#f0e6d2"] },
+  { id: "beige", title: "베이지 / 샌드", colors: ["#d9c8ad", "#e3cba0"] },
   { id: "gray", title: "그레이", colors: ["#b9b9b9"] },
-  { id: "brown", title: "브라운 / 우드", colors: ["#9d7b58"] },
-  { id: "green", title: "그린 / 올리브", colors: ["#4e6040"] },
-  { id: "blue", title: "블루 / 네이비", colors: ["#152238"] },
-  { id: "pink", title: "핑크 / 코랄", colors: ["#cfa293"] },
-  { id: "black", title: "블랙 / 다크", colors: ["#101010"] },
+  { id: "brown", title: "브라운 / 우드", colors: ["#6b4a35", "#b08968"] },
+  { id: "green", title: "그린 / 올리브", colors: ["#3f6b44", "#6b6b3f"] },
+  { id: "blue", title: "블루 / 네이비", colors: ["#3a5a8c", "#152238"] },
+  { id: "pink", title: "핑크 / 코랄", colors: ["#f0b8c8", "#e8735a"] },
+  { id: "black", title: "블랙 / 다크", colors: ["#0a0a0a", "#2b2b2b"] },
 ];
 const preferenceVisitedKey = "roomfit:visited:preference";
 

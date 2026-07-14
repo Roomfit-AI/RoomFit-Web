@@ -9,6 +9,7 @@ import {
   type SampleRoomCard,
   type UploadedRoomCard,
 } from "../api/rooms";
+import { getConfirmedLayout, hasConfirmedLayout } from "../config/confirmedLayouts";
 
 const filters = ["전체", "원룸", "사무실"];
 const selectedRoomStorageKeys = [
@@ -120,9 +121,14 @@ export default function Rooms() {
     localStorage.setItem("roomfit:selectedRoomTitle", room.title);
     localStorage.setItem("roomfit:selectedRoomType", room.category);
     localStorage.setItem("roomfit:selectedRoomSize", room.size);
+
+    // If this room was already confirmed in a previous session (see
+    // LayoutConfirm.tsx's confirmLayout), reopen it showing that same
+    // finalized furniture arrangement instead of the bare as-uploaded scan.
+    const confirmedLayout = getConfirmedLayout(room.layoutId);
     localStorage.setItem(
       "roomfit:selectedRoomLayout",
-      JSON.stringify(room.layout)
+      JSON.stringify(confirmedLayout ?? room.layout)
     );
 
     setSelectedRoomId(room.layoutId);
@@ -271,6 +277,13 @@ export default function Rooms() {
 
                       <strong className="mt-5 block text-base font-bold text-[#151515]">{room.title}</strong>
                       <span className="mt-1 block text-sm font-medium text-[#777777]">{room.dimensions}</span>
+
+                      {hasConfirmedLayout(room.layoutId) && (
+                        <span className="mt-2 inline-flex items-center gap-1 rounded-full bg-[#eefbf1] px-2.5 py-1 text-xs font-bold text-[#16803a]">
+                          <FiCheck className="h-3.5 w-3.5" />
+                          확정된 배치 있음
+                        </span>
+                      )}
 
                       {selectedRoomId === room.layoutId && (
                         <span className="absolute right-4 top-5 z-10 inline-flex items-center gap-1 rounded-full bg-[#111111] px-3 py-1.5 text-xs font-bold text-white">
