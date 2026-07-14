@@ -18,6 +18,7 @@ export default function Storage({ item }: { item: Furniture }) {
   const isTall = height > 1.1;
   const doorCount = isTall && width > 0.9 ? 2 : 1;
   const drawerCount = Math.max(2, Math.min(4, Math.round(height / 0.18)));
+  const hasLouverDoors = item.name.includes("루버");
 
   const bodyDims: [number, number, number] = [width, height, depth];
 
@@ -43,6 +44,17 @@ export default function Storage({ item }: { item: Furniture }) {
                   <boxGeometry args={[0.014, 0.1, 0.014]} />
                   <meshStandardMaterial color="#d8c8a0" roughness={0.3} metalness={0.5} />
                 </mesh>
+                {hasLouverDoors &&
+                  Array.from({ length: 6 }, (_, slatIndex) => (
+                    <mesh
+                      key={slatIndex}
+                      position={[0, -height * 0.32 + slatIndex * ((height * 0.64) / 5), 0.018]}
+                      receiveShadow
+                    >
+                      <boxGeometry args={[doorWidth * 0.78, 0.018, 0.012]} />
+                      <meshStandardMaterial color="#a87743" roughness={0.62} />
+                    </mesh>
+                  ))}
               </group>
             );
           })

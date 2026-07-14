@@ -29,6 +29,24 @@ export default function FurnitureRenderer({ item }: { item: Furniture }) {
   }
 
   if (item.category === "rug" || item.geometry === "plane") {
+    if (item.geometry === "cylinder") {
+      return (
+        <group>
+          <mesh receiveShadow position={[0, -item.dimensions.height / 2 + 0.018, 0]}>
+            <cylinderGeometry args={[item.dimensions.width / 2, item.dimensions.width / 2, item.dimensions.height, 64]} />
+            <Material {...material} roughness={material.roughness ?? 0.96} />
+          </mesh>
+          {name.includes("라탄") &&
+            [0.32, 0.53, 0.73, 0.9].map((ratio) => (
+              <mesh key={ratio} position={[0, -item.dimensions.height / 2 + 0.027, 0]} rotation={[Math.PI / 2, 0, 0]} receiveShadow>
+                <torusGeometry args={[item.dimensions.width * ratio * 0.5, 0.009, 8, 64]} />
+                <meshStandardMaterial color="#b18a58" roughness={0.9} />
+              </mesh>
+            ))}
+        </group>
+      );
+    }
+
     return (
       <mesh receiveShadow position={[0, -item.dimensions.height / 2 + 0.018, 0]}>
         <boxGeometry args={[item.dimensions.width, item.dimensions.height, item.dimensions.depth]} />

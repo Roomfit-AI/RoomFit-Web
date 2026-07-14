@@ -1,45 +1,105 @@
+import { useMemo } from "react";
+import * as THREE from "three";
+
 import Material from "../materials/Material";
 import type { Furniture } from "../../types";
 
-// Most uses of this component are a tabletop vase (see the "화병"/plant
-// match in FurnitureRenderer) — but FurnitureMesh has no notion of "resting
-// surface," it always centers a group at floor + height/2, the same
-// convention every floor-standing item uses. That previously put the pot's
-// bottom barely above the floor, entirely inside the coffee table's own
-// 0.42m-tall volume instead of on top of it. `restHeight - height/2` cancels
-// that floor-relative centering and re-anchors local y=0 to the resting
-// surface's real height instead, so the pot's bottom actually lands there.
-//
-// A name containing "바닥"/"플로어" (floor/floor-standing) switches this to
-// an actual floor plant instead: rest height 0 (the floor itself) and a
-// bigger scale, since the geometry below is otherwise a fixed small
-// tabletop-vase size regardless of the item's own declared dimensions.
+type Leaf = {
+  curve: THREE.CatmullRomCurve3;
+  end: THREE.Vector3;
+  angle: number;
+  tilt: number;
+  scale: number;
+};
+
+function createLeafShape() {
+  const shape = new THREE.Shape();
+  shape.moveTo(0, 0);
+  shape.bezierCurveTo(0.12, 0.08, 0.17, 0.34, 0, 0.62);
+  shape.bezierCurveTo(-0.17, 0.34, -0.12, 0.08, 0, 0);
+  return shape;
+}
+
+// A compact broad-leaf plant: tapered pot, gently curved stems, and shaped
+// double-sided leaves. The plant stays within the size specified by the
+// furniture data instead of scaling a fixed tiny vase into an oversized prop.
 export default function Plant({ item }: { item: Furniture }) {
   const isFloorPlant = item.name.includes("바닥") || item.name.includes("플로어");
-  const restHeight = isFloorPlant ? 0 : 0.42;
-  const scale = isFloorPlant ? Math.max(1.6, item.dimensions.height / 0.42) : 1;
+  const plantHeight = Math.min(Math.max(item.dimensions.height, 0.32), 1.25);
+  const restHeight = isFloorPlant ? 0 : 0.4;
+  const potHeight = isFloorPlant ? plantHeight * 0.24 : 0.12;
+  const potRadius = Math.min(item.dimensions.width * 0.32, plantHeight * 0.19);
   const baseY = restHeight - item.dimensions.height / 2;
+  const leafShape = useMemo(() => createLeafShape(), []);
+
+  const leaves = useMemo<Leaf[]>(() => {
+    const count = isFloorPlant ? 9 : 5;
+    const stemStartY = baseY + potHeight * 0.94;
+
+    return Array.from({ length: count }, (_, index) => {
+      const angle = (index / count) * Math.PI * 2 + (index % 2 ? 0.18 : 0);
+      const heightRatio = 0.48 + (index % 3) * 0.1;
+      const spread = plantHeight * (0.2 + (index % 2) * 0.035);
+      const directionX = Math.cos(angle);
+      const directionZ = Math.sin(angle);
+      const end = new THREE.Vector3(
+        directionX * spread,
+        stemStartY + plantHeight * heightRatio,
+        directionZ * spread,
+      );
+      const control = new THREE.Vector3(
+        directionX * spread * 0.34,
+        stemStartY + plantHeight * (heightRatio * 0.56),
+        directionZ * spread * 0.34,
+      );
+
+      return {
+        curve: new THREE.CatmullRomCurve3([
+          new THREE.Vector3(0, stemStartY, 0),
+          control,
+          end,
+        ]),
+        end,
+        angle,
+        tilt: 0.48 + (index % 3) * 0.1,
+        scale: plantHeight * (0.72 + (index % 2) * 0.12),
+      };
+    });
+  }, [baseY, isFloorPlant, plantHeight, potHeight]);
 
   return (
-    <group position={[0, baseY, 0]} scale={scale}>
-      <mesh castShadow receiveShadow position={[0, 0.1, 0]}>
-        <cylinderGeometry args={[0.11, 0.14, 0.2, 24]} />
-        <Material type="wood" color="#9a7048" roughness={0.72} />
+    <group>
+      <mesh castShadow receiveShadow position={[0, baseY + potHeight / 2, 0]}>
+        <cylinderGeometry args={[potRadius * 0.82, potRadius, potHeight, 32]} />
+        <Material type="wood" color="#907052" roughness={0.78} />
       </mesh>
-      {Array.from({ length: 7 }, (_, index) => {
-        const angle = (index / 7) * Math.PI * 2;
-        return (
-          <mesh
-            key={index}
-            castShadow
-            position={[Math.cos(angle) * 0.07, 0.26 + (index % 3) * 0.035, Math.sin(angle) * 0.07]}
-            rotation={[0.7, angle, 0.2]}
-          >
-            <boxGeometry args={[0.035, 0.22, 0.012]} />
-            <Material type="accent" color={item.color} roughness={0.8} />
+      <mesh receiveShadow position={[0, baseY + potHeight + 0.008, 0]}>
+        <cylinderGeometry args={[potRadius * 0.82, potRadius * 0.82, 0.016, 24]} />
+        <meshStandardMaterial color="#3f3023" roughness={1} />
+      </mesh>
+
+      {leaves.map((leaf, index) => (
+        <group key={index}>
+          <mesh castShadow>
+            <tubeGeometry args={[leaf.curve, 14, isFloorPlant ? 0.012 : 0.008, 6, false]} />
+            <meshStandardMaterial color="#4d6335" roughness={0.8} />
           </mesh>
-        );
-      })}
+          <mesh
+            castShadow
+            receiveShadow
+            position={leaf.end}
+            rotation={[leaf.tilt, -leaf.angle, 0]}
+            scale={[leaf.scale, leaf.scale, 1]}
+          >
+            <shapeGeometry args={[leafShape, 10]} />
+            <meshStandardMaterial
+              color={index % 3 === 0 ? "#2f6b3f" : item.color}
+              roughness={0.72}
+              side={THREE.DoubleSide}
+            />
+          </mesh>
+        </group>
+      ))}
     </group>
   );
 }

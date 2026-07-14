@@ -245,6 +245,7 @@ export default function ManageFurniture() {
               onMoveFurniture={moveFurniture}
               hideEntranceWalls={hideEntranceWalls}
               alignCameraToEntrance
+              showEditingHelpers
             />
           </div>
 
