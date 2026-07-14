@@ -5,6 +5,7 @@ import { applyLayoutFeedback, createDefaultAgentContext, recommendLayout, type I
 import { applyBackendFurnitureToLayout } from "../api/rooms";
 import RoomViewer from "../components/room/RoomViewer";
 import { applyLocalFeedback } from "../config/localFeedback";
+import { buildLocalValidation } from "../config/localValidation";
 import { applyScenario, currentScenario } from "../config/scenarios";
 import type { RoomLayout, Vector2D } from "../types";
 
@@ -161,8 +162,13 @@ export default function EditorPlaceholder() {
       // furniture reveal, instead of an instant swap.
       await new Promise((resolve) => setTimeout(resolve, 700));
 
-      setRoomLayout((current) => (current ? applyScenario(current, scenario) : current));
+      const nextRoom = applyScenario(roomLayout, scenario);
+      const { scoreSummary, validationResult } = buildLocalValidation(nextRoom);
+
+      setRoomLayout(nextRoom);
       setLayoutId(LOCAL_SCENARIO_LAYOUT_ID);
+      setScoreSummary(scoreSummary);
+      setValidationResult(validationResult);
       setIsRecommending(false);
       return;
     }
@@ -216,8 +222,12 @@ export default function EditorPlaceholder() {
       if ("error" in result) {
         setErrorMessage(result.error);
       } else {
+        const { scoreSummary, validationResult } = buildLocalValidation(result.room);
+
         setRoomLayout(result.room);
         setInterpretedIntent(result.intent);
+        setScoreSummary(scoreSummary);
+        setValidationResult(validationResult);
       }
 
       setIsApplyingFeedback(false);

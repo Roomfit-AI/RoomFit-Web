@@ -8,19 +8,35 @@ import type { RoomLayout } from "../types";
 
 function loadConfirmedRoomLayout(): RoomLayout {
   const confirmed = localStorage.getItem("roomfit:confirmedRoomLayout");
-  const selected = localStorage.getItem("roomfit:selectedRoomLayout");
-  const raw = confirmed ?? selected;
 
-  if (!raw) {
+  // roomfit:confirmedRoomLayout (see EditorPlaceholder.tsx's effect) already
+  // has any matching scenario applied *and* every manual edit made in
+  // /editor (drag, rotate, delete, feedback) baked in — re-running
+  // applyScenario on it would be wrong, not just redundant: restyle/wall-snap
+  // and pairChairWithDesk aren't idempotent the way the itemIds-guarded
+  // build() step is, so a second pass silently re-snaps a manually-rotated
+  // cabinet back to its wall-facing rotation and re-snaps a manually-moved
+  // desk chair back to sit in front of the desk, discarding exactly the
+  // edits this page is supposed to show as final.
+  if (confirmed) {
+    try {
+      return JSON.parse(confirmed) as RoomLayout;
+    } catch {
+      return sampleRoom;
+    }
+  }
+
+  // Only reached when the user lands here without ever visiting /editor —
+  // apply the scripted scenario once as a fallback so the confirm preview
+  // isn't just the bare as-uploaded room.
+  const selected = localStorage.getItem("roomfit:selectedRoomLayout");
+
+  if (!selected) {
     return sampleRoom;
   }
 
   try {
-    const room = JSON.parse(raw) as RoomLayout;
-    // roomfit:confirmedRoomLayout (see EditorPlaceholder.tsx) already has any
-    // matching scenario applied — this only does real work as a fallback for
-    // landing here straight from roomfit:selectedRoomLayout. applyScenario is
-    // safe to re-run (idempotent), so no need to distinguish the two cases.
+    const room = JSON.parse(selected) as RoomLayout;
     const scenario = currentScenario();
     return scenario ? applyScenario(room, scenario) : room;
   } catch {
