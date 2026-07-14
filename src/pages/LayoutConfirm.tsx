@@ -2,7 +2,7 @@ import { FiChevronDown, FiInfo, FiShoppingBag } from "react-icons/fi";
 
 import RoomViewer from "../components/room/RoomViewer";
 import PageStepHeader from "../components/ui/PageStepHeader";
-import { applyScenario } from "../config/scenarios";
+import { applyScenario, currentScenario } from "../config/scenarios";
 import { sampleRoom } from "../mock/sampleRoom";
 import type { RoomLayout } from "../types";
 
@@ -16,7 +16,13 @@ function loadConfirmedRoomLayout(): RoomLayout {
   }
 
   try {
-    return applyScenario(JSON.parse(raw) as RoomLayout);
+    const room = JSON.parse(raw) as RoomLayout;
+    // roomfit:confirmedRoomLayout (see EditorPlaceholder.tsx) already has any
+    // matching scenario applied — this only does real work as a fallback for
+    // landing here straight from roomfit:selectedRoomLayout. applyScenario is
+    // safe to re-run (idempotent), so no need to distinguish the two cases.
+    const scenario = currentScenario();
+    return scenario ? applyScenario(room, scenario) : room;
   } catch {
     return sampleRoom;
   }

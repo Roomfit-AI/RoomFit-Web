@@ -1,4 +1,5 @@
 import Blind from "./Blind";
+import Curtain from "./Curtain";
 import { windowCenterY } from "./openingLayout";
 import type { Opening } from "../../types";
 
@@ -83,7 +84,7 @@ export default function Window({ opening, wallHeight = 2.4 }: { opening: Opening
         );
       })}
 
-      <Blind opening={opening} />
+      {opening.blind?.type === "curtain" ? <Curtain opening={opening} /> : <Blind opening={opening} />}
     </group>
   );
 }

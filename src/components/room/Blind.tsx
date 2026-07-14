@@ -14,7 +14,11 @@ export default function Blind({ opening }: { opening: Opening }) {
   const top = height / 2;
   const coverage = height * 0.6;
   const slats = Math.max(10, opening.blind.slats ?? 14);
-  const railColor = opening.frame?.color ?? "#8c633d";
+  // opening.blind.color (set only by a demo scenario restyle — see
+  // config/scenarios.ts) overrides the default wood-toned slats/rail
+  // uniformly. Undefined keeps the original hardcoded look untouched.
+  const railColor = opening.blind.color ?? opening.frame?.color ?? "#8c633d";
+  const slatColor = opening.blind.color ?? "#7b5230";
 
   return (
     <group position={[0, 0, 0.045]}>
@@ -27,7 +31,7 @@ export default function Blind({ opening }: { opening: Opening }) {
       {Array.from({ length: slats }, (_, index) => (
         <mesh key={index} castShadow position={[0, top - (coverage * (index + 0.5)) / slats, 0]}>
           <boxGeometry args={[width, coverage / slats - 0.006, 0.03]} />
-          <meshStandardMaterial color="#7b5230" roughness={0.58} />
+          <meshStandardMaterial color={slatColor} roughness={0.58} />
         </mesh>
       ))}
 

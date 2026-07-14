@@ -1,17 +1,15 @@
 import { useEffect, useState } from "react";
-import { FiRotateCcw } from "react-icons/fi";
+import { FiRotateCcw, FiTrash2 } from "react-icons/fi";
 
 import { applyLayoutFeedback, createDefaultAgentContext, recommendLayout, type InterpretedIntent, type LayoutValidationResult, type ScoreSummary } from "../api/layouts";
-import { applyBackendFurnitureToLayout, type BackendFurnitureApiItem } from "../api/rooms";
+import { applyBackendFurnitureToLayout } from "../api/rooms";
 import RoomViewer from "../components/room/RoomViewer";
-import { applyScenario } from "../config/scenarios";
+import { applyLocalFeedback } from "../config/localFeedback";
+import { applyScenario, currentScenario } from "../config/scenarios";
 import type { Furniture, RoomLayout, Vector2D } from "../types";
 
 const naturalWoodRestRoomExistingFurnitureIds = new Set(["bed-1", "desk-1", "chair-1"]);
 
-// Fixed recommendation-only furniture for the naturalWoodRestRoom demo. The
-// baseline sample room remains unchanged; this collection is applied only
-// after the AI recommendation request succeeds.
 const naturalWoodRestRoomFurniture: Furniture[] = [
   {
     id: "natural-wardrobe",
@@ -158,65 +156,45 @@ const naturalWoodRestRoomFurniture: Furniture[] = [
   },
 ];
 
-function applyNaturalWoodRestRoom(layout: RoomLayout, furniture: BackendFurnitureApiItem[]): RoomLayout {
-  const nextLayout = applyBackendFurnitureToLayout(
-    layout,
-    furniture.filter((item) => naturalWoodRestRoomExistingFurnitureIds.has(item.id)),
-  );
-
-  const naturalWoodExistingFurniture = nextLayout.furniture.map((item) => {
-    if (item.id === "bed-1") {
-      return {
-        ...item,
-        position: { x: -1.5, z: -1.12 },
-        color: "#f5f0e4",
-        material: { type: "fabric" as const, color: "#f5f0e4", roughness: 0.88, metalness: 0 },
-      };
-    }
-
-    if (item.id === "desk-1") {
-      return {
-        ...item,
-        position: { x: 0.25, z: -1.85 },
-        rotationY: 0,
-        color: "#d0a46c",
-        material: { type: "wood" as const, color: "#d0a46c", roughness: 0.58, metalness: 0 },
-      };
-    }
-
-    if (item.id === "chair-1") {
-      return {
-        ...item,
-        position: { x: 0.25, z: -0.98 },
-        rotationY: Math.PI,
-        color: "#c9955d",
-        material: { type: "wood" as const, color: "#c9955d", roughness: 0.58, metalness: 0 },
-      };
-    }
-
-    return item;
-  });
+function applyNaturalWoodRestRoom(layout: RoomLayout, sourceFurniture: Furniture[]): RoomLayout {
+  const naturalWoodExistingFurniture = sourceFurniture
+    .filter((item) => naturalWoodRestRoomExistingFurnitureIds.has(item.id))
+    .map((item) => {
+      if (item.id === "bed-1") {
+        return { ...item, position: { x: -1.5, z: -1.12 }, color: "#f5f0e4", material: { type: "fabric" as const, color: "#f5f0e4", roughness: 0.88, metalness: 0 } };
+      }
+      if (item.id === "desk-1") {
+        return { ...item, position: { x: 0.25, z: -1.85 }, rotationY: 0, color: "#d0a46c", material: { type: "wood" as const, color: "#d0a46c", roughness: 0.58, metalness: 0 } };
+      }
+      if (item.id === "chair-1") {
+        return { ...item, position: { x: 0.25, z: -0.98 }, rotationY: Math.PI, color: "#c9955d", material: { type: "wood" as const, color: "#c9955d", roughness: 0.58, metalness: 0 } };
+      }
+      return item;
+    });
 
   return {
-    ...nextLayout,
-    floor: {
-      size: { width: nextLayout.width, depth: nextLayout.depth },
-      material: { color: "#d2a86e", roughness: 0.72 },
-    },
-    lighting: {
-      ...nextLayout.lighting,
-      ambient: 0.84,
-      sun: { intensity: 1.9, position: [3.8, 7.5, 4.6] },
-      environment: "warm-natural-studio",
-    },
-    walls: nextLayout.walls.map((wall) => ({
-      ...wall,
-      material: { color: "#f3efe7", roughness: 0.84 },
-    })),
+    ...layout,
+    floor: { size: { width: layout.width, depth: layout.depth }, material: { color: "#d2a86e", roughness: 0.72 } },
+    lighting: { ...layout.lighting, ambient: 0.84, sun: { intensity: 1.9, position: [3.8, 7.5, 4.6] }, environment: "warm-natural-studio" },
+    walls: layout.walls.map((wall) => ({ ...wall, material: { color: "#f3efe7", roughness: 0.84 } })),
     furniture: [...naturalWoodExistingFurniture, ...naturalWoodRestRoomFurniture],
   };
 }
 
+// Sentinel layoutId for rooms whose "AI 추천 생성" took the scripted-mood
+// shortcut (see handleRecommend below) instead of a real backend call —
+// there's no backend layoutId to hand to applyLayoutFeedback in that case,
+// but the "AI 피드백" panel only unlocks once layoutId is truthy, so without
+// this the feedback box would stay permanently disabled for every scenario
+// demo run. handleFeedback branches on this value to run applyLocalFeedback
+// instead of hitting the network.
+const LOCAL_SCENARIO_LAYOUT_ID = -1;
+
+// The room as saved from /manage-furniture, unmodified — demo-mood
+// restyling/additions (see config/scenarios.ts) only happen when "AI 추천
+// 생성" is clicked (see handleRecommend below), not at load time, so the
+// editor opens showing exactly what was saved and the mood reveal has
+// something to visibly change *from*.
 function loadSelectedRoomLayout(): RoomLayout | null {
   const raw = localStorage.getItem("roomfit:selectedRoomLayout");
 
@@ -225,11 +203,7 @@ function loadSelectedRoomLayout(): RoomLayout | null {
   }
 
   try {
-    // Additive-only demo-mood furniture (see config/scenarios.ts) layered on
-    // top of whatever was saved from /manage-furniture — never touches
-    // sampleRoom.ts/Home.tsx, and never mutates or removes anything already
-    // in this room.
-    return applyScenario(JSON.parse(raw) as RoomLayout);
+    return JSON.parse(raw) as RoomLayout;
   } catch {
     return null;
   }
@@ -311,6 +285,17 @@ export default function EditorPlaceholder() {
     });
   };
 
+  const handleDeleteFurniture = (id: string) => {
+    setRoomLayout((current) => {
+      if (!current) {
+        return current;
+      }
+
+      return { ...current, furniture: current.furniture.filter((item) => item.id !== id) };
+    });
+    setSelectedFurnitureId(null);
+  };
+
   // Resets to whatever is currently saved under roomfit:selectedRoomLayout
   // (the furniture as last saved from /manage-furniture) rather than the
   // room's original as-uploaded furniture — AI recommendations/feedback and
@@ -333,6 +318,36 @@ export default function EditorPlaceholder() {
       return;
     }
 
+    // The two scripted demo moods (see config/scenarios.ts) take over here
+    // instead of the real backend call — the backend has no concept of
+    // "rest/minimal/gray" or "work/natural/wood," so for a room whose saved
+    // preference matches one of them, restyle+add locally and skip the
+    // network round trip entirely.
+    const scenario = currentScenario();
+
+    if (scenario) {
+      setIsRecommending(true);
+      setErrorMessage("");
+      setInterpretedIntent(null);
+
+      // A brief pause so "AI 추천 생성 중..." is actually visible before the
+      // furniture reveal, instead of an instant swap.
+      await new Promise((resolve) => setTimeout(resolve, 700));
+
+      setRoomLayout((current) => {
+        if (!current) {
+          return current;
+        }
+
+        return scenario.id === "rest-natural-wood"
+          ? applyNaturalWoodRestRoom(current, current.furniture)
+          : applyScenario(current, scenario);
+      });
+      setLayoutId(LOCAL_SCENARIO_LAYOUT_ID);
+      setIsRecommending(false);
+      return;
+    }
+
     setIsRecommending(true);
     setErrorMessage("");
     setInterpretedIntent(null);
@@ -342,7 +357,8 @@ export default function EditorPlaceholder() {
       const context = await createDefaultAgentContext(roomId);
       const result = await recommendLayout(roomId, context.contextId);
 
-      setRoomLayout(applyNaturalWoodRestRoom(roomLayout, result.recommendedFurniture));
+      const recommendedLayout = applyBackendFurnitureToLayout(roomLayout, result.recommendedFurniture);
+      setRoomLayout(applyNaturalWoodRestRoom(recommendedLayout, recommendedLayout.furniture));
       setLayoutId(result.layoutId);
       setScoreSummary(result.scoreSummary);
       setValidationResult(result.validationResult);
@@ -373,10 +389,28 @@ export default function EditorPlaceholder() {
     setIsApplyingFeedback(true);
     setErrorMessage("");
 
+    if (layoutId === LOCAL_SCENARIO_LAYOUT_ID) {
+      // Brief pause so "피드백 반영 중..." is visible, matching the scripted
+      // recommend flow's own pacing instead of an instant swap.
+      await new Promise((resolve) => setTimeout(resolve, 400));
+      const result = applyLocalFeedback(roomLayout, feedback);
+
+      if ("error" in result) {
+        setErrorMessage(result.error);
+      } else {
+        setRoomLayout(result.room);
+        setInterpretedIntent(result.intent);
+      }
+
+      setIsApplyingFeedback(false);
+      return;
+    }
+
     try {
       const result = await applyLayoutFeedback(layoutId, feedback.trim());
 
-      setRoomLayout(applyNaturalWoodRestRoom(roomLayout, result.recommendedFurniture));
+      const recommendedLayout = applyBackendFurnitureToLayout(roomLayout, result.recommendedFurniture);
+      setRoomLayout(applyNaturalWoodRestRoom(recommendedLayout, recommendedLayout.furniture));
       setLayoutId(result.layoutId);
       setScoreSummary(result.scoreSummary);
       setValidationResult(result.validationResult);
@@ -446,6 +480,11 @@ export default function EditorPlaceholder() {
               label="90° 회전"
               icon={<span className="text-[11px] font-extrabold leading-none">90°</span>}
               onClick={selectedFurnitureId ? () => handleRotateFurniture(selectedFurnitureId) : undefined}
+            />
+            <EditorToolButton
+              label="가구 삭제"
+              icon={<FiTrash2 />}
+              onClick={selectedFurnitureId ? () => handleDeleteFurniture(selectedFurnitureId) : undefined}
             />
             <EditorToolButton label="초기화" icon={<FiRotateCcw />} onClick={handleResetFurniture} />
           </div>

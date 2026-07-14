@@ -15,10 +15,19 @@ function safeRadius(dims: number[], desired: number): number {
 export default function Storage({ item }: { item: Furniture }) {
   const { width, depth, height } = item.dimensions;
   const material = materialFromConfig(item.material, item.color);
+  const theme = item.theme;
   const isTall = height > 1.1;
   const doorCount = isTall && width > 0.9 ? 2 : 1;
   const drawerCount = Math.max(2, Math.min(4, Math.round(height / 0.18)));
   const hasLouverDoors = item.name.includes("루버");
+  // item.theme (set only by a demo scenario restyle — see
+  // config/scenarios.ts) changes the hardware, not just the color: 미니멀
+  // drops handles entirely for a flush, handleless look; 네추럴 gets bigger,
+  // darker wood pulls instead of the default small brass ones. 기본 keeps
+  // the original hardware untouched.
+  const showHandles = theme !== "gray";
+  const handleColor = theme === "wood" ? "#4a3420" : "#d8c8a0";
+  const handleScale = theme === "wood" ? 1.6 : 1;
 
   const bodyDims: [number, number, number] = [width, height, depth];
 
@@ -40,10 +49,12 @@ export default function Storage({ item }: { item: Furniture }) {
                   <boxGeometry args={[doorWidth, height - 0.06, 0.014]} />
                   <Material type="wood" color={material.color} roughness={0.5} />
                 </mesh>
-                <mesh position={[handleX, 0, 0.014]} castShadow>
-                  <boxGeometry args={[0.014, 0.1, 0.014]} />
-                  <meshStandardMaterial color="#d8c8a0" roughness={0.3} metalness={0.5} />
-                </mesh>
+                {showHandles && (
+                  <mesh position={[handleX, 0, 0.014]} castShadow>
+                    <boxGeometry args={[0.014 * handleScale, 0.1 * handleScale, 0.014 * handleScale]} />
+                    <meshStandardMaterial color={handleColor} roughness={0.3} metalness={0.5} />
+                  </mesh>
+                )}
                 {hasLouverDoors &&
                   Array.from({ length: 6 }, (_, slatIndex) => (
                     <mesh
@@ -68,10 +79,12 @@ export default function Storage({ item }: { item: Furniture }) {
                   <boxGeometry args={[width - 0.05, drawerHeight, 0.014]} />
                   <Material type="wood" color={material.color} roughness={0.5} />
                 </mesh>
-                <mesh position={[0, 0, 0.014]} castShadow>
-                  <boxGeometry args={[width * 0.28, 0.014, 0.014]} />
-                  <meshStandardMaterial color="#d8c8a0" roughness={0.3} metalness={0.5} />
-                </mesh>
+                {showHandles && (
+                  <mesh position={[0, 0, 0.014]} castShadow>
+                    <boxGeometry args={[width * 0.28 * handleScale, 0.014 * handleScale, 0.014 * handleScale]} />
+                    <meshStandardMaterial color={handleColor} roughness={0.3} metalness={0.5} />
+                  </mesh>
+                )}
               </group>
             );
           })}
