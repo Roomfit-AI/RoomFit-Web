@@ -3,6 +3,7 @@ import { FiChevronDown, FiChevronUp, FiMoreHorizontal, FiPlus, FiRotateCcw, FiTr
 
 import { getSampleRoomLayouts } from "../api/rooms";
 import { RoomViewer } from "../components/room/RoomViewer";
+import { getLiveMirrorForSelectedRoom } from "../config/confirmedLayouts";
 import { captureCanvasThumbnail, saveRoomThumbnail } from "../config/roomThumbnails";
 import { sampleRoomLayouts } from "../mock/interiorPlacementMock";
 import { sampleRoom } from "../mock/sampleRoom";
@@ -446,18 +447,31 @@ function FurnitureThumb({ category, color }: { category: FurnitureCategory; colo
 }
 
 function getSelectedRoom(): RoomLayout {
-  // Deliberately always the raw as-uploaded/as-selected room, never a
-  // previously-confirmed result — /manage-furniture is upstream of
-  // /preference's purpose/style pick and /editor's "AI 추천 생성", so
-  // starting from a prior confirm here would carry that old scenario's
-  // furniture (different ids, already restyled/rearranged) into a fresh
-  // run. `applyScenario`/`applyNaturalWoodRestRoom` look for the room's
-  // *original* furniture ids (e.g. "bed-1") to restyle — if those were
-  // already replaced by a previous scenario's own generated furniture, the
-  // new scenario silently finds nothing to transform, and every retry (e.g.
-  // testing rest-natural-wood, then re-testing the same room as
-  // work-modern-gray) ends up looking identical to whatever was confirmed
-  // first instead of actually re-applying the newly selected mood.
+  // The live mirror (see confirmedLayouts.ts's getLiveMirrorForSelectedRoom)
+  // reflects every edit made in /editor this session, including a just-
+  // confirmed final result — id-matched against roomfit:selectedRoomId, and
+  // cleared by Rooms.tsx's selectRoom every time a room is freshly (re)
+  // selected from /rooms. So this only ever resurrects something within the
+  // *same* room session (fixing /manage-furniture appearing to "reset" after
+  // confirming and coming back without reselecting the room) — it can never
+  // leak a stale scenario into a fresh retest, since picking the room again
+  // from /rooms always clears it first.
+  //
+  // Deliberately NOT the *permanent* confirmedLayouts store here — that one
+  // persists forever per room id, so preferring it would carry an old
+  // scenario's furniture (different ids, already restyled/rearranged) into
+  // what's supposed to be a fresh run. `applyScenario`/`applyNaturalWoodRestRoom`
+  // look for the room's *original* furniture ids (e.g. "bed-1") to restyle —
+  // if those were already replaced by a previous scenario's own generated
+  // furniture, the new scenario silently finds nothing to transform, and
+  // every retry (e.g. testing rest-natural-wood, then re-testing the same
+  // room as work-modern-gray) ends up looking identical to whatever was
+  // confirmed first instead of actually re-applying the newly selected mood.
+  const liveMirror = getLiveMirrorForSelectedRoom();
+  if (liveMirror) {
+    return liveMirror;
+  }
+
   const selectedRoomLayout = localStorage.getItem("roomfit:selectedRoomLayout");
   if (selectedRoomLayout) {
     try {
