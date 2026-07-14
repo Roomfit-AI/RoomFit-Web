@@ -303,33 +303,6 @@ function wallForOpening(opening: Opening | undefined, walls: RoomLayout["walls"]
   return nearestWallToPoint(opening.position, walls);
 }
 
-// Like snapAgainstNearestWall's pushToCorner path, but for a specific
-// already-chosen wall (the work scenario picks the bed's wall deliberately —
-// perpendicular to the desk row, avoiding the door and whatever "내부 보기"
-// hides — rather than letting the nearest-wall search decide).
-function placeAgainstWallCorner(
-  dims: { width: number; depth: number },
-  wall: RoomLayout["walls"][number],
-  currentPosition: { x: number; z: number },
-): { position: { x: number; z: number }; rotationY: number } {
-  const { dirX, dirZ, len } = wallGeometry(wall);
-  const inward = inwardNormalForWall(wall);
-  const rotationY = Math.atan2(inward.x, inward.z);
-  const halfWidth = dims.width / 2;
-  const minAlong = Math.min(halfWidth, len / 2);
-  const maxAlong = Math.max(len - halfWidth, len / 2);
-  const relX = currentPosition.x - wall.start.x;
-  const relZ = currentPosition.z - wall.start.z;
-  const rawAlong = relX * dirX + relZ * dirZ;
-  const along = rawAlong - minAlong <= maxAlong - rawAlong ? minAlong : maxAlong;
-  const inset = (wall.thickness ?? 0.12) / 2 + dims.depth / 2 + 0.03;
-
-  return {
-    position: { x: wall.start.x + dirX * along + inward.x * inset, z: wall.start.z + dirZ * along + inward.z * inset },
-    rotationY,
-  };
-}
-
 // Re-snaps any survivor of the given categories off the window's wall (see
 // Scenario.keepOffWindowWall) — the generic wall-snap pass just picks
 // whichever wall is nearest to a piece's original scan position, which can
@@ -479,7 +452,7 @@ function arrangeRowAgainstWall(
 // FurnitureRenderer's name-based routing) up against whichever desk survived
 // this mood, facing it. No-ops if either piece is missing so a room without
 // a desk, or one whose chair got removed by the mood, is left untouched.
-function pairChairWithDesk(furniture: Furniture[]): Furniture[] {
+function pairChairWithDesk(furniture: Furniture[], gap = 0.12): Furniture[] {
   const desk = furniture.find((item) => item.category === "desk");
   const chair = furniture.find((item) => {
     if (item.category !== "chair") {
@@ -494,7 +467,6 @@ function pairChairWithDesk(furniture: Furniture[]): Furniture[] {
   }
 
   const front = frontDirection(desk.rotationY);
-  const gap = 0.12;
   const offset = desk.dimensions.depth / 2 + chair.dimensions.depth / 2 + gap;
   const position = { x: desk.position.x + front.x * offset, z: desk.position.z + front.z * offset };
   // Faces back toward the desk — opposite of the desk's own into-the-room
@@ -924,43 +896,74 @@ export const scenarios: Scenario[] = [
       const bookshelf = survivors.find((item) => item.category === "cabinet");
 
       let next = survivors;
+      let deskAlong: number | null = null;
 
-      // 책장 (far corner of the window wall) → 책상 (right next to it, same
-      // wall) → 침대 (wraps around the *other* end of the window wall, onto
-      // whichever wall actually meets it there, rotated to match) — a single
-      // flowing line around the corner instead of three independently
-      // wall-snapped pieces that can overlap.
-      if (windowWall && (bookshelf || desk)) {
-        const rowIds: string[] = [];
-        const rowDims: { width: number; depth: number }[] = [];
+      // 책상은 창문 바로 아래(창문벽 기준 가운데)에 — desk goes first so the
+      // bookshelf placed right after it can sit snug against its actual
+      // position instead of an independent corner.
+      if (windowWall && desk) {
+        const windowOpening = room.windows[0];
+        const deskDims = sanitizedFootprintDims(desk);
+        const { dirX, dirZ } = wallGeometry(windowWall);
+        const inward = inwardNormalForWall(windowWall);
+        const rotationY = Math.atan2(inward.x, inward.z);
+        // "창문벽을 기준으로 창문 바로 아래로" — centered on the window's own
+        // position along the wall, not the wall's own midpoint (the window
+        // itself isn't always dead-center on its wall).
+        const relX = (windowOpening?.position.x ?? (windowWall.start.x + windowWall.end.x) / 2) - windowWall.start.x;
+        const relZ = (windowOpening?.position.z ?? (windowWall.start.z + windowWall.end.z) / 2) - windowWall.start.z;
+        const along = relX * dirX + relZ * dirZ;
+        deskAlong = along;
+        const inset = (windowWall.thickness ?? 0.12) / 2 + deskDims.depth / 2 + 0.03;
+        const deskPosition = {
+          x: windowWall.start.x + dirX * along + inward.x * inset,
+          z: windowWall.start.z + dirZ * along + inward.z * inset,
+        };
 
-        if (bookshelf) {
-          rowIds.push(bookshelf.id);
-          rowDims.push(sanitizedFootprintDims(bookshelf));
+        next = next.map((item) =>
+          item.id === desk.id ? { ...item, position: deskPosition, rotationY, dimensions: { ...item.dimensions, ...deskDims } } : item,
+        );
+
+        if (chair) {
+          // Pulled back a little from a dead-on overlap — "의자는 너무
+          // 겹치니까 조금만 뒤로 이격시키고" — rather than centered exactly
+          // on the desk.
+          const pullBack = 0.18;
+          next = pairChairWithDesk(next, pullBack - (desk.dimensions.depth / 2 + chair.dimensions.depth / 2));
         }
-        if (desk) {
-          rowIds.push(desk.id);
-          rowDims.push(sanitizedFootprintDims(desk));
-        }
+      }
 
-        const slots = arrangeRowAgainstWall(windowWall, rowDims, 0.18, "start");
+      // 책장은 그 창문쪽 책상 옆으로 — snug against the desk's own along-wall
+      // position (whichever side of it has room), facing 270° (90°×3) from
+      // the wall's usual "flush, facing into the room" orientation so its
+      // spine reads sideways next to the desk instead of lying flat like it.
+      if (windowWall && bookshelf) {
+        const shelfDims = sanitizedFootprintDims(bookshelf);
+        const { dirX, dirZ, len } = wallGeometry(windowWall);
+        const inward = inwardNormalForWall(windowWall);
+        // Facing straight into the room, like the desk right next to it —
+        // "책장이 정면을 보게" — not rotated sideways.
+        const rotationY = Math.atan2(inward.x, inward.z);
+        const gap = 0.04;
+        const anchorAlong = deskAlong ?? len / 2;
+        const deskHalfWidth = desk ? sanitizedFootprintDims(desk).width / 2 : 0;
+        const maxAlong = Math.max(len - shelfDims.width / 2, len / 2);
+        // Actually flush against the *big* desk takes priority over staying
+        // clear of the wall's own corner — clamping this to "at least
+        // half the shelf's width from wall.start" was quietly leaving a gap
+        // and reading as "next to some other, smaller piece" instead of the
+        // desk it's supposed to be beside. A few cm past the corner is a
+        // much smaller problem than that.
+        const shelfAlong = Math.min(anchorAlong - deskHalfWidth - gap - shelfDims.width / 2, maxAlong);
+        const inset = (windowWall.thickness ?? 0.12) / 2 + shelfDims.depth / 2 + 0.03;
+        const shelfPosition = {
+          x: windowWall.start.x + dirX * shelfAlong + inward.x * inset,
+          z: windowWall.start.z + dirZ * shelfAlong + inward.z * inset,
+        };
 
-        next = next.map((item) => {
-          const index = rowIds.indexOf(item.id);
-          if (index === -1) {
-            return item;
-          }
-          return {
-            ...item,
-            position: slots[index].position,
-            rotationY: slots[index].rotationY,
-            dimensions: { ...item.dimensions, ...sanitizedFootprintDims(item) },
-          };
-        });
-
-        if (chair && desk) {
-          next = pairChairWithDesk(next);
-        }
+        next = next.map((item) =>
+          item.id === bookshelf.id ? { ...item, position: shelfPosition, rotationY, dimensions: { ...item.dimensions, ...shelfDims } } : item,
+        );
       }
 
       if (bed) {
@@ -968,13 +971,48 @@ export const scenarios: Scenario[] = [
 
         if (bedWall) {
           const bedDims = sanitizedFootprintDims(bed);
-          // Anchored toward the window wall's free end specifically (not
-          // just "whichever end of bedWall is nearest"), so the bed reads as
-          // continuing the row around that same corner.
-          const bedSlot = placeAgainstWallCorner(bedDims, bedWall, windowWall?.end ?? bed.position);
+          const cornerRef = windowWall?.end ?? bed.position;
+
+          // Rotated 90° from the usual "headboard against the wall" pose —
+          // width (the short side) faces the window wall instead of depth
+          // (the long side) reaching out into the room — "침대는 90도로
+          // 돌려서 너비부분이 창문벽으로 가게."
+          const inward = inwardNormalForWall(bedWall);
+          const baseRotationY = Math.atan2(inward.x, inward.z) - Math.PI / 2;
+          // Bed.tsx anchors the headboard/pillow at local -Z, so this
+          // rotation's frontDirection (local +Z in world space) points
+          // toward the *foot* of the bed, not the head.
+          const footDirection = frontDirection(baseRotationY);
+
+          const { dirX, dirZ, len } = wallGeometry(bedWall);
+          const halfLength = bedDims.depth / 2; // real depth (1.96) now runs along the wall
+          const halfReachIntoRoom = bedDims.width / 2; // real width (1.0) now reaches into the room
+          const minAlong = Math.min(halfLength, len / 2);
+          const maxAlong = Math.max(len - halfLength, len / 2);
+
+          const relX = cornerRef.x - bedWall.start.x;
+          const relZ = cornerRef.z - bedWall.start.z;
+          const cornerAlong = relX * dirX + relZ * dirZ;
+          // The *head* end needs to land at the corner (not just the
+          // center) — "지금은 침대방향도 거꾸로" — so the center sits one
+          // half-length further along the wall, in the foot's own
+          // direction, from the corner itself.
+          const footAlongComponent = footDirection.x * dirX + footDirection.z * dirZ;
+          const centerAlong = Math.min(Math.max(cornerAlong + footAlongComponent * halfLength, minAlong), maxAlong);
+
+          const inset = (bedWall.thickness ?? 0.12) / 2 + halfReachIntoRoom + 0.03;
+          const bedPosition = {
+            x: bedWall.start.x + dirX * centerAlong + inward.x * inset,
+            z: bedWall.start.z + dirZ * centerAlong + inward.z * inset,
+          };
+          // Flipped 180° from the position math above (which still targets
+          // the same corner) — "침대를 일단 90도로 2번만 회전시켜": the
+          // position stays, only the facing/head-foot direction flips.
+          const bedRotationY = baseRotationY + Math.PI;
+
           next = next.map((item) =>
             item.id === bed.id
-              ? { ...item, position: bedSlot.position, rotationY: bedSlot.rotationY, dimensions: { ...item.dimensions, ...bedDims } }
+              ? { ...item, position: bedPosition, rotationY: bedRotationY, dimensions: { ...item.dimensions, ...bedDims } }
               : item,
           );
 
