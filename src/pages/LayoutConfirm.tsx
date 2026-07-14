@@ -1,6 +1,7 @@
 import { useRef, useState } from "react";
 import { FaRug } from "react-icons/fa6";
-import { FiCheck, FiChevronDown, FiChevronUp, FiExternalLink, FiInfo, FiShoppingBag } from "react-icons/fi";
+import { FiCheck, FiChevronDown, FiChevronUp, FiExternalLink, FiHome, FiInfo, FiShoppingBag } from "react-icons/fi";
+import { useNavigate } from "react-router-dom";
 import {
   MdOutlineBed,
   MdOutlineDesk,
@@ -32,6 +33,7 @@ const SHOPPING_LIST_ICONS: Record<string, typeof MdOutlineBed> = {
 };
 
 export default function LayoutConfirm() {
+  const navigate = useNavigate();
   const roomLayout = resolveCurrentRoomLayout();
   const furnitureCount = roomLayout.furniture.length;
   // Actual scanned width x depth (matches how Rooms.tsx shows room size on
@@ -99,11 +101,23 @@ export default function LayoutConfirm() {
             <PageStepHeader step={8} title="최종 배치 확정" className="mb-8" />
 
             <div>
-              <h1 className="text-4xl font-extrabold leading-tight tracking-normal">최종 배치를 확정할까요?</h1>
+              <h1 className="text-4xl font-extrabold leading-tight tracking-normal">
+                {justConfirmed ? "최종 배치가 확정되었습니다" : "최종 배치를 확정할까요?"}
+              </h1>
               <p className="mt-5 text-lg font-semibold leading-8 text-[#777777]">
-                마음에 드는 결과라면 확정하고
-                <br />
-                쇼핑 리스트도 확인해보세요.
+                {justConfirmed ? (
+                  <>
+                    이제 쇼핑 리스트를 확인해보세요.
+                    <br />
+                    언제든지 다시 편집할 수 있어요.
+                  </>
+                ) : (
+                  <>
+                    마음에 드는 결과라면 확정하고
+                    <br />
+                    쇼핑 리스트도 확인해보세요.
+                  </>
+                )}
               </p>
             </div>
 
@@ -154,6 +168,15 @@ export default function LayoutConfirm() {
                     <FiShoppingBag className="h-5 w-5" />
                     쇼핑 리스트 {showShoppingList ? "닫기" : "보기"}
                     {showShoppingList ? <FiChevronUp className="h-4 w-4" /> : <FiChevronDown className="h-4 w-4" />}
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => navigate("/")}
+                    className="animate-fade-slide-up mt-4 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-[#111111] px-5 py-4 text-base font-extrabold text-white transition-colors hover:bg-[#333333]"
+                  >
+                    <FiHome className="h-5 w-5" />
+                    홈 화면으로 돌아가기
                   </button>
                 </>
               )}

@@ -696,4 +696,23 @@
     left: 59px;
     transform: rotate(32deg);
   }
+
+  @keyframes fade-slide-up {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  /* `both` fills the pre-animation state (opacity 0) too, so the element
+     doesn't flash fully visible for one frame before the animation starts —
+     used by LayoutConfirm.tsx's "홈 화면으로 돌아가기" button, which only
+     mounts once the layout is actually confirmed. */
+  .animate-fade-slide-up {
+    animation: fade-slide-up 0.45s ease-out both;
+  }
 }

@@ -342,7 +342,7 @@ export default function EditorPlaceholder() {
       setErrorMessage("");
       setInterpretedIntent(null);
 
-      await new Promise((resolve) => setTimeout(resolve, 700));
+      await new Promise((resolve) => setTimeout(resolve, 5000));
 
       const nextRoom = createHobbyCoralRecommendation(roomLayout);
       const { scoreSummary, validationResult } = buildScenarioValidation();
@@ -368,9 +368,10 @@ export default function EditorPlaceholder() {
       setErrorMessage("");
       setInterpretedIntent(null);
 
-      // A brief pause so "AI 추천 생성 중..." is actually visible before the
-      // furniture reveal, instead of an instant swap.
-      await new Promise((resolve) => setTimeout(resolve, 700));
+      // A fixed 5s pause so "AI 추천 생성 중..." reads as the AI actually
+      // working, instead of an instant swap that gives away the scripted
+      // shortcut this demo path is taking.
+      await new Promise((resolve) => setTimeout(resolve, 5000));
 
       // The hardcoded "natural wood rest room" layout below is tuned to one
       // specific sample room's fixed dimensions/coordinates (see
@@ -433,9 +434,9 @@ export default function EditorPlaceholder() {
     setErrorMessage("");
 
     if (layoutId === LOCAL_SCENARIO_LAYOUT_ID) {
-      // Brief pause so "피드백 반영 중..." is visible, matching the scripted
-      // recommend flow's own pacing instead of an instant swap.
-      await new Promise((resolve) => setTimeout(resolve, 400));
+      // Same fixed 5s pause as the recommend flow above, so "피드백 반영 중..."
+      // reads the same way instead of an instant swap.
+      await new Promise((resolve) => setTimeout(resolve, 5000));
       const result = applyLocalFeedback(roomLayout, feedback, currentScenario()?.id);
 
       if ("error" in result) {

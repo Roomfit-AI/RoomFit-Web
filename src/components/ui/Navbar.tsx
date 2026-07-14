@@ -74,9 +74,12 @@ export default function Navbar() {
             </button>
           )}
 
-          {(nextStep || isLastStep) && (
+          {/* LayoutConfirm.tsx has its own in-page "확정하기" button inside the
+              요약 정보 aside, which also handles the thumbnail capture on
+              confirm — keeping this navbar one too just doubled the button. */}
+          {nextStep && !isLastStep && (
             <Button onClick={goNext} className="hidden px-7 py-2.5 sm:inline-flex">
-              {isLastStep ? "확정하기" : isHome ? "시작하기" : "다음 단계"}
+              {isHome ? "시작하기" : "다음 단계"}
             </Button>
           )}
         </div>
