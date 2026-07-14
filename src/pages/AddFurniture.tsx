@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { FiCheck, FiPlus } from "react-icons/fi";
 
+import FurnitureVisual from "../components/ui/FurnitureVisual";
+
 const categories = ["전체", "소파", "테이블", "의자", "수납장", "조명", "러그", "데코 / 소품", "식물"];
 const addFurnitureVisitedKey = "roomfit:visited:add-furniture";
 
@@ -141,15 +143,3 @@ export default function AddFurniture() {
   );
 }
 
-function FurnitureVisual({ type }: { type: string }) {
-  return (
-    <div className="relative grid h-36 place-items-center overflow-hidden rounded-lg bg-[#f3f0eb]">
-      <div className={`furniture-card-visual furniture-card-${type}`}>
-        <span />
-        <span />
-        <span />
-        <span />
-      </div>
-    </div>
-  );
-}

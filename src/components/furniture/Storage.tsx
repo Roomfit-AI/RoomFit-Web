@@ -23,11 +23,12 @@ export default function Storage({ item }: { item: Furniture }) {
   const hasLouverDoors = item.name.includes("루버");
   // item.theme (set only by a demo scenario restyle — see
   // config/scenarios.ts) changes the hardware, not just the color: 미니멀
-  // drops handles entirely for a flush, handleless look; 네추럴 gets bigger,
-  // darker wood pulls instead of the default small brass ones. 기본 keeps
-  // the original hardware untouched.
+  // drops handles entirely for a flush, handleless look; 네추럴 gets bigger
+  // pulls in a soft sage green — a small, deliberate accent of the "화이트
+  // + 우드 + 초록" natural palette on the one piece (책장) that otherwise
+  // reads as all-wood. 기본 keeps the original hardware untouched.
   const showHandles = theme !== "gray";
-  const handleColor = theme === "wood" ? "#4a3420" : "#d8c8a0";
+  const handleColor = theme === "wood" ? "#7d9169" : "#d8c8a0";
   const handleScale = theme === "wood" ? 1.6 : 1;
 
   const bodyDims: [number, number, number] = [width, height, depth];

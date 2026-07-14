@@ -46,7 +46,13 @@ export function RoomViewer({
       <Canvas
         shadows
         dpr={[1, 2]}
-        gl={{ antialias: true }}
+        // preserveDrawingBuffer keeps the last-rendered frame in the canvas's
+        // backbuffer instead of it being cleared right after compositing —
+        // without it, canvas.toDataURL() (see ManageFurniture.tsx's room
+        // thumbnail capture) can grab a blank/black frame depending on
+        // exactly when the browser decides to swap buffers relative to the
+        // capture call.
+        gl={{ antialias: true, preserveDrawingBuffer: true }}
         onCreated={({ gl }) => {
           gl.toneMapping = THREE.ACESFilmicToneMapping;
           gl.toneMappingExposure = 1.05;

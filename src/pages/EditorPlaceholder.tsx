@@ -4,6 +4,7 @@ import { FiRotateCcw, FiTrash2 } from "react-icons/fi";
 import { applyLayoutFeedback, createDefaultAgentContext, recommendLayout, type InterpretedIntent, type LayoutValidationResult, type ScoreSummary } from "../api/layouts";
 import { applyBackendFurnitureToLayout } from "../api/rooms";
 import RoomViewer from "../components/room/RoomViewer";
+import { getLiveMirrorForSelectedRoom } from "../config/confirmedLayouts";
 import { applyLocalFeedback } from "../config/localFeedback";
 import { buildScenarioValidation } from "../config/localValidation";
 import { applyScenario, currentScenario } from "../config/scenarios";
@@ -207,9 +208,9 @@ const LOCAL_SCENARIO_LAYOUT_ID = -1;
 
 // The room as saved from /manage-furniture, unmodified — demo-mood
 // restyling/additions (see config/scenarios.ts) only happen when "AI 추천
-// 생성" is clicked (see handleRecommend below), not at load time, so the
-// editor opens showing exactly what was saved and the mood reveal has
-// something to visibly change *from*.
+// 생성" is clicked (see handleRecommend below), not at load time. Used by
+// handleResetFurniture's "초기화" button, which needs the true untouched
+// baseline to discard edits back to — not whatever's currently on screen.
 function loadSelectedRoomLayout(): RoomLayout | null {
   const raw = localStorage.getItem("roomfit:selectedRoomLayout");
 
@@ -224,6 +225,17 @@ function loadSelectedRoomLayout(): RoomLayout | null {
   }
 }
 
+// What the editor should actually open showing: the live mirror (every
+// edit made in /editor this session, whether formally confirmed or not) if
+// this room already has one, so navigating away (e.g. to /layout-confirm)
+// and back — via "이전 단계" or otherwise — doesn't appear to "reset" the
+// room back to its untouched baseline. Falls back to the true baseline only
+// the very first time a room is opened this session, so the AI 추천 mood
+// reveal still has something to visibly change *from*.
+function loadInitialRoomLayout(): RoomLayout | null {
+  return getLiveMirrorForSelectedRoom() ?? loadSelectedRoomLayout();
+}
+
 function loadBackendRoomId(): number {
   const raw = localStorage.getItem("roomfit:backendRoomId");
   const parsed = Number(raw);
@@ -232,7 +244,7 @@ function loadBackendRoomId(): number {
 }
 
 export default function EditorPlaceholder() {
-  const [roomLayout, setRoomLayout] = useState<RoomLayout | null>(() => loadSelectedRoomLayout());
+  const [roomLayout, setRoomLayout] = useState<RoomLayout | null>(() => loadInitialRoomLayout());
   const [selectedFurnitureId, setSelectedFurnitureId] = useState<string | null>(null);
   const [layoutId, setLayoutId] = useState<number | null>(null);
   const [feedback, setFeedback] = useState("");

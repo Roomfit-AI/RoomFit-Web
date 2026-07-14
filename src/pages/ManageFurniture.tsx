@@ -3,6 +3,7 @@ import { FiChevronDown, FiChevronUp, FiMoreHorizontal, FiPlus, FiRotateCcw, FiTr
 
 import { getSampleRoomLayouts } from "../api/rooms";
 import { RoomViewer } from "../components/room/RoomViewer";
+import { captureCanvasThumbnail, saveRoomThumbnail } from "../config/roomThumbnails";
 import { sampleRoomLayouts } from "../mock/interiorPlacementMock";
 import { sampleRoom } from "../mock/sampleRoom";
 import type { Furniture, FurnitureCategory, RoomLayout, Vector2D } from "../types";
@@ -109,7 +110,11 @@ export default function ManageFurniture() {
   const addedFurnitureSequenceRef = useRef(0);
   const [selectedFurnitureId, setSelectedFurnitureId] = useState<string | null>(null);
   const [isCatalogOpen, setIsCatalogOpen] = useState(false);
-  const [hideEntranceWalls, setHideEntranceWalls] = useState(false);
+  // Starts true (not false) so the very first render already shows/captures
+  // the interior view, without an initial exterior-view render needing to be
+  // undone by an effect right after mount.
+  const [hideEntranceWalls, setHideEntranceWalls] = useState(true);
+  const viewerContainerRef = useRef<HTMLDivElement>(null);
   const [panelWidth, setPanelWidth] = useState(320);
   const [isResizing, setIsResizing] = useState(false);
 
@@ -204,6 +209,43 @@ export default function ManageFurniture() {
     );
   };
 
+  // /rooms' cards otherwise only have the iOS app's scan-time snapshot to
+  // show (a flat, textureless RoomPlan mesh capture — see api/rooms.ts's
+  // thumbnailBase64) — this actually-furnished, colored 3D view is a much
+  // better thumbnail. The short delay gives the now-hidden walls a couple of
+  // render frames to actually disappear before the frame is captured,
+  // instead of grabbing the outgoing walls-visible one.
+  const captureInteriorThumbnail = () => {
+    window.setTimeout(() => {
+      const container = viewerContainerRef.current;
+      const dataUrl = container && captureCanvasThumbnail(container);
+
+      if (dataUrl) {
+        saveRoomThumbnail(selectedRoom.id, dataUrl);
+      }
+    }, 300);
+  };
+
+  const handleToggleInteriorView = (checked: boolean) => {
+    setHideEntranceWalls(checked);
+
+    if (checked) {
+      captureInteriorThumbnail();
+    }
+  };
+
+  // Relying on the user remembering to manually flip "내부 보기" made this
+  // easy to skip entirely — a room could go all the way to /layout-confirm
+  // still showing no real thumbnail on /rooms. Capturing once, right when
+  // this room is first opened here (hideEntranceWalls already starts true —
+  // see its useState above), means every room gets a real thumbnail before
+  // confirming even happens, not just the ones someone happened to click the
+  // checkbox for.
+  useEffect(() => {
+    captureInteriorThumbnail();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   useEffect(() => {
     const nextRoom = {
       ...selectedRoom,
@@ -231,14 +273,14 @@ export default function ManageFurniture() {
               <input
                 type="checkbox"
                 checked={hideEntranceWalls}
-                onChange={(event) => setHideEntranceWalls(event.target.checked)}
+                onChange={(event) => handleToggleInteriorView(event.target.checked)}
                 className="h-4 w-4 accent-[#111111]"
               />
               내부 보기
             </label>
           </div>
 
-          <div className="manage-room flex-1">
+          <div className="manage-room flex-1" ref={viewerContainerRef}>
             <RoomViewer
               room={selectedRoom}
               furniture={furniture}
@@ -404,6 +446,18 @@ function FurnitureThumb({ category, color }: { category: FurnitureCategory; colo
 }
 
 function getSelectedRoom(): RoomLayout {
+  // Deliberately always the raw as-uploaded/as-selected room, never a
+  // previously-confirmed result — /manage-furniture is upstream of
+  // /preference's purpose/style pick and /editor's "AI 추천 생성", so
+  // starting from a prior confirm here would carry that old scenario's
+  // furniture (different ids, already restyled/rearranged) into a fresh
+  // run. `applyScenario`/`applyNaturalWoodRestRoom` look for the room's
+  // *original* furniture ids (e.g. "bed-1") to restyle — if those were
+  // already replaced by a previous scenario's own generated furniture, the
+  // new scenario silently finds nothing to transform, and every retry (e.g.
+  // testing rest-natural-wood, then re-testing the same room as
+  // work-modern-gray) ends up looking identical to whatever was confirmed
+  // first instead of actually re-applying the newly selected mood.
   const selectedRoomLayout = localStorage.getItem("roomfit:selectedRoomLayout");
   if (selectedRoomLayout) {
     try {
