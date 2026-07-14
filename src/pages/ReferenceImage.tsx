@@ -2,13 +2,42 @@ import { useEffect, useState } from "react";
 import { FiCheck } from "react-icons/fi";
 import PageStepHeader from "../components/ui/PageStepHeader";
 
+import minimal from "../assets/styles/minimal.png";
+import natural from "../assets/styles/natural.png";
+import modern from "../assets/styles/modern.png";
+import classic from "../assets/styles/classic.png";
+import midcentury from "../assets/styles/midcentury.png";
+
+
+
 const styles = [
-  { id: "minimal", title: "미니멀", tone: "white" },
-  { id: "natural", title: "내추럴", tone: "wood" },
-  { id: "modern", title: "모던", tone: "light" },
-  { id: "classic", title: "클래식", tone: "cream" },
-  { id: "midcentury", title: "미드센추리", tone: "deep" },
+  {
+    id: "minimal",
+    title: "미니멀",
+    image: minimal,
+  },
+  {
+    id: "natural",
+    title: "내추럴",
+    image: natural,
+  },
+  {
+    id: "modern",
+    title: "모던",
+    image: modern,
+  },
+  {
+    id: "classic",
+    title: "클래식",
+    image: classic,
+  },
+  {
+    id: "midcentury",
+    title: "미드센추리",
+    image: midcentury,
+  },
 ];
+
 const referenceImageVisitedKey = "roomfit:visited:reference-image";
 
 export default function ReferenceImage() {
@@ -56,7 +85,11 @@ export default function ReferenceImage() {
                       <FiCheck className="h-4 w-4" />
                     </span>
                   )}
-                  <RoomStylePreview tone={style.tone} />
+                  <img
+                    src={style.image}
+                    alt={style.title}
+                    className="h-44 w-full rounded-md object-cover transition-transform duration-300 group-hover:scale-105"
+                  />
                 </span>
                 <strong className="mt-4 block text-center text-sm font-extrabold">{style.title}</strong>
               </button>
@@ -65,20 +98,5 @@ export default function ReferenceImage() {
         </div>
       </section>
     </main>
-  );
-}
-
-function RoomStylePreview({ tone }: { tone: string }) {
-  return (
-    <div className={`room-preview room-preview-${tone} h-44`}>
-      <span className="room-wall room-wall-left" />
-      <span className="room-wall room-wall-right" />
-      <span className="room-floor" />
-      <span className="room-window" />
-      <span className="room-bed" />
-      <span className="room-table" />
-      <span className="room-rug" />
-      <span className="room-plant" />
-    </div>
   );
 }
