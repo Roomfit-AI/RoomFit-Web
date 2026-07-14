@@ -35,6 +35,16 @@ export interface Scenario {
   // wood-blind rendering in Blind.tsx is never touched by a scenario that
   // doesn't set this.
   restyleWindow?: (opening: Opening) => Opening;
+  // Categories snapped flush against their nearest wall for this mood.
+  // Defaults to bed/cabinet (see WALL_SNAP_CATEGORIES) when unset — a
+  // scenario only needs this when it wants an additional category (e.g. a
+  // desk) pulled into the same "against the wall" treatment, so the mood
+  // reads as an actual rearrangement instead of a same-spot recolor.
+  wallSnapCategories?: Furniture["category"][];
+  // After wall-snapping, pulls the room's desk chair up to whichever desk
+  // survived, facing it — so a kept chair doesn't stay wherever the original
+  // scan left it once the desk itself has moved to a new wall.
+  pairChairWithDesk?: boolean;
 }
 
 function withColor(item: Furniture, color: string, materialType: "fabric" | "wood" | "white" | "metal" | "glass" | "accent", theme: Furniture["theme"]): Furniture {
@@ -101,9 +111,11 @@ function findOpenSpots(room: RoomLayout, margin: number, count: number, centerPu
 // collision check further down need a believable size instead, or a single
 // mis-scanned piece ends up floating a meter off its wall and "colliding"
 // with the rest of the room no matter where it's placed. Beds legitimately
-// run long, so they get a larger ceiling than everything else.
+// run long and desks legitimately run wide (a work-mood desk snapped to its
+// own wall is a legitimate ~1.2-1.5m piece, not scan noise), so both get a
+// larger ceiling than everything else.
 function sanitizedFootprintDims(item: Furniture): { width: number; depth: number } {
-  const maxDim = item.category === "bed" ? 2.2 : 1.0;
+  const maxDim = item.category === "bed" ? 2.2 : item.category === "desk" ? 2.0 : 1.0;
   return {
     width: Math.min(item.dimensions.width, maxDim),
     depth: Math.min(item.dimensions.depth, maxDim),
@@ -164,6 +176,41 @@ function snapAgainstNearestWall(item: Furniture, room: RoomLayout): { position: 
 
 const WALL_SNAP_CATEGORIES = new Set(["bed", "cabinet"]);
 
+// The item's own "front" faces local +Z, which at rotationY maps to this
+// world-space direction — same convention snapAgainstNearestWall uses above.
+function frontDirection(rotationY: number): { x: number; z: number } {
+  return { x: Math.sin(rotationY), z: Math.cos(rotationY) };
+}
+
+// Pulls the room's desk chair (a "chair" that isn't actually a sofa — see
+// FurnitureRenderer's name-based routing) up against whichever desk survived
+// this mood, facing it. No-ops if either piece is missing so a room without
+// a desk, or one whose chair got removed by the mood, is left untouched.
+function pairChairWithDesk(furniture: Furniture[]): Furniture[] {
+  const desk = furniture.find((item) => item.category === "desk");
+  const chair = furniture.find((item) => {
+    if (item.category !== "chair") {
+      return false;
+    }
+    const name = item.name.toLowerCase();
+    return !name.includes("소파") && !name.includes("sofa") && !name.includes("couch");
+  });
+
+  if (!desk || !chair) {
+    return furniture;
+  }
+
+  const front = frontDirection(desk.rotationY);
+  const gap = 0.12;
+  const offset = desk.dimensions.depth / 2 + chair.dimensions.depth / 2 + gap;
+  const position = { x: desk.position.x + front.x * offset, z: desk.position.z + front.z * offset };
+  // Faces back toward the desk — opposite of the desk's own into-the-room
+  // facing — so sitting in it means looking at the desk, not away from it.
+  const rotationY = desk.rotationY + Math.PI;
+
+  return furniture.map((item) => (item.id === chair.id ? { ...item, position, rotationY } : item));
+}
+
 function footprint(item: Furniture) {
   const dims = sanitizedFootprintDims(item);
   const cos = Math.abs(Math.cos(item.rotationY));
@@ -205,9 +252,9 @@ function resolveOverlapTowardCenter(item: Furniture, others: Furniture[]): Furni
   return fallback;
 }
 
-function repositionAgainstWalls(furniture: Furniture[], room: RoomLayout): Furniture[] {
+function repositionAgainstWalls(furniture: Furniture[], room: RoomLayout, categories: Set<string> = WALL_SNAP_CATEGORIES): Furniture[] {
   const snapped = furniture.map((item) => {
-    if (!WALL_SNAP_CATEGORIES.has(item.category)) {
+    if (!categories.has(item.category)) {
       return item;
     }
 
@@ -230,7 +277,7 @@ function repositionAgainstWalls(furniture: Furniture[], room: RoomLayout): Furni
   // something; a plain re-render of the room never introduces a *new*
   // collision that wasn't already there.
   return snapped.map((item, index) => {
-    if (!WALL_SNAP_CATEGORIES.has(item.category)) {
+    if (!categories.has(item.category)) {
       return item;
     }
 
@@ -304,7 +351,21 @@ export const scenarios: Scenario[] = [
     restyleWindow: (opening) =>
       opening.blind ? { ...opening, blind: { ...opening.blind, type: "curtain", color: "#e8e4da" } } : opening,
     build: (room) => {
-      const [sofaSpot, lampSpot, plantSpot, tableSpot] = findOpenSpots(room, 0.5, 4);
+      // Sofa/table get the usual "farthest open corner" treatment; the lamp
+      // and plant are deliberately *not* independent corner picks — a lamp
+      // reads as "placed for the sofa" only if it's actually next to it, and
+      // a plant reads as part of the bed nook only if it sits beside the
+      // bed, not off in whichever other corner scored best in isolation.
+      const [sofaSpot, tableSpot] = findOpenSpots(room, 0.5, 2);
+      const lampSpot = { x: sofaSpot.x + (sofaSpot.x >= 0 ? -0.6 : 0.6), z: sofaSpot.z + (sofaSpot.z >= 0 ? -0.5 : 0.5) };
+      const bed = room.furniture.find((item) => item.category === "bed");
+      const plantSpot = bed
+        ? (() => {
+            const side = { x: Math.cos(bed.rotationY), z: -Math.sin(bed.rotationY) };
+            const offset = bed.dimensions.width / 2 + 0.32;
+            return { x: bed.position.x + side.x * offset, z: bed.position.z + side.z * offset };
+          })()
+        : findOpenSpots(room, 0.4, 1)[0];
       const extras: Furniture[] = [
         {
           id: "scenario-rest-sofa",
@@ -397,7 +458,7 @@ export const scenarios: Scenario[] = [
     purpose: "work",
     style: "modern",
     palette: "gray",
-    itemIds: ["scenario-work-bookshelf", "scenario-work-rug"],
+    itemIds: ["scenario-work-bookshelf", "scenario-work-rug", "scenario-work-storage-box"],
     addFurnitureIds: ["shelf-open"],
     remove: () => false,
     restyle: restyleForWork,
@@ -405,6 +466,12 @@ export const scenarios: Scenario[] = [
     // just recolored black, the one explicit "적재적소에 검은색" accent that
     // isn't already covered by the chair's black leather/pedestal look.
     restyleWindow: (opening) => (opening.blind ? { ...opening, blind: { ...opening.blind, color: "#1c1c1c" } } : opening),
+    // Desk joins the bed/cabinet against-the-wall treatment, and its chair
+    // (see pairChairWithDesk) is pulled up to face it — a proper "desk moved
+    // to its own wall, chair in front of it" work-nook layout instead of the
+    // desk sitting wherever the original scan happened to leave it.
+    wallSnapCategories: ["bed", "cabinet", "desk"],
+    pairChairWithDesk: true,
     build: (room) => {
       const [shelfSpot] = findOpenSpots(room, 0.4, 1);
       const extras: Furniture[] = [
@@ -427,6 +494,30 @@ export const scenarios: Scenario[] = [
           theme: "gray",
         },
       ];
+
+      // A low storage box at the foot of the bed — the one grounded, textural
+      // piece that keeps the room from reading as just "bed + desk against
+      // two walls." Only placed when there's a bed to anchor it to.
+      const bed = room.furniture.find((item) => item.category === "bed");
+      if (bed) {
+        const front = frontDirection(bed.rotationY);
+        const boxDims = { width: 0.5, depth: 0.5, height: 0.4 };
+        const offset = bed.dimensions.depth / 2 + boxDims.depth / 2 + 0.18;
+        extras.push({
+          id: "scenario-work-storage-box",
+          name: "화이트 수납 박스",
+          category: "cabinet",
+          geometry: "rounded-box",
+          dimensions: boxDims,
+          position: { x: bed.position.x + front.x * offset, z: bed.position.z + front.z * offset },
+          rotationY: bed.rotationY,
+          color: "#e8e8e8",
+          material: { type: "white", color: "#e8e8e8", roughness: 0.5, metalness: 0 },
+          status: "recommended",
+          removable: true,
+          theme: "gray",
+        });
+      }
 
       // Only add a rug if this room doesn't already have one — an existing
       // rug just gets restyled instead of doubling up.
@@ -469,12 +560,17 @@ export function applyScenario(room: RoomLayout, scenario: Scenario): RoomLayout 
   const alreadyAdded = room.furniture.some((item) => scenario.itemIds.includes(item.id));
   const survivors = room.furniture.filter((item) => !scenario.remove(item));
   const restyled = survivors.map((item) => scenario.restyle(item));
-  // Beds/storage get snapped flush against their nearest real wall — a
-  // deliberate "against the wall" layout instead of leaving them at whatever
-  // off-wall spot the raw scan happened to record. Done before build() so
-  // findOpenSpots() scores open floor space against the *repositioned*
-  // pieces, not their old positions.
-  const repositioned = repositionAgainstWalls(restyled, room);
+  // Beds/storage (and, for moods that opt in, a desk too) get snapped flush
+  // against their nearest real wall — a deliberate "against the wall" layout
+  // instead of leaving them at whatever off-wall spot the raw scan happened
+  // to record. Done before build() so findOpenSpots() scores open floor
+  // space against the *repositioned* pieces, not their old positions.
+  const wallSnapCategories = new Set(scenario.wallSnapCategories ?? WALL_SNAP_CATEGORIES);
+  const wallSnapped = repositionAgainstWalls(restyled, room, wallSnapCategories);
+  // Once the desk has a final wall-snapped spot, pull its chair up to it —
+  // otherwise the chair stays at its original scan position, orphaned from a
+  // desk that just moved to a different wall.
+  const repositioned = scenario.pairChairWithDesk ? pairChairWithDesk(wallSnapped) : wallSnapped;
   const roomForExtras = { ...room, furniture: repositioned };
   const extras = alreadyAdded ? [] : scenario.build(roomForExtras);
   // findOpenSpots only scores its 4 fixed corners against existing furniture

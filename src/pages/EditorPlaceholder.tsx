@@ -4,8 +4,18 @@ import { FiRotateCcw, FiTrash2 } from "react-icons/fi";
 import { applyLayoutFeedback, createDefaultAgentContext, recommendLayout, type InterpretedIntent, type LayoutValidationResult, type ScoreSummary } from "../api/layouts";
 import { applyBackendFurnitureToLayout } from "../api/rooms";
 import RoomViewer from "../components/room/RoomViewer";
+import { applyLocalFeedback } from "../config/localFeedback";
 import { applyScenario, currentScenario } from "../config/scenarios";
 import type { RoomLayout, Vector2D } from "../types";
+
+// Sentinel layoutId for rooms whose "AI 추천 생성" took the scripted-mood
+// shortcut (see handleRecommend below) instead of a real backend call —
+// there's no backend layoutId to hand to applyLayoutFeedback in that case,
+// but the "AI 피드백" panel only unlocks once layoutId is truthy, so without
+// this the feedback box would stay permanently disabled for every scenario
+// demo run. handleFeedback branches on this value to run applyLocalFeedback
+// instead of hitting the network.
+const LOCAL_SCENARIO_LAYOUT_ID = -1;
 
 // The room as saved from /manage-furniture, unmodified — demo-mood
 // restyling/additions (see config/scenarios.ts) only happen when "AI 추천
@@ -148,6 +158,7 @@ export default function EditorPlaceholder() {
       await new Promise((resolve) => setTimeout(resolve, 700));
 
       setRoomLayout((current) => (current ? applyScenario(current, scenario) : current));
+      setLayoutId(LOCAL_SCENARIO_LAYOUT_ID);
       setIsRecommending(false);
       return;
     }
@@ -191,6 +202,23 @@ export default function EditorPlaceholder() {
 
     setIsApplyingFeedback(true);
     setErrorMessage("");
+
+    if (layoutId === LOCAL_SCENARIO_LAYOUT_ID) {
+      // Brief pause so "피드백 반영 중..." is visible, matching the scripted
+      // recommend flow's own pacing instead of an instant swap.
+      await new Promise((resolve) => setTimeout(resolve, 400));
+      const result = applyLocalFeedback(roomLayout, feedback);
+
+      if ("error" in result) {
+        setErrorMessage(result.error);
+      } else {
+        setRoomLayout(result.room);
+        setInterpretedIntent(result.intent);
+      }
+
+      setIsApplyingFeedback(false);
+      return;
+    }
 
     try {
       const result = await applyLayoutFeedback(layoutId, feedback.trim());
