@@ -5,7 +5,7 @@ import { applyLayoutFeedback, createDefaultAgentContext, recommendLayout, type I
 import { applyBackendFurnitureToLayout } from "../api/rooms";
 import RoomViewer from "../components/room/RoomViewer";
 import { applyLocalFeedback } from "../config/localFeedback";
-import { buildLocalValidation } from "../config/localValidation";
+import { buildScenarioValidation } from "../config/localValidation";
 import { applyScenario, currentScenario } from "../config/scenarios";
 import type { Furniture, RoomLayout, Vector2D } from "../types";
 
@@ -345,7 +345,7 @@ export default function EditorPlaceholder() {
         scenario.id === "rest-natural-wood" && roomLayout.source !== "ROOMPLAN"
           ? applyNaturalWoodRestRoom(roomLayout, roomLayout.furniture)
           : applyScenario(roomLayout, scenario);
-      const { scoreSummary, validationResult } = buildLocalValidation(nextRoom);
+      const { scoreSummary, validationResult } = buildScenarioValidation();
 
       setRoomLayout(nextRoom);
       setLayoutId(LOCAL_SCENARIO_LAYOUT_ID);
@@ -404,7 +404,7 @@ export default function EditorPlaceholder() {
       if ("error" in result) {
         setErrorMessage(result.error);
       } else {
-        const { scoreSummary, validationResult } = buildLocalValidation(result.room);
+        const { scoreSummary, validationResult } = buildScenarioValidation();
 
         setRoomLayout(result.room);
         setInterpretedIntent(result.intent);
@@ -481,6 +481,7 @@ export default function EditorPlaceholder() {
               onMoveFurniture={handleMoveFurniture}
               hideEntranceWalls={hideEntranceWalls}
               alignCameraToEntrance
+              showEditingHelpers
             />
           </div>
 
