@@ -26,7 +26,12 @@ const BOOK_COLORS_GRAY = ["#7d8ba1", "#8a9a86", "#a89684", "#5a5a5a", "#b6ac9a",
 export default function Bookshelf({ item }: { item: Furniture }) {
   const material = materialFromConfig(item.material, item.color);
   const theme = item.theme;
-  const shelfBoardColor = theme === "gray" ? "#e2e2e2" : "#5d3f25";
+  // "wood" (네츄럴 톤) gets the same bright light-oak tone as the carcass
+  // itself (see config/scenarios.ts's restyleForRest) instead of this
+  // component's own much-darker default board color — otherwise the shelf
+  // boards/dividers stood out as a separate, dingier wood tone even after
+  // the carcass around them was brightened.
+  const shelfBoardColor = theme === "gray" ? "#e2e2e2" : theme === "wood" ? "#c9a874" : "#5d3f25";
   const bookColors = theme === "gray" ? BOOK_COLORS_GRAY : BOOK_COLORS;
   const { width, depth, height } = item.dimensions;
   const boardThickness = Math.min(0.025, depth * 0.2);

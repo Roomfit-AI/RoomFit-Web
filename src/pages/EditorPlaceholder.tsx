@@ -436,7 +436,7 @@ export default function EditorPlaceholder() {
       // Brief pause so "피드백 반영 중..." is visible, matching the scripted
       // recommend flow's own pacing instead of an instant swap.
       await new Promise((resolve) => setTimeout(resolve, 400));
-      const result = applyLocalFeedback(roomLayout, feedback);
+      const result = applyLocalFeedback(roomLayout, feedback, currentScenario()?.id);
 
       if ("error" in result) {
         setErrorMessage(result.error);
