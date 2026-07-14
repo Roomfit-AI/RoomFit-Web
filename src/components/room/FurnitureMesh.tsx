@@ -9,6 +9,7 @@ interface FurnitureMeshProps {
   item: Furniture;
   isSelected: boolean;
   canTransform: boolean;
+  showSelectionIndicator: boolean;
   onSelect: (id: string) => void;
   onMove: (id: string, position: Vector2D) => void;
 }
@@ -17,6 +18,7 @@ export function FurnitureMesh({
   item,
   isSelected,
   canTransform,
+  showSelectionIndicator,
   onSelect,
   onMove,
 }: FurnitureMeshProps) {
@@ -56,7 +58,7 @@ export function FurnitureMesh({
       onPointerDown={handlePointerDown}
     >
       <FurnitureRenderer item={item} />
-      {isSelected && (
+      {isSelected && showSelectionIndicator && (
         <mesh position={[0, item.dimensions.height / 2 + 0.045, 0]}>
           <boxGeometry args={[item.dimensions.width + 0.1, 0.035, item.dimensions.depth + 0.1]} />
           <meshStandardMaterial color="#111111" transparent opacity={0.16} />

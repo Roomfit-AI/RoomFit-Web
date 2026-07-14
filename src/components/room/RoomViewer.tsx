@@ -18,6 +18,7 @@ interface RoomViewerProps {
   onRotateFurniture?: (id: string) => void;
   hideEntranceWalls?: boolean;
   alignCameraToEntrance?: boolean;
+  showEditingHelpers?: boolean;
 }
 
 export function RoomViewer({
@@ -29,6 +30,7 @@ export function RoomViewer({
   onRotateFurniture,
   hideEntranceWalls = false,
   alignCameraToEntrance = false,
+  showEditingHelpers = false,
 }: RoomViewerProps) {
   const camera = room.camera ?? {
     type: "orthographic" as const,
@@ -74,7 +76,8 @@ export function RoomViewer({
               key={item.id}
               item={item}
               isSelected={selectedFurnitureId === item.id}
-              canTransform
+              canTransform={showEditingHelpers}
+              showSelectionIndicator={showEditingHelpers}
               onSelect={onSelectFurniture}
               onMove={onMoveFurniture}
             />
@@ -97,8 +100,8 @@ export function RoomViewer({
         </group>
       </Canvas>
       <div className="viewer-caption">
-        <span>가구를 클릭한 뒤 드래그해 이동할 수 있습니다.</span>
-        {selectedFurnitureId && onRotateFurniture && (
+        {showEditingHelpers && <span>가구를 클릭한 뒤 드래그해 이동할 수 있습니다.</span>}
+        {showEditingHelpers && selectedFurnitureId && onRotateFurniture && (
           <button
             type="button"
             onClick={() => onRotateFurniture(selectedFurnitureId)}
@@ -107,7 +110,7 @@ export function RoomViewer({
             ⟳ 90° 회전
           </button>
         )}
-        <strong>{selectedFurnitureId ? "선택됨" : "둘러보기"}</strong>
+        <strong>{showEditingHelpers && selectedFurnitureId ? "선택됨" : "둘러보기"}</strong>
       </div>
     </div>
   );
