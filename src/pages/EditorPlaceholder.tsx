@@ -398,8 +398,17 @@ export default function EditorPlaceholder() {
     setInterpretedIntent(null);
 
     try {
-      const context = await createDefaultAgentContext(roomId);
-      const result = await recommendLayout(roomId, context.contextId);
+      // Real backend round trip (used by sample rooms whose purpose/style
+      // don't match a scripted demo mood, e.g. the collector rooms above) —
+      // a local backend answers near-instantly, which read as an instant
+      // swap instead of the AI actually working. Racing it against the same
+      // fixed 5s floor used by the scripted-mood path keeps that "AI 추천
+      // 생성 중..." reading consistent regardless of which path a given
+      // sample room happens to take.
+      const [result] = await Promise.all([
+        createDefaultAgentContext(roomId).then((context) => recommendLayout(roomId, context.contextId)),
+        new Promise((resolve) => setTimeout(resolve, 5000)),
+      ]);
 
       const recommendedLayout = applyBackendFurnitureToLayout(roomLayout, result.recommendedFurniture);
       setRoomLayout(applyRecommendedRoomLayout(roomLayout, recommendedLayout));

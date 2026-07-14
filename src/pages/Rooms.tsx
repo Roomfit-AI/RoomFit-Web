@@ -11,6 +11,7 @@ import {
 } from "../api/rooms";
 import { RoomViewer } from "../components/room/RoomViewer";
 import { hasConfirmedLayout } from "../config/confirmedLayouts";
+import { applyPreferencesToStorage, getRoomPreferences } from "../config/roomPreferences";
 import { captureCanvasThumbnail, getRoomThumbnail, saveRoomThumbnail } from "../config/roomThumbnails";
 import type { RoomLayout } from "../types";
 
@@ -171,6 +172,16 @@ export default function Rooms() {
     // get picked up the moment /editor opens again, silently overriding the
     // fresh raw layout just set above with the old scenario's result.
     localStorage.removeItem("roomfit:confirmedRoomLayout");
+
+    // /preference, /reference-image, /add-furniture each keep their pick in
+    // one global localStorage key that only resets once per browser session
+    // — without this, switching to a different room here left the previous
+    // room's purpose/palette/style/checked-furniture still applied there,
+    // needing to be cleared out by hand. Restoring this room's own saved
+    // picks (or blanking them out if it's never been through this before)
+    // means every fresh room actually starts fresh, while an already-
+    // confirmed room reopens showing what it was actually confirmed with.
+    applyPreferencesToStorage(getRoomPreferences(room.layoutId));
 
     setSelectedRoomId(room.layoutId);
   };

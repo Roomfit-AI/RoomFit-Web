@@ -15,6 +15,7 @@ import RoomViewer from "../components/room/RoomViewer";
 import PageStepHeader from "../components/ui/PageStepHeader";
 import { resolveCurrentRoomLayout, saveConfirmedLayout } from "../config/confirmedLayouts";
 import { NATURAL_SCENARIO_SHOPPING_LIST } from "../config/naturalScenarioShoppingList";
+import { readCurrentPreferences, saveRoomPreferences } from "../config/roomPreferences";
 import { captureCanvasThumbnail, saveRoomThumbnail } from "../config/roomThumbnails";
 import { currentScenario } from "../config/scenarios";
 
@@ -58,6 +59,12 @@ export default function LayoutConfirm() {
     // picks the confirmed result back up instead of the bare as-uploaded
     // furniture.
     saveConfirmedLayout(roomLayout.id, roomLayout);
+
+    // Snapshots whatever purpose/palette/style/추가 가구 this room actually
+    // used — Rooms.tsx's selectRoom restores this the next time this same
+    // room is picked, so reopening a confirmed room shows its own real
+    // choices instead of whatever room was selected most recently elsewhere.
+    saveRoomPreferences(roomLayout.id, readCurrentPreferences());
 
     // /manage-furniture also captures a thumbnail (its "내부 보기" toggle),
     // but that happens early in the flow, before /preference's style pick or
