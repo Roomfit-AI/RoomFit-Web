@@ -184,11 +184,11 @@ function applyNaturalWoodRestRoom(layout: RoomLayout, sourceFurniture: Furniture
 }
 
 function isCollectorRoom(room: RoomLayout): boolean {
-  return room.name === "미드센추리 컬렉터 룸";
+  return room.name === "미드센추리 컬렉터 룸" || room.name === "미드센추리 컬렉터 스튜디오";
 }
 
 function applyRecommendedRoomLayout(currentRoom: RoomLayout, recommendedLayout: RoomLayout): RoomLayout {
-  // The collector sample intentionally reveals its complete scripted room
+  // Collector samples intentionally reveal their complete scripted room
   // only after the backend recommendation call. Other rooms preserve the
   // existing natural-wood demo transformation.
   return isCollectorRoom(currentRoom)

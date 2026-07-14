@@ -17,7 +17,9 @@ const COLORS = {
 };
 
 export default function MidCenturyCollectorFurniture({ item }: { item: Furniture }) {
-  switch (item.id) {
+  const templateId = item.id.replace(/^studio-/, "collector-");
+
+  switch (templateId) {
     case "collector-bed":
       return <CollectorBed item={item} />;
     case "collector-bedside":

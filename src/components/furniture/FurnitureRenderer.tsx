@@ -26,7 +26,7 @@ export default function FurnitureRenderer({ item }: { item: Furniture }) {
     return <Plant item={item} />;
   }
 
-  if (item.id.startsWith("collector-")) {
+  if (item.id.startsWith("collector-") || item.id.startsWith("studio-")) {
     return <MidCenturyCollectorFurniture item={item} />;
   }
 

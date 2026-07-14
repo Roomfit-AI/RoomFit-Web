@@ -479,7 +479,7 @@ function toFurniture(
 ): Furniture {
   const category = toFurnitureCategory(item.type);
   const materialType = materialByCategory(category);
-  const collectorAppearance = collectorAppearanceById[item.id];
+  const collectorAppearance = collectorAppearanceById[item.id.replace(/^studio-/, "collector-")];
   const color = collectorAppearance?.color ?? colorByCategory(category);
   const rotationY = normalizeRotation(item.rotation);
   const rawPosition = { x: item.position.x - roomWidth / 2, z: item.position.z - roomDepth / 2 };
