@@ -1,5 +1,6 @@
 import { useLocation, useNavigate } from "react-router-dom";
 import Button from "./Button";
+import { resolveCurrentRoomLayout, saveConfirmedLayout } from "../../config/confirmedLayouts";
 
 const navigationSteps = [
   { path: "/", label: "홈" },
@@ -37,12 +38,12 @@ export default function Navbar() {
     currentStep.beforeNext?.();
 
     if (isLastStep) {
-      const confirmedLayout = localStorage.getItem("roomfit:confirmedRoomLayout");
-
-      if (confirmedLayout) {
-        localStorage.setItem("roomfit:finalRoomLayout", confirmedLayout);
-      }
-
+      // Mirrors LayoutConfirm.tsx's own "확정하기" button — this navbar button
+      // relabels itself to "확정하기" on the last step (see the render below),
+      // so clicking it here needs to actually persist the result too, not
+      // just the in-page button.
+      const layout = resolveCurrentRoomLayout();
+      saveConfirmedLayout(layout.id, layout);
       return;
     }
 

@@ -6,9 +6,11 @@ const addFurnitureVisitedKey = "roomfit:visited:add-furniture";
 
 const furnitureItems = [
   { id: "sofa-modern", category: "소파", name: "모던 패브릭 소파", visual: "sofa" },
+  { id: "sofa-round", category: "소파", name: "라운드 소파", visual: "roundSofa" },
   { id: "table-round", category: "테이블", name: "라운드 커피테이블", visual: "table" },
   { id: "tv-stand", category: "수납장", name: "우드 TV 장식장", visual: "tvStand" },
   { id: "shelf-open", category: "수납장", name: "오픈 책장", visual: "shelf" },
+  { id: "bookshelf", category: "수납장", name: "책장", visual: "bookshelf" },
   { id: "chair-rattan", category: "의자", name: "라탄 암체어", visual: "chair" },
   { id: "dining-table", category: "테이블", name: "우드 다이닝 테이블", visual: "dining" },
   { id: "green-sofa", category: "소파", name: "벨벳 1인 소파", visual: "greenChair" },
