@@ -62,7 +62,7 @@ export default function ReferenceImage() {
   return (
     <main className="min-h-[calc(100vh-76px)] bg-[#fbfbfb] px-5 py-8 text-[#141414] sm:px-8 lg:px-10">
       <section className="mx-auto max-w-7xl">
-        <PageStepHeader step={4} title="레퍼런스 이미지 선택" className="mb-12" />
+        <PageStepHeader step={3} title="라이프 스타일 및 선호하는 디자인 선택" className="mb-12" />
 
         <header className="mb-20 text-center">
           <h1 className="text-3xl font-extrabold tracking-normal sm:text-4xl">마음에 드는 인테리어 이미지를 선택해주세요</h1>
