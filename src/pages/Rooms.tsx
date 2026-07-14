@@ -267,7 +267,7 @@ export default function Rooms() {
                         <span className="text-xs font-medium text-[#777777]">{formatUploadedAt(room.createdAt)}</span>
                       </div>
 
-                      <RoomPreview tone={room.tone} />
+                      <RoomPreview tone={room.tone} thumbnailUrl={room.thumbnailUrl} alt={room.title} />
 
                       <strong className="mt-5 block text-base font-bold text-[#151515]">{room.title}</strong>
                       <span className="mt-1 block text-sm font-medium text-[#777777]">{room.dimensions}</span>
@@ -349,7 +349,7 @@ export default function Rooms() {
                       </span>
                     )}
 
-                    <RoomPreview tone={room.tone} />
+                    <RoomPreview tone={room.tone} thumbnailUrl={room.thumbnailUrl} alt={room.title} />
 
                     <strong className="mt-5 block text-base font-bold text-[#151515]">
                       {room.title}
@@ -433,7 +433,20 @@ function InfoRow({
   );
 }
 
-function RoomPreview({ tone }: { tone: string }) {
+function RoomPreview({ tone, thumbnailUrl, alt }: { tone: string; thumbnailUrl?: string; alt: string }) {
+  // A real snapshot (see api/rooms.ts's thumbnailUrl, sourced from the iOS
+  // app's scan-completion capture) takes priority over the generic
+  // tone-based illustration below — that illustration is a decorative
+  // placeholder, not a rendering of the room's actual furniture, so it only
+  // applies when no real photo exists (older uploads, or sample rooms).
+  if (thumbnailUrl) {
+    return (
+      <div className="room-preview">
+        <img src={thumbnailUrl} alt={alt} className="h-full w-full object-cover" />
+      </div>
+    );
+  }
+
   return (
     <div className={`room-preview room-preview-${tone}`}>
       <span className="room-wall room-wall-left" />
