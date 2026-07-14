@@ -183,6 +183,19 @@ function applyNaturalWoodRestRoom(layout: RoomLayout, sourceFurniture: Furniture
   };
 }
 
+function isCollectorRoom(room: RoomLayout): boolean {
+  return room.name === "미드센추리 컬렉터 룸";
+}
+
+function applyRecommendedRoomLayout(currentRoom: RoomLayout, recommendedLayout: RoomLayout): RoomLayout {
+  // The collector sample intentionally reveals its complete scripted room
+  // only after the backend recommendation call. Other rooms preserve the
+  // existing natural-wood demo transformation.
+  return isCollectorRoom(currentRoom)
+    ? recommendedLayout
+    : applyNaturalWoodRestRoom(recommendedLayout, recommendedLayout.furniture);
+}
+
 // Sentinel layoutId for rooms whose "AI 추천 생성" took the scripted-mood
 // shortcut (see handleRecommend below) instead of a real backend call —
 // there's no backend layoutId to hand to applyLayoutFeedback in that case,
@@ -335,7 +348,8 @@ export default function EditorPlaceholder() {
     // "rest/minimal/gray" or "work/natural/wood," so for a room whose saved
     // preference matches one of them, restyle+add locally and skip the
     // network round trip entirely.
-    const scenario = currentScenario();
+    const roomId = loadBackendRoomId();
+    const scenario = isCollectorRoom(roomLayout) ? undefined : currentScenario();
 
     if (scenario) {
       setIsRecommending(true);
@@ -371,11 +385,11 @@ export default function EditorPlaceholder() {
     setInterpretedIntent(null);
 
     try {
-      const roomId = loadBackendRoomId();
       const context = await createDefaultAgentContext(roomId);
       const result = await recommendLayout(roomId, context.contextId);
 
-      setRoomLayout(applyBackendFurnitureToLayout(roomLayout, result.recommendedFurniture));
+      const recommendedLayout = applyBackendFurnitureToLayout(roomLayout, result.recommendedFurniture);
+      setRoomLayout(applyRecommendedRoomLayout(roomLayout, recommendedLayout));
       setLayoutId(result.layoutId);
       setScoreSummary(result.scoreSummary);
       setValidationResult(result.validationResult);
@@ -430,7 +444,8 @@ export default function EditorPlaceholder() {
     try {
       const result = await applyLayoutFeedback(layoutId, feedback.trim());
 
-      setRoomLayout(applyBackendFurnitureToLayout(roomLayout, result.recommendedFurniture));
+      const recommendedLayout = applyBackendFurnitureToLayout(roomLayout, result.recommendedFurniture);
+      setRoomLayout(applyRecommendedRoomLayout(roomLayout, recommendedLayout));
       setLayoutId(result.layoutId);
       setScoreSummary(result.scoreSummary);
       setValidationResult(result.validationResult);
