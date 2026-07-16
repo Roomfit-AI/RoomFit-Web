@@ -617,3 +617,76 @@ export function applyBackendFurnitureToLayout(
     furniture: furniture.map((item) => toFurniture(item, layout.width, layout.depth)),
   };
 }
+
+// Reverse of toFurnitureCategory() above — lossy (several backend `type`
+// strings collapse into one frontend category, e.g. "shelf"/"tvStand"/
+// "wardrobe" all become "cabinet"), so a piece that started life as e.g.
+// "shelf" round-trips back as the generic "storage" instead of its original
+// type. Acceptable here: PUT /api/rooms/{roomId}/layout only needs `type` to
+// stay one of the categories AgentContextService's requiredItems/
+// optionalItems checks against (bed/desk/chair/storage/rug/lamp).
+const BACKEND_TYPE_BY_CATEGORY: Record<FurnitureCategory, string> = {
+  bed: "bed",
+  desk: "desk",
+  chair: "chair",
+  cabinet: "storage",
+  rug: "rug",
+  lighting: "lamp",
+};
+
+// Inverse of normalizeRotation() above: that function turns a backend
+// clockwise-degrees angle into Three.js's rotation.y (negated radians) — this
+// undoes both steps to get back to the backend's convention.
+export function toBackendRotationDegrees(rotationY: number): number {
+  const degrees = (-rotationY * 180) / Math.PI;
+  return ((degrees % 360) + 360) % 360;
+}
+
+// The frontend only ever has two statuses (types.ts's FurnitureStatus); a
+// piece the user picked from the manage-furniture catalog or repositioned
+// reads as "USER_MODIFIED" rather than "RECOMMENDED" once saved back —
+// RECOMMENDED is reserved for the backend's own AI-generated suggestions.
+export function toBackendFurnitureStatus(status: Furniture["status"]): "EXISTING" | "USER_MODIFIED" {
+  return status === "existing" ? "EXISTING" : "USER_MODIFIED";
+}
+
+export interface RoomFurnitureReplaceItem {
+  id: string;
+  type: string;
+  label: string;
+  width: number;
+  depth: number;
+  height: number;
+  position: { x: number; z: number };
+  rotation: number;
+  status: "EXISTING" | "USER_MODIFIED";
+}
+
+// Undoes the center-origin shift toWallSegment()/toFurniture() apply on the
+// way in, so positions land back in the backend's corner-origin (0..width,
+// 0..depth) space.
+function toBackendFurnitureItem(item: Furniture, roomWidth: number, roomDepth: number): RoomFurnitureReplaceItem {
+  return {
+    id: item.id,
+    type: BACKEND_TYPE_BY_CATEGORY[item.category],
+    label: item.name,
+    width: item.dimensions.width,
+    depth: item.dimensions.depth,
+    height: item.dimensions.height,
+    position: { x: item.position.x + roomWidth / 2, z: item.position.z + roomDepth / 2 },
+    rotation: toBackendRotationDegrees(item.rotationY),
+    status: toBackendFurnitureStatus(item.status),
+  };
+}
+
+// Persists the room's current furniture (manage-furniture add/move/delete/
+// rotate) back to the backend's Room, via the same shape RoomUploadRequest
+// uses — see RoomFit-Backend's PUT /api/rooms/{roomId}/layout. Callers should
+// treat failures as non-fatal (this is a best-effort background sync; the
+// caller's own local state is the source of truth for the current session
+// either way) rather than surfacing an error to the user mid-edit.
+export async function updateRoomFurniture(roomId: number, furniture: Furniture[], roomWidth: number, roomDepth: number): Promise<void> {
+  await apiClient.put(`/api/rooms/${roomId}/layout`, {
+    furniture: furniture.map((item) => toBackendFurnitureItem(item, roomWidth, roomDepth)),
+  });
+}

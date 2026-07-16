@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { FiChevronDown, FiChevronUp, FiMoreHorizontal, FiPlus, FiRotateCcw, FiTrash2, FiZoomIn } from "react-icons/fi";
 
-import { getSampleRoomLayouts } from "../api/rooms";
+import { getSampleRoomLayouts, updateRoomFurniture } from "../api/rooms";
 import { RoomViewer } from "../components/room/RoomViewer";
 import { getLiveMirrorForSelectedRoom } from "../config/confirmedLayouts";
 import { captureCanvasThumbnail, saveRoomThumbnail } from "../config/roomThumbnails";
@@ -255,6 +255,30 @@ export default function ManageFurniture() {
 
     localStorage.setItem("roomfit:selectedRoomLayout", JSON.stringify(nextRoom));
   }, [selectedRoom, furniture]);
+
+  // Mirrors every add/move/delete/rotate here onto the backend's Room (see
+  // PUT /api/rooms/{roomId}/layout) — without this, the localStorage write
+  // above is the only record of what the user actually arranged, and
+  // "AI 추천 생성" on /editor (which reads the backend's own Room.furniture)
+  // never learns about it. Debounced so a drag doesn't fire a request per
+  // frame; best-effort (a failed background save shouldn't interrupt
+  // editing, the localStorage copy above is still there either way).
+  useEffect(() => {
+    const rawRoomId = localStorage.getItem("roomfit:backendRoomId");
+    const roomId = Number(rawRoomId);
+
+    if (!rawRoomId || !Number.isFinite(roomId) || roomId <= 0) {
+      return;
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      updateRoomFurniture(roomId, furniture, selectedRoom.width, selectedRoom.depth).catch((error) => {
+        console.error("가구 배치를 백엔드에 저장하지 못했습니다.", error);
+      });
+    }, 800);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [furniture, selectedRoom.width, selectedRoom.depth]);
 
   return (
     <main className="min-h-[calc(100vh-76px)] bg-[#fbfbfb] text-[#141414]">

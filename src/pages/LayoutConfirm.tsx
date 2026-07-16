@@ -11,6 +11,7 @@ import {
   MdOutlineWeekend,
 } from "react-icons/md";
 
+import { confirmLayout as confirmLayoutOnBackend } from "../api/layouts";
 import RoomViewer from "../components/room/RoomViewer";
 import PageStepHeader from "../components/ui/PageStepHeader";
 import { resolveCurrentRoomLayout, saveConfirmedLayout } from "../config/confirmedLayouts";
@@ -53,12 +54,28 @@ export default function LayoutConfirm() {
   const isNaturalScenario = currentScenario()?.id === "rest-natural-wood";
 
   const confirmLayout = () => {
-    // No backend endpoint saves a finalized layout back to a room (see
-    // api/rooms.ts) — this keeps the result locally, keyed by the room's own
-    // id, so reopening this same room later (see Rooms.tsx's selectRoom)
+    // Local save stays as the source of truth for this session either way
+    // (and is the only option for the scripted-scenario path, which has no
+    // backend layoutId) — this keeps the result locally, keyed by the room's
+    // own id, so reopening this same room later (see Rooms.tsx's selectRoom)
     // picks the confirmed result back up instead of the bare as-uploaded
     // furniture.
     saveConfirmedLayout(roomLayout.id, roomLayout);
+
+    // Also confirms on the backend when a real layoutId exists (see
+    // EditorPlaceholder.tsx's own persist effect for roomfit:backendLayoutId)
+    // — RoomFit-Backend's LayoutService.confirmLayout now writes the
+    // confirmed furniture back onto the Room, so GET /api/rooms/{roomId}
+    // reflects it too. Best-effort: a failed backend confirm shouldn't block
+    // the local confirmation the rest of this handler already did.
+    const rawLayoutId = localStorage.getItem("roomfit:backendLayoutId");
+    const backendLayoutId = Number(rawLayoutId);
+
+    if (rawLayoutId && Number.isFinite(backendLayoutId) && backendLayoutId > 0) {
+      confirmLayoutOnBackend(backendLayoutId).catch((error) => {
+        console.error("배치를 백엔드에서 확정하지 못했습니다.", error);
+      });
+    }
 
     // Snapshots whatever purpose/palette/style/추가 가구 this room actually
     // used — Rooms.tsx's selectRoom restores this the next time this same

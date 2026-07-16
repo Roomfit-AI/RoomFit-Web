@@ -1,5 +1,7 @@
 import { apiClient } from "./client";
+import { toBackendFurnitureStatus, toBackendRotationDegrees } from "./rooms";
 import type { BackendFurnitureApiItem } from "./rooms";
+import type { Furniture } from "../types";
 
 interface ApiResponse<T> {
   success: boolean;
@@ -164,6 +166,49 @@ export async function applyLayoutFeedback(layoutId: number, feedback: string): P
     layoutId,
     feedback,
   });
+
+  return response.data.data;
+}
+
+// Compact override item PUT /api/layouts/{layoutId} and POST /api/layouts/validate
+// expect — id/position/rotation/status only, never the recommendation
+// metadata (width/depth/height/productId/styleTags) those endpoints already
+// own. Must include every furniture id currently in the layout or the
+// backend rejects it with FURNITURE_ARRAY_MISMATCH.
+function toLayoutPositionUpdate(item: Furniture, roomWidth: number, roomDepth: number) {
+  return {
+    id: item.id,
+    position: { x: item.position.x + roomWidth / 2, z: item.position.z + roomDepth / 2 },
+    rotation: toBackendRotationDegrees(item.rotationY),
+    status: toBackendFurnitureStatus(item.status),
+  };
+}
+
+// Persists /editor's drag/rotate/delete edits back onto the backend's Layout
+// — without this, the backend never learns about manual edits made after
+// "AI 추천 생성", so a later confirm (see RoomFit-Backend's
+// LayoutService.confirmLayout, which now writes the Layout's furniture back
+// onto the Room) would confirm the pre-edit recommendation instead of what's
+// actually on screen. `furniture` must be the full current array (deleted
+// pieces already filtered out) — the backend validates the id set is exactly
+// the layout's original set, so a genuinely deleted piece has to be excluded
+// entirely, not marked DELETED, unlike rooms' own furniture-status endpoint.
+export async function updateLayout(layoutId: number, furniture: Furniture[], roomWidth: number, roomDepth: number): Promise<LayoutResponse> {
+  const response = await apiClient.put<ApiResponse<LayoutResponse>>(`/api/layouts/${layoutId}`, {
+    furniture: furniture.map((item) => toLayoutPositionUpdate(item, roomWidth, roomDepth)),
+  });
+
+  return response.data.data;
+}
+
+export interface ConfirmLayoutResponse {
+  layoutId: number;
+  confirmed: boolean;
+  confirmedAt: string;
+}
+
+export async function confirmLayout(layoutId: number): Promise<ConfirmLayoutResponse> {
+  const response = await apiClient.post<ApiResponse<ConfirmLayoutResponse>>(`/api/layouts/${layoutId}/confirm`);
 
   return response.data.data;
 }

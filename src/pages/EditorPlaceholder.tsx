@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { FiRotateCcw, FiTrash2 } from "react-icons/fi";
 
-import { applyLayoutFeedback, createDefaultAgentContext, recommendLayout, type InterpretedIntent, type LayoutValidationResult, type ScoreSummary } from "../api/layouts";
+import { applyLayoutFeedback, createDefaultAgentContext, recommendLayout, updateLayout, type InterpretedIntent, type LayoutValidationResult, type ScoreSummary } from "../api/layouts";
 import { applyBackendFurnitureToLayout } from "../api/rooms";
 import RoomViewer from "../components/room/RoomViewer";
 import { getLiveMirrorForSelectedRoom } from "../config/confirmedLayouts";
@@ -263,6 +263,44 @@ export default function EditorPlaceholder() {
 
     localStorage.setItem("roomfit:confirmedRoomLayout", JSON.stringify(roomLayout));
   }, [roomLayout]);
+
+  // /layout-confirm and Navbar.tsx's own "확정하기" run on a separate page
+  // mount, with no direct way to read this component's layoutId state — this
+  // is the only channel that carries a real backend layoutId to them (the
+  // scripted-scenario sentinel is deliberately never written, since there's
+  // no backend Layout for it to confirm).
+  useEffect(() => {
+    if (!layoutId || layoutId === LOCAL_SCENARIO_LAYOUT_ID) {
+      localStorage.removeItem("roomfit:backendLayoutId");
+      return;
+    }
+
+    localStorage.setItem("roomfit:backendLayoutId", String(layoutId));
+  }, [layoutId]);
+
+  // Mirrors drag/rotate/delete edits onto the backend's Layout (see PUT
+  // /api/layouts/{layoutId}) — only reachable once a real backend layoutId
+  // exists (skipped for the scripted-scenario sentinel, which has no backend
+  // Layout to save to). Without this, edits made after "AI 추천 생성" never
+  // reach the backend, so confirming (which now writes Layout.furniture onto
+  // Room — see RoomFit-Backend's LayoutService.confirmLayout) would persist
+  // the pre-edit recommendation instead of what's actually on screen.
+  // Debounced so a drag doesn't fire a request per frame; best-effort (the
+  // localStorage mirror above already keeps this session's edits safe either
+  // way).
+  useEffect(() => {
+    if (!roomLayout || !layoutId || layoutId === LOCAL_SCENARIO_LAYOUT_ID) {
+      return;
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      updateLayout(layoutId, roomLayout.furniture, roomLayout.width, roomLayout.depth).catch((error) => {
+        console.error("배치를 백엔드에 저장하지 못했습니다.", error);
+      });
+    }, 800);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [roomLayout, layoutId]);
 
   const handleMoveFurniture = (id: string, position: Vector2D) => {
     setRoomLayout((current) => {

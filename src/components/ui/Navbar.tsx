@@ -1,5 +1,6 @@
 import { useLocation, useNavigate } from "react-router-dom";
 import Button from "./Button";
+import { confirmLayout as confirmLayoutOnBackend } from "../../api/layouts";
 import { resolveCurrentRoomLayout, saveConfirmedLayout } from "../../config/confirmedLayouts";
 
 const navigationSteps = [
@@ -44,6 +45,16 @@ export default function Navbar() {
       // just the in-page button.
       const layout = resolveCurrentRoomLayout();
       saveConfirmedLayout(layout.id, layout);
+
+      const rawLayoutId = localStorage.getItem("roomfit:backendLayoutId");
+      const backendLayoutId = Number(rawLayoutId);
+
+      if (rawLayoutId && Number.isFinite(backendLayoutId) && backendLayoutId > 0) {
+        confirmLayoutOnBackend(backendLayoutId).catch((error) => {
+          console.error("배치를 백엔드에서 확정하지 못했습니다.", error);
+        });
+      }
+
       return;
     }
 
