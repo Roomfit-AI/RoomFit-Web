@@ -253,6 +253,43 @@
     display: block;
   }
 
+  .furniture-card-bed span:nth-child(1) {
+    left: 10px;
+    right: 10px;
+    bottom: 14px;
+    height: 32px;
+    border-radius: 6px;
+    background: #f0e8dc;
+    box-shadow: 0 10px 18px rgba(83, 65, 48, 0.16);
+  }
+
+  .furniture-card-bed span:nth-child(2) {
+    left: 10px;
+    top: 10px;
+    width: 14px;
+    height: 56px;
+    border-radius: 4px;
+    background: #8b633d;
+  }
+
+  .furniture-card-bed span:nth-child(3) {
+    left: 18px;
+    top: 26px;
+    width: 26px;
+    height: 16px;
+    border-radius: 6px;
+    background: #ffffff;
+  }
+
+  .furniture-card-bed span:nth-child(4) {
+    right: 12px;
+    bottom: 16px;
+    width: 34px;
+    height: 10px;
+    border-radius: 4px;
+    background: #b5654a;
+  }
+
   .furniture-card-sofa span:nth-child(1) {
     left: 8px;
     right: 8px;
@@ -658,5 +695,24 @@
   .furniture-card-plant span:nth-child(4) {
     left: 59px;
     transform: rotate(32deg);
+  }
+
+  @keyframes fade-slide-up {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  /* `both` fills the pre-animation state (opacity 0) too, so the element
+     doesn't flash fully visible for one frame before the animation starts —
+     used by LayoutConfirm.tsx's "홈 화면으로 돌아가기" button, which only
+     mounts once the layout is actually confirmed. */
+  .animate-fade-slide-up {
+    animation: fade-slide-up 0.45s ease-out both;
   }
 }

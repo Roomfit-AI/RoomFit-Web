@@ -26,6 +26,18 @@ const SHRINK_WORDS = ["좁게", "좁히", "작게", "줄이", "줄여", "축소"
 const WIDTH_WORDS = ["가로", "폭"];
 const DEPTH_WORDS = ["세로", "깊이"];
 
+// A scripted special case for the 네츄럴 톤 (rest-natural-wood) demo only —
+// "더 큰 책상으로 교체해줘" style requests read as wanting an actual
+// *different* desk, not just a bigger version of the same one, so this
+// swaps in both a bigger width and a fresh look instead of just nudging the
+// existing size like the generic grow/shrink path below does. This is a
+// scripted demo stand-in, not a general "replace this furniture" feature.
+const DESK_REPLACEMENT_VERBS = ["교체", "바꿔", "바꾸", "다른"];
+
+function isDeskReplacementRequest(feedback: string): boolean {
+  return feedback.includes("책상") && DESK_REPLACEMENT_VERBS.some((word) => feedback.includes(word));
+}
+
 // Per-request step and sane per-category min/max — this never does real
 // collision/footprint checking against the room (that's what the backend's
 // validation pass is for), just keeps a repeatedly-applied "넓게" from
@@ -72,8 +84,46 @@ function clamp(value: number, min: number, max: number): number {
 
 export type LocalFeedbackResult = { room: RoomLayout; intent: InterpretedIntent } | { error: string };
 
-export function applyLocalFeedback(room: RoomLayout, feedbackText: string): LocalFeedbackResult {
+export function applyLocalFeedback(room: RoomLayout, feedbackText: string, scenarioId?: string): LocalFeedbackResult {
   const feedback = feedbackText.trim();
+
+  if (scenarioId === "rest-natural-wood" && isDeskReplacementRequest(feedback)) {
+    const desk = room.furniture.find((item) => item.category === "desk");
+
+    if (!desk) {
+      return { error: "이 방에는 책상이(가) 없어 반영할 수 없습니다." };
+    }
+
+    const bounds = SIZE_BOUNDS.desk!;
+    // A distinctly bigger jump than STEP (0.18) — "더 큰 책상으로 교체" reads
+    // as wanting an actually different, proper desk, not a marginal resize.
+    const nextWidth = clamp(desk.dimensions.width + 0.4, bounds.width[0], bounds.width[1]);
+    // A fresh white-oak two-tone look, distinct from the light-oak "#c9a874"
+    // every other natural-scenario wood piece already uses — otherwise a
+    // "new design" would look identical to the old one.
+    const updatedFurniture: Furniture[] = room.furniture.map((item) =>
+      item.id === desk.id
+        ? {
+            ...item,
+            name: "화이트 우드 책상",
+            dimensions: { ...item.dimensions, width: nextWidth },
+            color: "#ede4d3",
+            material: { type: "white", color: "#ede4d3", roughness: 0.55, metalness: 0 },
+          }
+        : item,
+    );
+
+    return {
+      room: { ...room, furniture: updatedFurniture },
+      intent: {
+        source: "RULE_BASED",
+        rawIntent: feedback,
+        targetFurniture: "책상",
+        fallbackUsed: true,
+      },
+    };
+  }
+
   const matched = matchCategory(feedback);
 
   if (!matched) {

@@ -9,7 +9,11 @@ import {
   type SampleRoomCard,
   type UploadedRoomCard,
 } from "../api/rooms";
-import { getConfirmedLayout, hasConfirmedLayout } from "../config/confirmedLayouts";
+import { RoomViewer } from "../components/room/RoomViewer";
+import { hasConfirmedLayout } from "../config/confirmedLayouts";
+import { applyPreferencesToStorage, getRoomPreferences } from "../config/roomPreferences";
+import { captureCanvasThumbnail, getRoomThumbnail, saveRoomThumbnail } from "../config/roomThumbnails";
+import type { RoomLayout } from "../types";
 
 const filters = ["전체", "원룸", "사무실"];
 const selectedRoomStorageKeys = [
@@ -35,6 +39,12 @@ export default function Rooms() {
   const deletedUploadIds = useRef(new Set<number>());
 
   const [selectedRoomId, setSelectedRoomId] = useState(() => getInitialSelectedRoomId());
+  // Ticks up after every background capture completes, purely to force
+  // roomNeedingCapture below to re-check which room (if any) still needs
+  // one — capturing happens one room at a time (see HiddenThumbnailCapture)
+  // rather than all at once, since each capture opens its own WebGL
+  // context and browsers cap how many a single page can hold open at once.
+  const [thumbnailCaptureTick, setThumbnailCaptureTick] = useState(0);
 
   useEffect(() => {
     let ignore = false;
@@ -115,6 +125,24 @@ export default function Rooms() {
     return roomSamples.filter((room) => room.category === activeFilter);
   }, [activeFilter, roomSamples]);
 
+  // The first room (sample or uploaded) with no locally-captured thumbnail
+  // yet (see getRoomThumbnail) — capturing this automatically, right when
+  // the room list itself loads, means a real furnished-3D thumbnail is
+  // ready the moment a room shows up here instead of only after someone
+  // happens to open /manage-furniture for it.
+  const roomNeedingCapture = useMemo(() => {
+    const candidates: Array<{ layoutId: string; layout: RoomLayout }> = [
+      ...roomSamples.map((room) => ({ layoutId: room.layoutId, layout: room.layout })),
+      ...uploadedRooms.map((room) => ({ layoutId: room.layoutId, layout: room.layout })),
+    ];
+
+    return candidates.find((room) => !getRoomThumbnail(room.layoutId));
+    // thumbnailCaptureTick has no meaningful value itself — it's only here
+    // so a completed capture (see HiddenThumbnailCapture's onDone) forces
+    // this to re-run and pick up the next room still needing one.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [roomSamples, uploadedRooms, thumbnailCaptureTick]);
+
   const selectRoom = (room: SampleRoomCard) => {
     localStorage.setItem("roomfit:selectedRoomId", room.layoutId);
     localStorage.setItem("roomfit:backendRoomId", String(room.roomId));
@@ -122,14 +150,38 @@ export default function Rooms() {
     localStorage.setItem("roomfit:selectedRoomType", room.category);
     localStorage.setItem("roomfit:selectedRoomSize", room.size);
 
-    // If this room was already confirmed in a previous session (see
-    // LayoutConfirm.tsx's confirmLayout), reopen it showing that same
-    // finalized furniture arrangement instead of the bare as-uploaded scan.
-    const confirmedLayout = getConfirmedLayout(room.layoutId);
-    localStorage.setItem(
-      "roomfit:selectedRoomLayout",
-      JSON.stringify(confirmedLayout ?? room.layout)
-    );
+    // Deliberately always the raw as-uploaded room, never a previously
+    // confirmed result — this room can be run through /preference's
+    // purpose/style pick and /editor's "AI 추천 생성" again with a *different*
+    // mood than whatever was confirmed last time (this app's actual demo
+    // workflow: the same physical room gets retested as both rest-natural-
+    // wood and work-modern-gray). Seeding a previous scenario's already-
+    // restyled furniture here means the new scenario's applyScenario/
+    // applyNaturalWoodRestRoom can't find the original ids ("bed-1" etc.)
+    // it looks for to transform, so the "new" mood silently doesn't apply —
+    // every retry just looks like whatever was confirmed first. The
+    // "확정된 배치 있음" badge (see hasConfirmedLayout below) is still the
+    // visible record that a confirm happened, without resuming its data here.
+    localStorage.setItem("roomfit:selectedRoomLayout", JSON.stringify(room.layout));
+
+    // roomfit:confirmedRoomLayout (see confirmedLayouts.ts's
+    // getLiveMirrorForSelectedRoom) mirrors *any* edit made in /editor this
+    // session, id-matched against roomfit:selectedRoomId — since that id
+    // doesn't change when re-selecting the *same* room, a stale mirror left
+    // over from a previous full run-through would otherwise still match and
+    // get picked up the moment /editor opens again, silently overriding the
+    // fresh raw layout just set above with the old scenario's result.
+    localStorage.removeItem("roomfit:confirmedRoomLayout");
+
+    // /preference, /reference-image, /add-furniture each keep their pick in
+    // one global localStorage key that only resets once per browser session
+    // — without this, switching to a different room here left the previous
+    // room's purpose/palette/style/checked-furniture still applied there,
+    // needing to be cleared out by hand. Restoring this room's own saved
+    // picks (or blanking them out if it's never been through this before)
+    // means every fresh room actually starts fresh, while an already-
+    // confirmed room reopens showing what it was actually confirmed with.
+    applyPreferencesToStorage(getRoomPreferences(room.layoutId));
 
     setSelectedRoomId(room.layoutId);
   };
@@ -273,7 +325,7 @@ export default function Rooms() {
                         <span className="text-xs font-medium text-[#777777]">{formatUploadedAt(room.createdAt)}</span>
                       </div>
 
-                      <RoomPreview tone={room.tone} thumbnailUrl={room.thumbnailUrl} alt={room.title} />
+                      <RoomPreview tone={room.tone} thumbnailUrl={getRoomThumbnail(room.layoutId) ?? room.thumbnailUrl} alt={room.title} />
 
                       <strong className="mt-5 block text-base font-bold text-[#151515]">{room.title}</strong>
                       <span className="mt-1 block text-sm font-medium text-[#777777]">{room.dimensions}</span>
@@ -362,7 +414,7 @@ export default function Rooms() {
                       </span>
                     )}
 
-                    <RoomPreview tone={room.tone} thumbnailUrl={room.thumbnailUrl} alt={room.title} />
+                    <RoomPreview tone={room.tone} thumbnailUrl={getRoomThumbnail(room.layoutId) ?? room.thumbnailUrl} alt={room.title} />
 
                     <strong className="mt-5 block text-base font-bold text-[#151515]">
                       {room.title}
@@ -396,6 +448,14 @@ export default function Rooms() {
           </section>
         </section>
       </section>
+
+      {roomNeedingCapture && (
+        <HiddenThumbnailCapture
+          key={roomNeedingCapture.layoutId}
+          room={roomNeedingCapture.layout}
+          onDone={() => setThumbnailCaptureTick((tick) => tick + 1)}
+        />
+      )}
     </main>
   );
 }
@@ -470,6 +530,60 @@ function RoomPreview({ tone, thumbnailUrl, alt }: { tone: string; thumbnailUrl?:
       <span className="room-table" />
       <span className="room-rug" />
       <span className="room-plant" />
+    </div>
+  );
+}
+
+// Renders one room invisibly just long enough to grab a real 3D thumbnail
+// of it, then reports back so the caller can move on to the next room still
+// missing one.
+function HiddenThumbnailCapture({ room, onDone }: { room: RoomLayout; onDone: () => void }) {
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      const container = containerRef.current;
+      const dataUrl = container && captureCanvasThumbnail(container);
+
+      if (dataUrl) {
+        saveRoomThumbnail(room.id, dataUrl);
+      }
+
+      onDone();
+    }, 500);
+
+    return () => window.clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [room.id]);
+
+  return (
+    <div
+      ref={containerRef}
+      aria-hidden
+      // The actual bug behind the broken framing: RoomViewer's internal
+      // ".viewer-shell" div (see RoomViewer.tsx / index.css) only gets a
+      // real width/height from a CSS rule scoped to an ancestor className
+      // — ".manage-room .viewer-shell", ".confirm-room .viewer-shell", etc.
+      // Without one of those classes on this wrapper, .viewer-shell had no
+      // size at all, so the Canvas/orthographic camera ended up with a
+      // degenerate aspect ratio and rendered that near-empty top-down
+      // sliver instead of a normal isometric view — regardless of how this
+      // div itself was hidden (off-screen vs. opacity, neither mattered).
+      // Reusing "manage-room" here gives it the exact same sizing as
+      // /manage-furniture's real, visible viewer. Hidden via opacity +
+      // negative z-index while still sitting within viewport bounds.
+      className="manage-room"
+      style={{ position: "fixed", inset: 0, width: 900, height: 620, opacity: 0, zIndex: -1, pointerEvents: "none" }}
+    >
+      <RoomViewer
+        room={room}
+        furniture={room.furniture}
+        selectedFurnitureId={null}
+        onSelectFurniture={() => undefined}
+        onMoveFurniture={() => undefined}
+        hideEntranceWalls
+        alignCameraToEntrance
+      />
     </div>
   );
 }

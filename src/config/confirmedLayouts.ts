@@ -38,41 +38,45 @@ export function hasConfirmedLayout(roomLayoutId: string): boolean {
   return Boolean(readAll()[roomLayoutId]);
 }
 
+// roomfit:confirmedRoomLayout (see EditorPlaceholder.tsx's effect) mirrors
+// every manual edit made in /editor (drag, rotate, delete, feedback) — not
+// just formally-confirmed ones — the moment they happen, live, within the
+// current session. But it's a single global key, not scoped per room, and
+// only gets refreshed by actually visiting /editor. Switching to a different
+// room on /rooms and jumping straight past /editor (to /layout-confirm, or
+// back into /editor again for a room that was already edited earlier this
+// session) without an /editor visit in between leaves this holding
+// whichever room's data was mirrored last — showing that *other* room's
+// furniture/area "stuck" under the one actually selected now, or a
+// previously-edited room's changes appearing to "reset" back to its raw
+// as-uploaded state. Only trust it when its id still matches whichever room
+// is currently selected; null means there's nothing to trust yet (a brand
+// new room this session has never touched /editor for).
+export function getLiveMirrorForSelectedRoom(): RoomLayout | null {
+  const confirmed = localStorage.getItem("roomfit:confirmedRoomLayout");
+  const selectedRoomId = localStorage.getItem("roomfit:selectedRoomId");
+
+  if (!confirmed) {
+    return null;
+  }
+
+  try {
+    const parsedConfirmed = JSON.parse(confirmed) as RoomLayout;
+    return !selectedRoomId || parsedConfirmed.id === selectedRoomId ? parsedConfirmed : null;
+  } catch {
+    return null;
+  }
+}
+
 // The room as it should be shown/confirmed right now — shared by
 // LayoutConfirm.tsx (to display it) and Navbar.tsx (its own "확정하기" button
 // on the last step confirms whatever this resolves to, without needing the
 // page's local state).
 export function resolveCurrentRoomLayout(): RoomLayout {
-  const confirmed = localStorage.getItem("roomfit:confirmedRoomLayout");
-  const selectedRoomId = localStorage.getItem("roomfit:selectedRoomId");
+  const liveMirror = getLiveMirrorForSelectedRoom();
 
-  // roomfit:confirmedRoomLayout (see EditorPlaceholder.tsx's effect) already
-  // has any matching scenario applied *and* every manual edit made in
-  // /editor (drag, rotate, delete, feedback) baked in — re-running
-  // applyScenario on it would be wrong, not just redundant: restyle/wall-snap
-  // and pairChairWithDesk aren't idempotent the way the itemIds-guarded
-  // build() step is, so a second pass silently re-snaps a manually-rotated
-  // cabinet back to its wall-facing rotation and re-snaps a manually-moved
-  // desk chair back to sit in front of the desk, discarding exactly the
-  // edits this page is supposed to show as final.
-  //
-  // But it's a single global key, not scoped per room, and only gets
-  // refreshed by actually visiting /editor. Switching to a different room
-  // on /rooms and jumping straight here (or to the navbar's "확정하기")
-  // without ever opening /editor for it leaves this holding the *previous*
-  // room's data — showing that old room's furniture/area "stuck" under the
-  // newly selected room. Only trust it when its id still matches whichever
-  // room is currently selected.
-  if (confirmed) {
-    try {
-      const parsedConfirmed = JSON.parse(confirmed) as RoomLayout;
-
-      if (!selectedRoomId || parsedConfirmed.id === selectedRoomId) {
-        return parsedConfirmed;
-      }
-    } catch {
-      // fall through to the selected-room fallback below
-    }
+  if (liveMirror) {
+    return liveMirror;
   }
 
   // Only reached when the user lands here without ever visiting /editor —

@@ -22,8 +22,8 @@ export default function Bed({ item }: { item: Furniture }) {
   const material = materialFromConfig(item.material, item.color);
   const theme = item.theme;
 
-  const frameColor = theme === "gray" ? "#b3b3b3" : theme === "wood" ? "#8a623d" : "#c8a877";
-  const duvetColor = theme === "gray" ? "#eaeaea" : theme === "wood" ? "#cdb890" : "#d8c9ad";
+  const frameColor = theme === "gray" ? "#b3b3b3" : theme === "wood" ? "#c9a874" : "#c8a877";
+  const duvetColor = theme === "gray" ? "#eaeaea" : theme === "wood" ? "#f0e8d8" : "#d8c9ad";
   // 미니멀/그레이: a low, headboard-less floating platform. 네추럴/우드: a
   // slightly chunkier frame and taller headboard. 기본: the original
   // proportions.

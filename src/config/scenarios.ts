@@ -1,4 +1,4 @@
-import type { Furniture, Opening, RoomLayout } from "../types";
+import type { Furniture, Opening, RoomLayout, WallSegment } from "../types";
 
 // Two fixed demo moods, triggered from the "AI 추천 생성" button in
 // /editor (see EditorPlaceholder.tsx) instead of the real backend call for
@@ -35,6 +35,11 @@ export interface Scenario {
   // wood-blind rendering in Blind.tsx is never touched by a scenario that
   // doesn't set this.
   restyleWindow?: (opening: Opening) => Opening;
+  // Optional per-wall restyle (color/material). Undefined means "leave
+  // walls exactly as scanned" — a scanned room's wall color/lighting can
+  // vary a lot, so a scenario that wants a guaranteed bright/on-palette
+  // look (rather than whatever tone the scan happened to capture) sets this.
+  restyleWall?: (wall: WallSegment) => WallSegment;
   // Categories snapped flush against their nearest wall for this mood.
   // Defaults to bed/cabinet (see WALL_SNAP_CATEGORIES) when unset — a
   // scenario only needs this when it wants an additional category (e.g. a
@@ -569,14 +574,29 @@ function repositionAgainstWalls(furniture: Furniture[], room: RoomLayout, catego
 // existing storage cabinet becomes a bookshelf — same footprint/position,
 // just FurnitureRenderer routed to Bookshelf instead of Storage — in
 // Bookshelf's original (undyed) wood look. Everything else goes warm wood.
+// Bright warm off-white — used for walls only (see restyleWall below). The
+// bookshelf briefly matched this exact color too, but that read as "책장이
+// 사라진" rather than a deliberate look — it's back to its own bright wood
+// tone instead (see NATURAL_WOOD_COLOR).
+const NATURAL_WALL_COLOR = "#f6f1e6";
+// The natural scenario's shared "light oak" tone — bookshelf carcass, its
+// shelf boards/dividers (see Bookshelf.tsx), and the small side table all use
+// this same value so they read as one consistent bright-wood palette instead
+// of the shelf boards' own separate, much darker hardcoded brown standing out.
+const NATURAL_WOOD_COLOR = "#c9a874";
+
 function restyleForRest(item: Furniture): Furniture {
   switch (item.category) {
     case "bed":
-      return withColor(item, "#d8c9ad", "fabric", "wood");
+      // Brightened from the original #d8c9ad — paired with Bed.tsx's own
+      // "wood" theme frame/duvet colors (also brightened), a light
+      // near-white tone instead of a deeper tan keeps the whole bed reading
+      // "화이트+우드" rather than dim/beige.
+      return withColor(item, "#f0e8d8", "fabric", "wood");
     case "cabinet":
-      return { ...withColor(item, "#8b623a", "wood", "wood"), name: "우드 책장" };
+      return { ...withColor(item, NATURAL_WOOD_COLOR, "wood", "wood"), name: "우드 책장" };
     case "rug":
-      return withColor(item, "#cdb890", "fabric", "wood");
+      return withColor(item, "#e3d3b8", "fabric", "wood");
     default:
       return item;
   }
@@ -635,6 +655,11 @@ export const scenarios: Scenario[] = [
     restyle: restyleForRest,
     restyleWindow: (opening) =>
       opening.blind ? { ...opening, blind: { ...opening.blind, type: "curtain", color: "#e8e4da" } } : opening,
+    // A scanned room's own wall color/material varies a lot and can read as
+    // dim depending on the scan's lighting — this guarantees a bright, warm
+    // off-white regardless of what the scan captured, rather than leaving
+    // "화이트" up to chance.
+    restyleWall: (wall) => ({ ...wall, material: { color: NATURAL_WALL_COLOR, roughness: 0.85 } }),
     build: (room) => {
       const [tableSpot] = findOpenSpots(room, 0.5, 1);
       const bed = room.furniture.find((item) => item.category === "bed");
@@ -768,8 +793,8 @@ export const scenarios: Scenario[] = [
           dimensions: { width: 0.32, depth: 0.32, height: 1.55 },
           position: lampSpot,
           rotationY: 0,
-          color: "#3d2a1a",
-          material: { type: "metal", color: "#3d2a1a", roughness: 0.35, metalness: 0.6 },
+          color: "#8a6a45",
+          material: { type: "metal", color: "#8a6a45", roughness: 0.35, metalness: 0.6 },
           status: "recommended",
           removable: true,
           theme: "wood",
@@ -823,8 +848,8 @@ export const scenarios: Scenario[] = [
         dimensions: { width: 0.46, depth: 0.46, height: 0.4 },
         position: tableSpot,
         rotationY: 0,
-        color: "#b98d5e",
-        material: { type: "wood", color: "#b98d5e", roughness: 0.5, metalness: 0 },
+        color: "#c9a874",
+        material: { type: "wood", color: "#c9a874", roughness: 0.5, metalness: 0 },
         status: "recommended",
         removable: true,
         theme: "wood",
@@ -1158,8 +1183,9 @@ export function applyScenario(room: RoomLayout, scenario: Scenario): RoomLayout 
   }
   const withExtras = [...repositioned, ...placedExtras];
   const windows = scenario.restyleWindow ? room.windows.map(scenario.restyleWindow) : room.windows;
+  const walls = scenario.restyleWall ? room.walls.map(scenario.restyleWall) : room.walls;
 
-  return { ...room, furniture: withExtras, windows };
+  return { ...room, furniture: withExtras, windows, walls };
 }
 
 // Convenience used by /editor's "AI 추천 생성" handler (see

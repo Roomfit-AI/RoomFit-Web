@@ -4,6 +4,7 @@ import { FiRotateCcw, FiTrash2 } from "react-icons/fi";
 import { applyLayoutFeedback, createDefaultAgentContext, recommendLayout, type InterpretedIntent, type LayoutValidationResult, type ScoreSummary } from "../api/layouts";
 import { applyBackendFurnitureToLayout } from "../api/rooms";
 import RoomViewer from "../components/room/RoomViewer";
+import { getLiveMirrorForSelectedRoom } from "../config/confirmedLayouts";
 import { applyLocalFeedback } from "../config/localFeedback";
 import { buildScenarioValidation } from "../config/localValidation";
 import { applyScenario, currentScenario } from "../config/scenarios";
@@ -207,9 +208,9 @@ const LOCAL_SCENARIO_LAYOUT_ID = -1;
 
 // The room as saved from /manage-furniture, unmodified — demo-mood
 // restyling/additions (see config/scenarios.ts) only happen when "AI 추천
-// 생성" is clicked (see handleRecommend below), not at load time, so the
-// editor opens showing exactly what was saved and the mood reveal has
-// something to visibly change *from*.
+// 생성" is clicked (see handleRecommend below), not at load time. Used by
+// handleResetFurniture's "초기화" button, which needs the true untouched
+// baseline to discard edits back to — not whatever's currently on screen.
 function loadSelectedRoomLayout(): RoomLayout | null {
   const raw = localStorage.getItem("roomfit:selectedRoomLayout");
 
@@ -224,6 +225,17 @@ function loadSelectedRoomLayout(): RoomLayout | null {
   }
 }
 
+// What the editor should actually open showing: the live mirror (every
+// edit made in /editor this session, whether formally confirmed or not) if
+// this room already has one, so navigating away (e.g. to /layout-confirm)
+// and back — via "이전 단계" or otherwise — doesn't appear to "reset" the
+// room back to its untouched baseline. Falls back to the true baseline only
+// the very first time a room is opened this session, so the AI 추천 mood
+// reveal still has something to visibly change *from*.
+function loadInitialRoomLayout(): RoomLayout | null {
+  return getLiveMirrorForSelectedRoom() ?? loadSelectedRoomLayout();
+}
+
 function loadBackendRoomId(): number {
   const raw = localStorage.getItem("roomfit:backendRoomId");
   const parsed = Number(raw);
@@ -232,7 +244,7 @@ function loadBackendRoomId(): number {
 }
 
 export default function EditorPlaceholder() {
-  const [roomLayout, setRoomLayout] = useState<RoomLayout | null>(() => loadSelectedRoomLayout());
+  const [roomLayout, setRoomLayout] = useState<RoomLayout | null>(() => loadInitialRoomLayout());
   const [selectedFurnitureId, setSelectedFurnitureId] = useState<string | null>(null);
   const [layoutId, setLayoutId] = useState<number | null>(null);
   const [feedback, setFeedback] = useState("");
@@ -330,7 +342,7 @@ export default function EditorPlaceholder() {
       setErrorMessage("");
       setInterpretedIntent(null);
 
-      await new Promise((resolve) => setTimeout(resolve, 700));
+      await new Promise((resolve) => setTimeout(resolve, 5000));
 
       const nextRoom = createHobbyCoralRecommendation(roomLayout);
       const { scoreSummary, validationResult } = buildScenarioValidation();
@@ -356,9 +368,10 @@ export default function EditorPlaceholder() {
       setErrorMessage("");
       setInterpretedIntent(null);
 
-      // A brief pause so "AI 추천 생성 중..." is actually visible before the
-      // furniture reveal, instead of an instant swap.
-      await new Promise((resolve) => setTimeout(resolve, 700));
+      // A fixed 5s pause so "AI 추천 생성 중..." reads as the AI actually
+      // working, instead of an instant swap that gives away the scripted
+      // shortcut this demo path is taking.
+      await new Promise((resolve) => setTimeout(resolve, 5000));
 
       // The hardcoded "natural wood rest room" layout below is tuned to one
       // specific sample room's fixed dimensions/coordinates (see
@@ -385,8 +398,17 @@ export default function EditorPlaceholder() {
     setInterpretedIntent(null);
 
     try {
-      const context = await createDefaultAgentContext(roomId);
-      const result = await recommendLayout(roomId, context.contextId);
+      // Real backend round trip (used by sample rooms whose purpose/style
+      // don't match a scripted demo mood, e.g. the collector rooms above) —
+      // a local backend answers near-instantly, which read as an instant
+      // swap instead of the AI actually working. Racing it against the same
+      // fixed 5s floor used by the scripted-mood path keeps that "AI 추천
+      // 생성 중..." reading consistent regardless of which path a given
+      // sample room happens to take.
+      const [result] = await Promise.all([
+        createDefaultAgentContext(roomId).then((context) => recommendLayout(roomId, context.contextId)),
+        new Promise((resolve) => setTimeout(resolve, 5000)),
+      ]);
 
       const recommendedLayout = applyBackendFurnitureToLayout(roomLayout, result.recommendedFurniture);
       setRoomLayout(applyRecommendedRoomLayout(roomLayout, recommendedLayout));
@@ -421,10 +443,10 @@ export default function EditorPlaceholder() {
     setErrorMessage("");
 
     if (layoutId === LOCAL_SCENARIO_LAYOUT_ID) {
-      // Brief pause so "피드백 반영 중..." is visible, matching the scripted
-      // recommend flow's own pacing instead of an instant swap.
-      await new Promise((resolve) => setTimeout(resolve, 400));
-      const result = applyLocalFeedback(roomLayout, feedback);
+      // Same fixed 5s pause as the recommend flow above, so "피드백 반영 중..."
+      // reads the same way instead of an instant swap.
+      await new Promise((resolve) => setTimeout(resolve, 5000));
+      const result = applyLocalFeedback(roomLayout, feedback, currentScenario()?.id);
 
       if ("error" in result) {
         setErrorMessage(result.error);
