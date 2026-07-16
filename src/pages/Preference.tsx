@@ -1,17 +1,12 @@
 import { useEffect, useState } from "react";
-import { FiBookOpen, FiBriefcase, FiCheck, FiCoffee, FiGrid, FiHeart, FiHome, FiMoon, FiPackage, FiSmile } from "react-icons/fi";
+import { FiBookOpen, FiBriefcase, FiCheck, FiCoffee, FiHome } from "react-icons/fi";
 import PageStepHeader from "../components/ui/PageStepHeader";
 
 const purposes = [
   { id: "rest", title: "휴식", description: "편안하게 쉴 수 있는 목적", icon: FiCoffee },
   { id: "work", title: "업무 / 공부", description: "집중할 수 있는 공간", icon: FiBriefcase },
-  { id: "exercise", title: "운동", description: "홈트레이닝 공간", icon: FiGrid },
-  { id: "cook", title: "요리", description: "요리를 즐겨해요", icon: FiPackage },
-  { id: "party", title: "모임 / 접객", description: "사람들을 초대해요", icon: FiSmile },
-  { id: "hobby", title: "취미 / 수집", description: "취미 생활을 즐겨요", icon: FiBookOpen },
-  { id: "kids", title: "아이와 함께", description: "아이 중심의 공간", icon: FiHeart },
-  { id: "pet", title: "반려동물", description: "반려동물과 함께해요", icon: FiHome },
-  { id: "etc", title: "기타", description: "기타 목적", icon: FiMoon },
+  { id: "hobby", title: "취미 / 여가", description: "취미 생활을 즐겨요", icon: FiBookOpen },
+  { id: "storage", title: "수납", description: "수납을 많이 할 수 있는 목적", icon: FiHome },
 ];
 
 // Two-word titles ("A / B") get one color per word, split half-and-half in
@@ -62,7 +57,7 @@ export default function Preference() {
         </header>
 
         <section className="mb-10">
-          <h2 className="mb-4 text-base font-extrabold">라이프 스타일</h2>
+          <h2 className="mb-4 text-base font-extrabold">라이프스타일</h2>
           <div className="grid gap-4 md:grid-cols-3">
             {purposes.map((purpose) => {
               const Icon = purpose.icon;
