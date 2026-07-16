@@ -176,13 +176,8 @@ export default function EditorPlaceholder() {
     setInterpretedIntent(null);
 
     try {
-      // A fixed 5s floor so "AI 추천 생성 중..." reads as the AI actually
-      // working rather than an instant swap — a local backend can otherwise
-      // answer near-instantly.
-      const [result] = await Promise.all([
-        createDefaultAgentContext(roomId).then((context) => recommendLayout(roomId, context.contextId)),
-        new Promise((resolve) => setTimeout(resolve, 5000)),
-      ]);
+      const context = await createDefaultAgentContext(roomId);
+      const result = await recommendLayout(roomId, context.contextId);
 
       setRoomLayout(applyBackendFurnitureToLayout(roomLayout, result.recommendedFurniture));
       setLayoutId(result.layoutId);
