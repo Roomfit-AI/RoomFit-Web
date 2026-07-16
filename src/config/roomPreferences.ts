@@ -11,6 +11,8 @@
 // reflects its actual confirmed choices) while resetting to blank for any
 // room that's never been through this before (so a different room never
 // inherits another room's leftover picks).
+import { requireStorageWrite, safeStorageGet, safeStorageRemove, safeStorageSet } from "../api/safeStorage";
+
 const ROOM_PREFERENCES_KEY = "roomfit:preferencesByRoomId";
 
 export interface RoomPreferences {
@@ -27,51 +29,81 @@ const EMPTY_PREFERENCES: RoomPreferences = {
   additionalFurnitureIds: [],
 };
 
-function readAll(): Record<string, RoomPreferences> {
-  const raw = localStorage.getItem(ROOM_PREFERENCES_KEY);
+export type RoomPreferencesReadResult =
+  | { status: "valid"; preferences: RoomPreferences }
+  | { status: "missing" }
+  | { status: "invalid" }
+  | { status: "storage-error"; error: Error };
 
-  if (!raw) {
-    return {};
-  }
-
-  try {
-    const parsed = JSON.parse(raw);
-    return parsed && typeof parsed === "object" ? parsed : {};
-  } catch {
-    return {};
-  }
-}
+type RoomPreferencesMapReadResult =
+  | { status: "valid"; preferencesByRoomId: Record<string, RoomPreferences> }
+  | { status: "missing" }
+  | { status: "invalid" }
+  | { status: "storage-error"; error: Error };
 
 export function saveRoomPreferences(roomLayoutId: string, preferences: RoomPreferences): void {
-  const all = readAll();
+  const readResult = readAll();
+  if (readResult.status === "storage-error") {
+    throw readResult.error;
+  }
+  const all = readResult.status === "valid" ? readResult.preferencesByRoomId : {};
   all[roomLayoutId] = preferences;
-  localStorage.setItem(ROOM_PREFERENCES_KEY, JSON.stringify(all));
+  requireStorageWrite(
+    safeStorageSet("local", ROOM_PREFERENCES_KEY, JSON.stringify(all)),
+    "Room preferences storage is unavailable",
+  );
 }
 
 export function getRoomPreferences(roomLayoutId: string): RoomPreferences {
-  return readAll()[roomLayoutId] ?? EMPTY_PREFERENCES;
+  const result = readRoomPreferences(roomLayoutId);
+  if (result.status === "valid") {
+    return result.preferences;
+  }
+  if (result.status === "storage-error") {
+    console.warn("Room 취향 정보를 읽지 못해 기본값을 사용합니다.", result.error);
+  } else if (result.status === "invalid") {
+    console.warn("잘못된 Room 취향 정보를 무시하고 기본값을 사용합니다.");
+  }
+  return emptyPreferences();
+}
+
+export function readRoomPreferences(roomLayoutId: string): RoomPreferencesReadResult {
+  const result = readAll();
+  if (result.status !== "valid") {
+    return result;
+  }
+  const preferences = result.preferencesByRoomId[roomLayoutId];
+  return preferences
+    ? { status: "valid", preferences: clonePreferences(preferences) }
+    : { status: "missing" };
 }
 
 // Reads whatever /preference, /reference-image, and /add-furniture currently
 // have live in localStorage — used at confirm time to snapshot "what this
 // room actually ended up using" into the per-room store above.
 export function readCurrentPreferences(): RoomPreferences {
-  const rawIds = localStorage.getItem("roomfit:selectedAdditionalFurnitureIds");
+  const rawIdsResult = safeStorageGet("local", "roomfit:selectedAdditionalFurnitureIds");
+  if (rawIdsResult.status === "storage-error") {
+    console.warn("추가 가구 취향 정보를 읽지 못해 기본값을 사용합니다.", rawIdsResult.error);
+  }
+  const rawIds = rawIdsResult.status === "success" ? rawIdsResult.value : null;
   let additionalFurnitureIds: string[] = [];
 
   if (rawIds) {
     try {
       const parsed = JSON.parse(rawIds);
-      additionalFurnitureIds = Array.isArray(parsed) ? parsed : [];
+      additionalFurnitureIds = Array.isArray(parsed) && parsed.every((item) => typeof item === "string")
+        ? parsed
+        : [];
     } catch {
       additionalFurnitureIds = [];
     }
   }
 
   return {
-    purpose: localStorage.getItem("roomfit:selectedPurpose") ?? "",
-    palette: localStorage.getItem("roomfit:selectedPalette") ?? "",
-    style: localStorage.getItem("roomfit:selectedStyle") ?? "",
+    purpose: readCurrentPreferenceValue("roomfit:selectedPurpose"),
+    palette: readCurrentPreferenceValue("roomfit:selectedPalette"),
+    style: readCurrentPreferenceValue("roomfit:selectedStyle"),
     additionalFurnitureIds,
   };
 }
@@ -79,24 +111,84 @@ export function readCurrentPreferences(): RoomPreferences {
 // Writes a room's saved (or blank) preferences into the same live
 // localStorage keys /preference etc. read from — called by Rooms.tsx's
 // selectRoom so the next visit to those pages picks the right one up.
-export function applyPreferencesToStorage(preferences: RoomPreferences): void {
-  if (preferences.purpose) {
-    localStorage.setItem("roomfit:selectedPurpose", preferences.purpose);
-  } else {
-    localStorage.removeItem("roomfit:selectedPurpose");
+export function applyPreferencesToStorage(preferences: RoomPreferences): Error[] {
+  const warnings = [
+    writeOptionalPreference("roomfit:selectedPurpose", preferences.purpose),
+    writeOptionalPreference("roomfit:selectedPalette", preferences.palette),
+    writeOptionalPreference("roomfit:selectedStyle", preferences.style),
+    safeStorageSet(
+      "local",
+      "roomfit:selectedAdditionalFurnitureIds",
+      JSON.stringify(preferences.additionalFurnitureIds),
+    ),
+  ];
+  return warnings.flatMap((result) => result.status === "storage-error" ? [result.error] : []);
+}
+
+function readAll(): RoomPreferencesMapReadResult {
+  const result = safeStorageGet("local", ROOM_PREFERENCES_KEY);
+  if (result.status === "missing") {
+    return { status: "missing" };
+  }
+  if (result.status === "storage-error") {
+    return result;
   }
 
-  if (preferences.palette) {
-    localStorage.setItem("roomfit:selectedPalette", preferences.palette);
-  } else {
-    localStorage.removeItem("roomfit:selectedPalette");
-  }
+  try {
+    const parsed = JSON.parse(result.value) as unknown;
+    if (!isRecord(parsed)) {
+      return { status: "invalid" };
+    }
 
-  if (preferences.style) {
-    localStorage.setItem("roomfit:selectedStyle", preferences.style);
-  } else {
-    localStorage.removeItem("roomfit:selectedStyle");
+    const entries = Object.entries(parsed);
+    if (!entries.every(([, value]) => isRoomPreferences(value))) {
+      return { status: "invalid" };
+    }
+    return {
+      status: "valid",
+      preferencesByRoomId: Object.fromEntries(
+        entries.map(([roomId, preferences]) => [roomId, clonePreferences(preferences as RoomPreferences)]),
+      ),
+    };
+  } catch {
+    return { status: "invalid" };
   }
+}
 
-  localStorage.setItem("roomfit:selectedAdditionalFurnitureIds", JSON.stringify(preferences.additionalFurnitureIds));
+function readCurrentPreferenceValue(key: string): string {
+  const result = safeStorageGet("local", key);
+  if (result.status === "storage-error") {
+    console.warn(`취향 설정 ${key}를 읽지 못해 기본값을 사용합니다.`, result.error);
+  }
+  return result.status === "success" ? result.value : "";
+}
+
+function writeOptionalPreference(key: string, value: string) {
+  return value
+    ? safeStorageSet("local", key, value)
+    : safeStorageRemove("local", key);
+}
+
+function isRoomPreferences(value: unknown): value is RoomPreferences {
+  return isRecord(value)
+    && typeof value.purpose === "string"
+    && typeof value.palette === "string"
+    && typeof value.style === "string"
+    && Array.isArray(value.additionalFurnitureIds)
+    && value.additionalFurnitureIds.every((item) => typeof item === "string");
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return Boolean(value) && typeof value === "object" && !Array.isArray(value);
+}
+
+function clonePreferences(preferences: RoomPreferences): RoomPreferences {
+  return {
+    ...preferences,
+    additionalFurnitureIds: [...preferences.additionalFurnitureIds],
+  };
+}
+
+function emptyPreferences(): RoomPreferences {
+  return clonePreferences(EMPTY_PREFERENCES);
 }

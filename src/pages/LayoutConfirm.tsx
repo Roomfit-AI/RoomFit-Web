@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { FaRug } from "react-icons/fa6";
 import { FiCheck, FiChevronDown, FiChevronUp, FiExternalLink, FiHome, FiInfo, FiShoppingBag } from "react-icons/fi";
 import { useNavigate } from "react-router-dom";
@@ -11,10 +11,47 @@ import {
   MdOutlineWeekend,
 } from "react-icons/md";
 
-import { confirmLayout as confirmLayoutOnBackend } from "../api/layouts";
+import { confirmLayout as confirmLayoutOnBackend, getLayoutConfirmErrorDescriptor } from "../api/layouts";
+import {
+  clearActiveLayoutSaveStateIfOwned,
+  flushActiveLayoutSave,
+  getActiveLayoutSaveState,
+  recoverActiveLayoutSave,
+  setActiveLayoutSession,
+  useActiveLayoutSaveState,
+} from "../api/layoutSaveCoordinator";
+import {
+  flushActiveRoomFurnitureSave,
+  getActiveRoomFurnitureSaveState,
+  getPersistedRoomFurnitureSaveDraft,
+  recoverActiveRoomFurnitureSave,
+  setActiveRoomFurnitureSaveSession,
+  useActiveRoomFurnitureSaveState,
+} from "../api/roomFurnitureSaveCoordinator";
+import {
+  beginLayoutConfirmAttempt,
+  cleanupConfirmedLayoutLocally,
+  isLayoutSessionConfirmed,
+  markLayoutConfirmAttemptConfirmed,
+  readLayoutConfirmAttempt,
+  shouldReconcileAlreadyConfirmed,
+} from "../api/layoutConfirmation";
+import {
+  clearLayoutSessionForLayout,
+  hasSameLayoutOwnership,
+  isLayoutSessionOwnedBy,
+  readLayoutSession,
+  readSelectedBackendRoomId,
+} from "../api/layoutSession";
+import {
+  beginActiveLayoutWorkflow,
+  endActiveLayoutWorkflow,
+  useActiveLayoutWorkflowState,
+  type ActiveLayoutWorkflowToken,
+} from "../api/layoutWorkflow";
 import RoomViewer from "../components/room/RoomViewer";
 import PageStepHeader from "../components/ui/PageStepHeader";
-import { resolveCurrentRoomLayout, saveConfirmedLayout } from "../config/confirmedLayouts";
+import { hasConfirmedLayout, resolveCurrentRoomLayout, saveConfirmedLayout } from "../config/confirmedLayouts";
 import { NATURAL_SCENARIO_SHOPPING_LIST } from "../config/naturalScenarioShoppingList";
 import { readCurrentPreferences, saveRoomPreferences } from "../config/roomPreferences";
 import { captureCanvasThumbnail, saveRoomThumbnail } from "../config/roomThumbnails";
@@ -37,7 +74,8 @@ const SHOPPING_LIST_ICONS: Record<string, typeof MdOutlineBed> = {
 export default function LayoutConfirm() {
   const navigate = useNavigate();
   const roomLayout = resolveCurrentRoomLayout();
-  const furnitureCount = roomLayout.furniture.length;
+  const visibleFurniture = roomLayout.furniture.filter((item) => item.status !== "deleted");
+  const furnitureCount = visibleFurniture.length;
   // Actual scanned width x depth (matches how Rooms.tsx shows room size on
   // its cards) rather than a computed ㎡ figure — a real width/depth pair
   // like "3.38m x 3.47m" reads as the literal room shape, whereas the
@@ -45,43 +83,80 @@ export default function LayoutConfirm() {
   // digit and doesn't match anything the user actually recognizes as "their
   // room."
   const roomSize = `${roomLayout.width}m × ${roomLayout.depth}m`;
-  const [justConfirmed, setJustConfirmed] = useState(false);
+  const [justConfirmed, setJustConfirmed] = useState(() => {
+    const session = readLayoutSession();
+    const ownerBackendRoomId = readSelectedBackendRoomId();
+    const confirmAttempt = readLayoutConfirmAttempt();
+    const markerOwnsCurrentRoom = Boolean(
+      confirmAttempt
+      && confirmAttempt.status === "confirmed"
+      && ownerBackendRoomId
+      && confirmAttempt.ownerBackendRoomId === ownerBackendRoomId
+      && confirmAttempt.ownerUiRoomLayoutId === roomLayout.id,
+    );
+    const pendingMarkerOwnsCurrentRoom = Boolean(
+      confirmAttempt
+      && confirmAttempt.status === "pending"
+      && ownerBackendRoomId
+      && confirmAttempt.ownerBackendRoomId === ownerBackendRoomId
+      && confirmAttempt.ownerUiRoomLayoutId === roomLayout.id,
+    );
+    const ownsCurrentRoom = Boolean(
+      session
+      && ownerBackendRoomId
+      && isLayoutSessionOwnedBy(session, ownerBackendRoomId, roomLayout.id),
+    );
+    return !pendingMarkerOwnsCurrentRoom && (markerOwnsCurrentRoom || (ownsCurrentRoom
+      ? Boolean(session && isLayoutSessionConfirmed(session))
+      : hasConfirmedLayout(roomLayout.id)));
+  });
   const [showShoppingList, setShowShoppingList] = useState(false);
+  const [isWaitingForSave, setIsWaitingForSave] = useState(false);
+  const [confirmationError, setConfirmationError] = useState("");
+  const [confirmationWarning, setConfirmationWarning] = useState("");
   const roomViewerContainerRef = useRef<HTMLDivElement>(null);
+  const confirmationPendingRef = useRef(false);
+  const confirmationActionRef = useRef<() => Promise<void>>(async () => undefined);
+  const reconciliationStartedRef = useRef(false);
+  const layoutSaveState = useActiveLayoutSaveState();
+  const roomSaveState = useActiveRoomFurnitureSaveState();
+  const layoutWorkflowState = useActiveLayoutWorkflowState();
+  const selectedBackendRoomId = readSelectedBackendRoomId();
+  const currentLayoutSaveError = layoutSaveState.session
+    && selectedBackendRoomId
+    && isLayoutSessionOwnedBy(layoutSaveState.session, selectedBackendRoomId, roomLayout.id)
+    ? layoutSaveState.error
+    : null;
   // Real 오늘의집 product links only exist for the 네츄럴 톤 demo scenario
   // (see naturalScenarioShoppingList.ts) — there's no product-matching
   // backend to look these up generically for any other scenario/room.
   const isNaturalScenario = currentScenario()?.id === "rest-natural-wood";
 
-  const confirmLayout = () => {
+  const persistConfirmationLocally = (): string[] => {
+    const warnings: string[] = [];
     // Local save stays as the source of truth for this session either way
     // (and is the only option for the scripted-scenario path, which has no
     // backend layoutId) — this keeps the result locally, keyed by the room's
     // own id, so reopening this same room later (see Rooms.tsx's selectRoom)
     // picks the confirmed result back up instead of the bare as-uploaded
     // furniture.
-    saveConfirmedLayout(roomLayout.id, roomLayout);
-
-    // Also confirms on the backend when a real layoutId exists (see
-    // EditorPlaceholder.tsx's own persist effect for roomfit:backendLayoutId)
-    // — RoomFit-Backend's LayoutService.confirmLayout now writes the
-    // confirmed furniture back onto the Room, so GET /api/rooms/{roomId}
-    // reflects it too. Best-effort: a failed backend confirm shouldn't block
-    // the local confirmation the rest of this handler already did.
-    const rawLayoutId = localStorage.getItem("roomfit:backendLayoutId");
-    const backendLayoutId = Number(rawLayoutId);
-
-    if (rawLayoutId && Number.isFinite(backendLayoutId) && backendLayoutId > 0) {
-      confirmLayoutOnBackend(backendLayoutId).catch((error) => {
-        console.error("배치를 백엔드에서 확정하지 못했습니다.", error);
-      });
+    try {
+      saveConfirmedLayout(roomLayout.id, roomLayout);
+    } catch (error) {
+      console.warn("확정된 배치의 로컬 사본을 저장하지 못했습니다.", error);
+      warnings.push("layout-copy");
     }
 
     // Snapshots whatever purpose/palette/style/추가 가구 this room actually
     // used — Rooms.tsx's selectRoom restores this the next time this same
     // room is picked, so reopening a confirmed room shows its own real
     // choices instead of whatever room was selected most recently elsewhere.
-    saveRoomPreferences(roomLayout.id, readCurrentPreferences());
+    try {
+      saveRoomPreferences(roomLayout.id, readCurrentPreferences());
+    } catch (error) {
+      console.warn("확정된 배치의 취향 정보를 저장하지 못했습니다.", error);
+      warnings.push("preferences");
+    }
 
     // /manage-furniture also captures a thumbnail (its "내부 보기" toggle),
     // but that happens early in the flow, before /preference's style pick or
@@ -91,15 +166,166 @@ export default function LayoutConfirm() {
     // now) overwrites that with the real final look, so /rooms' thumbnail
     // reflects whichever scenario actually ended up confirmed instead of
     // staying frozen at that one early snapshot.
-    const container = roomViewerContainerRef.current;
-    const dataUrl = container && captureCanvasThumbnail(container);
+    try {
+      const container = roomViewerContainerRef.current;
+      const dataUrl = container && captureCanvasThumbnail(container);
+      if (dataUrl) {
+        saveRoomThumbnail(roomLayout.id, dataUrl);
+      }
+    } catch (error) {
+      console.warn("확정된 배치의 썸네일을 저장하지 못했습니다.", error);
+      warnings.push("thumbnail");
+    }
+    return warnings;
+  };
 
-    if (dataUrl) {
-      saveRoomThumbnail(roomLayout.id, dataUrl);
+  const confirmLayout = async () => {
+    if (confirmationPendingRef.current || layoutWorkflowState.kind !== "idle") {
+      return;
     }
 
-    setJustConfirmed(true);
+    const ownerBackendRoomId = readSelectedBackendRoomId();
+    const storedSession = readLayoutSession();
+    const activeSession = layoutSaveState.session;
+    if (storedSession && activeSession && !hasSameLayoutOwnership(storedSession, activeSession)) {
+      setConfirmationError("저장된 배치 세션과 현재 저장 작업이 일치하지 않습니다. 편집 화면에서 다시 확인해 주세요.");
+      return;
+    }
+    const currentSession = storedSession ?? activeSession;
+    if (
+      !ownerBackendRoomId
+      || !currentSession
+      || !isLayoutSessionOwnedBy(currentSession, ownerBackendRoomId, roomLayout.id)
+    ) {
+      setConfirmationError("현재 방과 일치하는 저장 가능한 배치가 없습니다. 편집 화면에서 추천 배치를 다시 확인해 주세요.");
+      return;
+    }
+
+    confirmationPendingRef.current = true;
+    setIsWaitingForSave(true);
+    setConfirmationError("");
+    setConfirmationWarning("");
+    let workflowToken: ActiveLayoutWorkflowToken | null = null;
+
+    try {
+      workflowToken = beginActiveLayoutWorkflow("confirm", currentSession);
+      setActiveLayoutSession(currentSession);
+      recoverActiveLayoutSave();
+      await flushActiveLayoutSave();
+      let activeRoomSave = getActiveRoomFurnitureSaveState().session;
+      const roomDraft = getPersistedRoomFurnitureSaveDraft();
+      if (!activeRoomSave && roomDraft) {
+        if (
+          roomDraft.ownerBackendRoomId !== ownerBackendRoomId
+          || roomDraft.ownerUiRoomLayoutId !== roomLayout.id
+        ) {
+          throw new Error("현재 방과 미저장 Room draft가 일치하지 않습니다.");
+        }
+        setActiveRoomFurnitureSaveSession({
+          ownerBackendRoomId,
+          ownerUiRoomLayoutId: roomLayout.id,
+        });
+        recoverActiveRoomFurnitureSave();
+        activeRoomSave = getActiveRoomFurnitureSaveState().session;
+      }
+      if (
+        activeRoomSave
+        && (activeRoomSave.ownerBackendRoomId !== ownerBackendRoomId
+          || activeRoomSave.ownerUiRoomLayoutId !== roomLayout.id)
+      ) {
+        throw new Error("현재 방과 Room 저장 작업이 일치하지 않습니다.");
+      }
+      await flushActiveRoomFurnitureSave();
+      const roomSaveAfterFlush = getActiveRoomFurnitureSaveState();
+      if (roomSaveAfterFlush.session && roomSaveAfterFlush.latestRevision > 0) {
+        throw new Error("Room furniture changed after the current Layout was created");
+      }
+
+      const sessionAfterFlush = readLayoutSession() ?? getActiveLayoutSaveState().session;
+      if (!sessionAfterFlush || !hasSameLayoutOwnership(sessionAfterFlush, currentSession)) {
+        throw new Error("Room 저장 후 현재 Layout 세션이 무효화되었습니다.");
+      }
+
+      beginLayoutConfirmAttempt(currentSession);
+      try {
+        const confirmation = await confirmLayoutOnBackend(currentSession.layoutId);
+        if (!confirmation.confirmed) {
+          throw new Error("Backend did not confirm the layout");
+        }
+      } catch (error) {
+        if (!shouldReconcileAlreadyConfirmed(
+          currentSession,
+          readLayoutConfirmAttempt(),
+          getLayoutConfirmErrorDescriptor(error),
+        )) {
+          throw error;
+        }
+      }
+
+      const markerResult = markLayoutConfirmAttemptConfirmed(currentSession);
+      if (!markerResult.persisted) {
+        console.warn("확정 marker는 메모리에 유지되지만 localStorage 저장에는 실패했습니다.");
+      }
+
+      const localSnapshotWarnings = persistConfirmationLocally();
+      setJustConfirmed(true);
+
+      const warningMessages: string[] = [];
+      if (localSnapshotWarnings.length > 0) {
+        warningMessages.push("확정은 완료됐지만 일부 로컬 사본을 저장하지 못했습니다.");
+      }
+      if (markerResult.persisted) {
+        const cleanup = cleanupConfirmedLayoutLocally(currentSession, {
+          clearCoordinator: () => clearActiveLayoutSaveStateIfOwned(currentSession),
+          clearSession: () => {
+            clearLayoutSessionForLayout(currentSession.layoutId);
+          },
+          preserveMarker: localSnapshotWarnings.length > 0,
+        });
+        if (!cleanup.complete) {
+          console.warn("확정은 완료됐지만 일부 로컬 상태를 정리하지 못했습니다.", cleanup.warnings);
+          warningMessages.push("확정은 완료됐지만 일부 임시 저장 상태를 정리하지 못했습니다.");
+        }
+      } else {
+        warningMessages.push("확정은 완료됐지만 복구 기록 저장에 실패해 다음 접속에서 상태를 다시 확인합니다.");
+      }
+      if (warningMessages.length > 0) {
+        setConfirmationWarning(warningMessages.join(" "));
+      }
+    } catch (error) {
+      console.error("배치를 저장하거나 확정하지 못했습니다.", error);
+      setConfirmationError("배치를 저장하거나 확정하지 못했습니다. 확정하기를 눌러 다시 시도해 주세요.");
+    } finally {
+      if (workflowToken) {
+        endActiveLayoutWorkflow(workflowToken);
+      }
+      confirmationPendingRef.current = false;
+      setIsWaitingForSave(false);
+    }
   };
+
+  useEffect(() => {
+    confirmationActionRef.current = confirmLayout;
+  });
+  useEffect(() => {
+    if (reconciliationStartedRef.current) {
+      return;
+    }
+    const attempt = readLayoutConfirmAttempt();
+    const session = readLayoutSession();
+    const ownerBackendRoomId = readSelectedBackendRoomId();
+    if (
+      attempt?.status !== "pending"
+      || !session
+      || !ownerBackendRoomId
+      || !hasSameLayoutOwnership(attempt, session)
+      || !isLayoutSessionOwnedBy(session, ownerBackendRoomId, roomLayout.id)
+    ) {
+      return;
+    }
+    reconciliationStartedRef.current = true;
+    void confirmationActionRef.current();
+  }, [roomLayout.id]);
 
   return (
     <main className="min-h-[calc(100vh-76px)] overflow-x-hidden bg-[#fbfbfb] px-5 py-7 text-[#111111] sm:px-8 lg:px-10">
@@ -172,9 +398,10 @@ export default function LayoutConfirm() {
                 <button
                   type="button"
                   onClick={confirmLayout}
-                  className="w-full rounded-lg bg-[#111111] px-5 py-4 text-base font-extrabold text-white transition-colors hover:bg-[#333333]"
+                  disabled={isWaitingForSave || layoutWorkflowState.kind !== "idle"}
+                  className="w-full rounded-lg bg-[#111111] px-5 py-4 text-base font-extrabold text-white transition-colors hover:bg-[#333333] disabled:cursor-not-allowed disabled:bg-[#777777]"
                 >
-                  확정하기
+                  {isWaitingForSave ? "저장 중..." : "확정하기"}
                 </button>
               ) : (
                 <>
@@ -203,6 +430,17 @@ export default function LayoutConfirm() {
                     홈 화면으로 돌아가기
                   </button>
                 </>
+              )}
+
+              {(confirmationError || currentLayoutSaveError || roomSaveState.error) && !justConfirmed && (
+                <p className="mt-3 text-sm font-bold text-[#c0392b]">
+                  {confirmationError || "편집 내용 저장에 실패했습니다. 확정하기를 눌러 다시 시도해 주세요."}
+                </p>
+              )}
+              {confirmationWarning && justConfirmed && (
+                <p role="status" className="mt-3 text-sm font-bold text-[#8a5a00]">
+                  {confirmationWarning}
+                </p>
               )}
             </div>
           </aside>

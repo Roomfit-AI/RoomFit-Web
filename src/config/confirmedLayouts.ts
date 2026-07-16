@@ -1,6 +1,9 @@
 import { applyScenario, currentScenario } from "./scenarios";
 import { sampleRoom } from "../mock/sampleRoom";
 import type { RoomLayout } from "../types";
+import { readSelectedRoomEnvelope } from "../api/roomSelectionStorage";
+import { isValidRoomFurnitureSnapshot } from "../api/roomFurnitureSaveDraft";
+import { requireStorageWrite, safeStorageGet, safeStorageSet } from "../api/safeStorage";
 
 // Confirmed layouts persist locally only — there's no backend endpoint to
 // save a finalized layout back to a room (see api/rooms.ts), so "확정하기"
@@ -9,25 +12,39 @@ import type { RoomLayout } from "../types";
 // same physical room shows its confirmed result again next time it's opened.
 const CONFIRMED_LAYOUTS_KEY = "roomfit:confirmedLayoutsByRoomId";
 
-function readAll(): Record<string, RoomLayout> {
-  const raw = localStorage.getItem(CONFIRMED_LAYOUTS_KEY);
+function readAll(requireReadableStorage = false): Record<string, RoomLayout> {
+  const result = safeStorageGet("local", CONFIRMED_LAYOUTS_KEY);
+  if (result.status === "storage-error" && requireReadableStorage) {
+    throw result.error;
+  }
+  const raw = result.status === "success" ? result.value : null;
 
   if (!raw) {
     return {};
   }
 
   try {
-    const parsed = JSON.parse(raw);
-    return parsed && typeof parsed === "object" ? parsed : {};
+    const parsed = JSON.parse(raw) as unknown;
+    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+      return {};
+    }
+    return Object.fromEntries(
+      Object.entries(parsed).filter(([roomLayoutId, layout]) => (
+        isValidRoomFurnitureSnapshot(layout) && layout.id === roomLayoutId
+      )),
+    );
   } catch {
     return {};
   }
 }
 
 export function saveConfirmedLayout(roomLayoutId: string, layout: RoomLayout): void {
-  const all = readAll();
+  const all = readAll(true);
   all[roomLayoutId] = layout;
-  localStorage.setItem(CONFIRMED_LAYOUTS_KEY, JSON.stringify(all));
+  requireStorageWrite(
+    safeStorageSet("local", CONFIRMED_LAYOUTS_KEY, JSON.stringify(all)),
+    "Confirmed layout copy storage is unavailable",
+  );
 }
 
 export function getConfirmedLayout(roomLayoutId: string): RoomLayout | null {
@@ -53,16 +70,21 @@ export function hasConfirmedLayout(roomLayoutId: string): boolean {
 // is currently selected; null means there's nothing to trust yet (a brand
 // new room this session has never touched /editor for).
 export function getLiveMirrorForSelectedRoom(): RoomLayout | null {
-  const confirmed = localStorage.getItem("roomfit:confirmedRoomLayout");
-  const selectedRoomId = localStorage.getItem("roomfit:selectedRoomId");
+  const confirmedResult = safeStorageGet("local", "roomfit:confirmedRoomLayout");
+  const selectionResult = readSelectedRoomEnvelope();
+  const confirmed = confirmedResult.status === "success" ? confirmedResult.value : null;
+  const selectedRoomId = selectionResult.status === "valid" ? selectionResult.selection.uiRoomLayoutId : null;
 
   if (!confirmed) {
     return null;
   }
 
   try {
-    const parsedConfirmed = JSON.parse(confirmed) as RoomLayout;
-    return !selectedRoomId || parsedConfirmed.id === selectedRoomId ? parsedConfirmed : null;
+    const parsedConfirmed = JSON.parse(confirmed) as unknown;
+    return isValidRoomFurnitureSnapshot(parsedConfirmed)
+      && (!selectedRoomId || parsedConfirmed.id === selectedRoomId)
+      ? parsedConfirmed
+      : null;
   } catch {
     return null;
   }
@@ -82,7 +104,8 @@ export function resolveCurrentRoomLayout(): RoomLayout {
   // Only reached when the user lands here without ever visiting /editor —
   // apply the scripted scenario once as a fallback so the confirm preview
   // isn't just the bare as-uploaded room.
-  const selected = localStorage.getItem("roomfit:selectedRoomLayout");
+  const selection = readSelectedRoomEnvelope();
+  const selected = selection.status === "valid" ? JSON.stringify(selection.selection.roomLayout) : null;
 
   if (!selected) {
     return sampleRoom;

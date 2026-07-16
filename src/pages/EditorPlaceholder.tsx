@@ -1,8 +1,54 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { FiRotateCcw, FiTrash2 } from "react-icons/fi";
 
-import { applyLayoutFeedback, createDefaultAgentContext, recommendLayout, updateLayout, type InterpretedIntent, type LayoutValidationResult, type ScoreSummary } from "../api/layouts";
-import { applyBackendFurnitureToLayout } from "../api/rooms";
+import { applyLayoutFeedback, createDefaultAgentContext, recommendLayout, type InterpretedIntent, type LayoutValidationResult, type ScoreSummary } from "../api/layouts";
+import {
+  clearActiveLayoutSaveStateIfOwned,
+  discardPersistedActiveLayoutDraft,
+  enqueueActiveLayoutSave,
+  flushActiveLayoutSave,
+  getActiveLayoutSaveState,
+  getPersistedActiveLayoutDraft,
+  recoverActiveLayoutSave,
+  setActiveLayoutSession,
+  subscribeActiveLayoutSaveResults,
+  useActiveLayoutSaveState,
+  type PersistedLayoutSaveDraft,
+} from "../api/layoutSaveCoordinator";
+import { discardConfirmedLayoutStaleState, isLayoutSessionConfirmed } from "../api/layoutConfirmation";
+import {
+  clearActiveRoomFurnitureSaveStateIfOwned,
+  flushActiveRoomFurnitureSave,
+  getActiveRoomFurnitureSaveState,
+  getPersistedRoomFurnitureSaveDraft,
+  recoverActiveRoomFurnitureSave,
+  setActiveRoomFurnitureSaveSession,
+} from "../api/roomFurnitureSaveCoordinator";
+import {
+  clearLayoutSession,
+  hasSameLayoutOwnership,
+  isLayoutSessionOwnedBy,
+  isLayoutOwnershipForRoom,
+  readLayoutSession,
+  readOrMigrateLayoutSession,
+  readSelectedBackendRoomId,
+  toLayoutSession,
+  writeLayoutSession,
+  type BackendRoomId,
+  type LayoutSession,
+} from "../api/layoutSession";
+import {
+  assertActiveLayoutEditingAllowed,
+  beginActiveLayoutWorkflow,
+  endActiveLayoutWorkflow,
+  isActiveLayoutWorkflowCurrent,
+  useActiveLayoutWorkflowState,
+  type ActiveLayoutWorkflowKind,
+  type ActiveLayoutWorkflowToken,
+} from "../api/layoutWorkflow";
+import { applyBackendFurnitureToLayout, type BackendFurnitureApiItem } from "../api/rooms";
+import { readSelectedRoomEnvelope } from "../api/roomSelectionStorage";
+import { safeStorageSet } from "../api/safeStorage";
 import RoomViewer from "../components/room/RoomViewer";
 import { getLiveMirrorForSelectedRoom } from "../config/confirmedLayouts";
 import type { RoomLayout, Vector2D } from "../types";
@@ -11,17 +57,8 @@ import type { RoomLayout, Vector2D } from "../types";
 // handleResetFurniture's "초기화" button, which needs the true untouched
 // baseline to discard edits back to — not whatever's currently on screen.
 function loadSelectedRoomLayout(): RoomLayout | null {
-  const raw = localStorage.getItem("roomfit:selectedRoomLayout");
-
-  if (!raw) {
-    return null;
-  }
-
-  try {
-    return JSON.parse(raw) as RoomLayout;
-  } catch {
-    return null;
-  }
+  const selected = readSelectedRoomEnvelope();
+  return selected.status === "valid" ? selected.selection.roomLayout : null;
 }
 
 // What the editor should actually open showing: the live mirror (every
@@ -30,121 +67,350 @@ function loadSelectedRoomLayout(): RoomLayout | null {
 // and back — via "이전 단계" or otherwise — doesn't appear to "reset" the
 // room back to its untouched baseline. Falls back to the true baseline only
 // the very first time a room is opened this session.
-function loadInitialRoomLayout(): RoomLayout | null {
-  return getLiveMirrorForSelectedRoom() ?? loadSelectedRoomLayout();
+interface InitialEditorState {
+  roomLayout: RoomLayout | null;
+  layoutSession: LayoutSession | null;
+  ownerBackendRoomId: BackendRoomId | null;
+  pendingDraft: PersistedLayoutSaveDraft | null;
+  migrateLegacySnapshot: boolean;
+  recoveryError: string;
 }
 
-function loadBackendRoomId(): number {
-  const raw = localStorage.getItem("roomfit:backendRoomId");
-  const parsed = Number(raw);
+function loadInitialEditorState(): InitialEditorState {
+  try {
+    return loadInitialEditorStateUnsafe();
+  } catch (error) {
+    console.warn("편집기 저장 상태를 읽지 못해 안전한 초기 상태로 시작합니다.", error);
+    return {
+      roomLayout: loadSelectedRoomLayout(),
+      layoutSession: null,
+      ownerBackendRoomId: readSelectedBackendRoomId(),
+      pendingDraft: null,
+      migrateLegacySnapshot: false,
+      recoveryError: "브라우저 저장 정보를 읽지 못해 이전 미저장 배치를 복구하지 않았습니다.",
+    };
+  }
+}
 
-  return Number.isFinite(parsed) && parsed > 0 ? parsed : 1;
+function loadInitialEditorStateUnsafe(): InitialEditorState {
+  const liveLayout = getLiveMirrorForSelectedRoom();
+  let roomLayout = liveLayout ?? loadSelectedRoomLayout();
+  const ownerBackendRoomId = readSelectedBackendRoomId();
+
+  if (!roomLayout || !ownerBackendRoomId) {
+    return {
+      roomLayout,
+      layoutSession: null,
+      ownerBackendRoomId,
+      pendingDraft: null,
+      migrateLegacySnapshot: false,
+      recoveryError: "",
+    };
+  }
+
+  const lookup = readOrMigrateLayoutSession(ownerBackendRoomId, roomLayout.id);
+  let layoutSession = lookup.session;
+  let migrateLegacySnapshot = lookup.migratedFromLegacy;
+  let recoveryError = "";
+
+  if (migrateLegacySnapshot && !liveLayout) {
+    clearLayoutSession();
+    layoutSession = null;
+    migrateLegacySnapshot = false;
+    recoveryError = "편집 이력이 없는 이전 배치 세션을 안전하게 정리했습니다.";
+  }
+
+  if (layoutSession && !isLayoutSessionOwnedBy(layoutSession, ownerBackendRoomId, roomLayout.id)) {
+    clearLayoutSession();
+    layoutSession = null;
+    recoveryError = "현재 방과 일치하지 않는 이전 배치 세션을 무시했습니다.";
+  }
+
+  let pendingDraft = getPersistedActiveLayoutDraft();
+
+  if (pendingDraft) {
+    const matchesRoom = isLayoutOwnershipForRoom(pendingDraft, ownerBackendRoomId, roomLayout.id);
+    const matchesSession = !layoutSession || hasSameLayoutOwnership(pendingDraft, layoutSession);
+    if (!matchesRoom || !matchesSession) {
+      discardPersistedActiveLayoutDraft(pendingDraft);
+      pendingDraft = null;
+      recoveryError = "현재 방과 일치하지 않는 미저장 배치를 안전하게 폐기했습니다.";
+    }
+  }
+
+  const confirmationCandidate = layoutSession ?? (pendingDraft ? toLayoutSession(pendingDraft) : null);
+  if (confirmationCandidate) {
+    const cleanup = discardConfirmedLayoutStaleState(confirmationCandidate, {
+      clearCoordinator: () => discardConfirmedEditorState(confirmationCandidate, pendingDraft),
+      clearSession: clearLayoutSession,
+    });
+    if (cleanup.confirmed) {
+      if (!cleanup.complete) {
+        console.warn("확정된 이전 배치 상태를 일부 정리하지 못했습니다.", cleanup.warnings);
+      }
+      layoutSession = null;
+      pendingDraft = null;
+      recoveryError = "이미 확정된 이전 배치 세션을 다시 저장하지 않도록 정리했습니다.";
+    }
+  }
+
+  if (pendingDraft) {
+    layoutSession ??= toLayoutSession(pendingDraft);
+    writeLayoutSession(layoutSession);
+    roomLayout = pendingDraft.roomLayout;
+    recoveryError = "";
+  }
+
+  return {
+    roomLayout,
+    layoutSession,
+    ownerBackendRoomId,
+    pendingDraft,
+    migrateLegacySnapshot: migrateLegacySnapshot && !pendingDraft,
+    recoveryError,
+  };
+}
+
+function discardConfirmedEditorState(
+  session: LayoutSession,
+  pendingDraft: PersistedLayoutSaveDraft | null,
+): boolean {
+  const activeSession = getActiveLayoutSaveState().session;
+  if (activeSession && hasSameLayoutOwnership(activeSession, session)) {
+    return clearActiveLayoutSaveStateIfOwned(session);
+  }
+  if (pendingDraft && hasSameLayoutOwnership(pendingDraft, session)) {
+    return discardPersistedActiveLayoutDraft(pendingDraft);
+  }
+  return true;
+}
+
+function persistRoomLayout(layout: RoomLayout): void {
+  const result = safeStorageSet("local", "roomfit:confirmedRoomLayout", JSON.stringify(layout));
+  if (result.status === "storage-error") {
+    console.warn("배치 live mirror를 저장하지 못했습니다. persisted draft로 복구합니다.", result.error);
+  }
+}
+
+function applyLayoutUpdateResult(layout: RoomLayout, furniture: BackendFurnitureApiItem[]): RoomLayout {
+  const backendLayout = applyBackendFurnitureToLayout(layout, furniture);
+  const currentById = new Map(layout.furniture.map((item) => [item.id, item]));
+
+  return {
+    ...layout,
+    furniture: backendLayout.furniture.map((backendItem) => {
+      const currentItem = currentById.get(backendItem.id);
+
+      if (!currentItem) {
+        throw new Error(`Backend returned an unknown furniture id: ${backendItem.id}`);
+      }
+
+      return {
+        ...currentItem,
+        dimensions: backendItem.dimensions,
+        position: backendItem.position,
+        rotationY: backendItem.rotationY,
+        status: backendItem.status,
+      };
+    }),
+  };
+}
+
+function hasSameNullableLayoutSession(
+  first: LayoutSession | null,
+  second: LayoutSession | null,
+): boolean {
+  if (!first || !second) {
+    return first === second;
+  }
+  return hasSameLayoutOwnership(first, second);
 }
 
 export default function EditorPlaceholder() {
-  const [roomLayout, setRoomLayout] = useState<RoomLayout | null>(() => loadInitialRoomLayout());
+  const [initialEditorState] = useState(loadInitialEditorState);
+  const [roomLayout, setRoomLayout] = useState<RoomLayout | null>(initialEditorState.roomLayout);
   const [selectedFurnitureId, setSelectedFurnitureId] = useState<string | null>(null);
-  const [layoutId, setLayoutId] = useState<number | null>(null);
+  const [layoutId, setLayoutId] = useState<number | null>(initialEditorState.layoutSession?.layoutId ?? null);
   const [feedback, setFeedback] = useState("");
   const [hideEntranceWalls, setHideEntranceWalls] = useState(false);
   const [isRecommending, setIsRecommending] = useState(false);
   const [isApplyingFeedback, setIsApplyingFeedback] = useState(false);
-  const [errorMessage, setErrorMessage] = useState("");
+  const [errorMessage, setErrorMessage] = useState(initialEditorState.recoveryError);
   const [scoreSummary, setScoreSummary] = useState<ScoreSummary | null>(null);
   const [validationResult, setValidationResult] = useState<LayoutValidationResult | null>(null);
   const [interpretedIntent, setInterpretedIntent] = useState<InterpretedIntent | null>(null);
+  const layoutSaveState = useActiveLayoutSaveState();
+  const layoutWorkflowState = useActiveLayoutWorkflowState();
+  const roomLayoutRef = useRef(roomLayout);
+  const layoutIdRef = useRef(layoutId);
+  const recoveryStartedRef = useRef(false);
+  const mountedRef = useRef(true);
+  const editorWorkflowRef = useRef<ActiveLayoutWorkflowToken | null>(null);
+  const workflowAbortRef = useRef<AbortController | null>(null);
+
+  const replaceRoomLayout = useCallback((nextLayout: RoomLayout) => {
+    roomLayoutRef.current = nextLayout;
+    setRoomLayout(nextLayout);
+    persistRoomLayout(nextLayout);
+  }, []);
 
   useEffect(() => {
-    if (!roomLayout) {
-      return;
-    }
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+      workflowAbortRef.current?.abort();
+      if (editorWorkflowRef.current) {
+        endActiveLayoutWorkflow(editorWorkflowRef.current);
+        editorWorkflowRef.current = null;
+      }
+    };
+  }, []);
 
-    localStorage.setItem("roomfit:confirmedRoomLayout", JSON.stringify(roomLayout));
-  }, [roomLayout]);
-
-  // /layout-confirm and Navbar.tsx's own "확정하기" run on a separate page
-  // mount, with no direct way to read this component's layoutId state — this
-  // is the only channel that carries the backend layoutId to them.
   useEffect(() => {
     if (!layoutId) {
-      localStorage.removeItem("roomfit:backendLayoutId");
-      return;
+      return undefined;
     }
 
-    localStorage.setItem("roomfit:backendLayoutId", String(layoutId));
-  }, [layoutId]);
-
-  // Mirrors drag/rotate/delete edits onto the backend's Layout (see PUT
-  // /api/layouts/{layoutId}) — only reachable once "AI 추천 생성" has produced
-  // a real backend layoutId. Without this, edits made after that never reach
-  // the backend, so confirming (which now writes Layout.furniture onto Room
-  // — see RoomFit-Backend's LayoutService.confirmLayout) would persist the
-  // pre-edit recommendation instead of what's actually on screen. Debounced
-  // so a drag doesn't fire a request per frame; best-effort (the localStorage
-  // mirror above already keeps this session's edits safe either way).
-  useEffect(() => {
-    if (!roomLayout || !layoutId) {
-      return;
-    }
-
-    const timeoutId = window.setTimeout(() => {
-      updateLayout(layoutId, roomLayout.furniture, roomLayout.width, roomLayout.depth).catch((error) => {
-        console.error("배치를 백엔드에 저장하지 못했습니다.", error);
-      });
-    }, 800);
-
-    return () => window.clearTimeout(timeoutId);
-  }, [roomLayout, layoutId]);
-
-  const handleMoveFurniture = (id: string, position: Vector2D) => {
-    setRoomLayout((current) => {
-      if (!current) {
-        return current;
+    return subscribeActiveLayoutSaveResults(({ revision, session, response }) => {
+      const currentSaveState = getActiveLayoutSaveState();
+      if (
+        session.layoutId !== layoutIdRef.current
+        || !currentSaveState.session
+        || !hasSameLayoutOwnership(currentSaveState.session, session)
+        || revision !== currentSaveState.latestRevision
+      ) {
+        return;
       }
 
-      return {
-        ...current,
-        furniture: current.furniture.map((item) =>
-          item.id === id
-            ? {
-                ...item,
-                position,
-              }
-            : item,
-        ),
-      };
+      const currentLayout = roomLayoutRef.current;
+      if (!currentLayout) {
+        return;
+      }
+
+      try {
+        replaceRoomLayout(applyLayoutUpdateResult(currentLayout, response.recommendedFurniture));
+        setScoreSummary(response.scoreSummary);
+        setValidationResult(response.validationResult);
+      } catch (error) {
+        console.error("저장 응답을 현재 편집 상태에 반영하지 못했습니다.", error);
+        setErrorMessage("서버 저장 응답이 현재 가구 목록과 일치하지 않아 화면에 반영하지 않았습니다.");
+      }
+    });
+  }, [layoutId, replaceRoomLayout]);
+
+  useEffect(() => {
+    if (recoveryStartedRef.current) {
+      return;
+    }
+    recoveryStartedRef.current = true;
+
+    const session = initialEditorState.layoutSession;
+    const layout = initialEditorState.roomLayout;
+    const ownerBackendRoomId = initialEditorState.ownerBackendRoomId;
+
+    if (!session || !layout || !ownerBackendRoomId) {
+      return;
+    }
+
+    try {
+      setActiveLayoutSession(session);
+      const recovery = recoverActiveLayoutSave();
+      if (initialEditorState.migrateLegacySnapshot && recovery.status !== "recovered") {
+        enqueueActiveLayoutSave(layout);
+      }
+    } catch (error) {
+      console.error("미저장 배치를 복구하지 못했습니다.", error);
+      queueMicrotask(() => setErrorMessage("미저장 배치를 안전하게 복구하지 못했습니다."));
+    }
+  }, [initialEditorState]);
+
+  const commitEditedLayout = (nextLayout: RoomLayout) => {
+    try {
+      assertActiveLayoutEditingAllowed();
+      const currentLayoutId = layoutIdRef.current;
+      if (!currentLayoutId) {
+        replaceRoomLayout(nextLayout);
+        setErrorMessage("");
+        return true;
+      }
+
+      const ownerBackendRoomId = readSelectedBackendRoomId();
+      const storedSession = readLayoutSession();
+      const activeSession = getActiveLayoutSaveState().session;
+      if (storedSession && activeSession && !hasSameLayoutOwnership(storedSession, activeSession)) {
+        throw new Error("Stored and active layout sessions do not match");
+      }
+      const session = storedSession ?? activeSession;
+
+      if (
+        !ownerBackendRoomId
+        || !session
+        || session.layoutId !== currentLayoutId
+        || !isLayoutSessionOwnedBy(session, ownerBackendRoomId, nextLayout.id)
+      ) {
+        throw new Error("Current room does not own the active layout session");
+      }
+
+      writeLayoutSession(session);
+      setActiveLayoutSession(session);
+      enqueueActiveLayoutSave(nextLayout);
+      replaceRoomLayout(nextLayout);
+      setErrorMessage("");
+      return true;
+    } catch (error) {
+      console.error("배치 저장 요청을 등록하지 못했습니다.", error);
+      setErrorMessage("편집 내용을 저장할 준비가 되지 않아 화면에 반영하지 않았습니다.");
+      return false;
+    }
+  };
+
+  const handleMoveFurniture = (id: string, position: Vector2D) => {
+    const currentLayout = roomLayoutRef.current;
+    const target = currentLayout?.furniture.find((item) => item.id === id);
+
+    if (!currentLayout || !target || target.status === "deleted") {
+      return;
+    }
+
+    commitEditedLayout({
+      ...currentLayout,
+      furniture: currentLayout.furniture.map((item) => item.id === id
+        ? { ...item, position, status: "user_modified" }
+        : item),
     });
   };
 
   const handleRotateFurniture = (id: string) => {
-    setRoomLayout((current) => {
-      if (!current) {
-        return current;
-      }
+    const currentLayout = roomLayoutRef.current;
+    const target = currentLayout?.furniture.find((item) => item.id === id);
 
-      return {
-        ...current,
-        furniture: current.furniture.map((item) =>
-          item.id === id
-            ? {
-                ...item,
-                rotationY: item.rotationY + Math.PI / 2,
-              }
-            : item,
-        ),
-      };
+    if (!currentLayout || !target || target.status === "deleted") {
+      return;
+    }
+
+    commitEditedLayout({
+      ...currentLayout,
+      furniture: currentLayout.furniture.map((item) => item.id === id
+        ? { ...item, rotationY: item.rotationY + Math.PI / 2, status: "user_modified" }
+        : item),
     });
   };
 
   const handleDeleteFurniture = (id: string) => {
-    setRoomLayout((current) => {
-      if (!current) {
-        return current;
-      }
+    const currentLayout = roomLayoutRef.current;
+    const target = currentLayout?.furniture.find((item) => item.id === id);
 
-      return { ...current, furniture: current.furniture.filter((item) => item.id !== id) };
+    if (!currentLayout || !target || target.status === "deleted") {
+      return;
+    }
+
+    const applied = commitEditedLayout({
+      ...currentLayout,
+      furniture: currentLayout.furniture.map((item) => item.id === id ? { ...item, status: "deleted" } : item),
     });
-    setSelectedFurnitureId(null);
+    if (applied) {
+      setSelectedFurnitureId(null);
+    }
   };
 
   // Resets to whatever is currently saved under roomfit:selectedRoomLayout
@@ -159,46 +425,254 @@ export default function EditorPlaceholder() {
       return;
     }
 
-    setRoomLayout((current) => (current ? { ...current, furniture: saved.furniture } : current));
-    setSelectedFurnitureId(null);
+    const currentLayout = roomLayoutRef.current;
+    if (!currentLayout) {
+      return;
+    }
+
+    if (!layoutIdRef.current) {
+      if (commitEditedLayout({ ...currentLayout, furniture: saved.furniture })) {
+        setSelectedFurnitureId(null);
+      }
+      return;
+    }
+
+    const savedById = new Map(saved.furniture.map((item) => [item.id, item]));
+    const applied = commitEditedLayout({
+      ...currentLayout,
+      furniture: currentLayout.furniture.map((item) => savedById.get(item.id) ?? { ...item, status: "deleted" }),
+    });
+    if (applied) {
+      setSelectedFurnitureId(null);
+    }
+  };
+
+  const readConsistentSession = (): LayoutSession | null => {
+    const storedSession = readLayoutSession();
+    const activeSession = getActiveLayoutSaveState().session;
+    if (storedSession && activeSession && !hasSameLayoutOwnership(storedSession, activeSession)) {
+      throw new Error("Stored and active layout sessions do not match");
+    }
+    return storedSession ?? activeSession;
+  };
+
+  const startEditorWorkflow = (
+    kind: ActiveLayoutWorkflowKind,
+    expectedSession: LayoutSession | null,
+  ) => {
+    const token = beginActiveLayoutWorkflow(kind, expectedSession);
+    const controller = new AbortController();
+    editorWorkflowRef.current = token;
+    workflowAbortRef.current = controller;
+    return { token, controller };
+  };
+
+  const finishEditorWorkflow = (token: ActiveLayoutWorkflowToken) => {
+    endActiveLayoutWorkflow(token);
+    if (editorWorkflowRef.current?.revision === token.revision) {
+      editorWorkflowRef.current = null;
+      workflowAbortRef.current = null;
+    }
+  };
+
+  const isEditorWorkflowCurrent = (
+    token: ActiveLayoutWorkflowToken,
+    expectedSession: LayoutSession | null,
+    ownerBackendRoomId: number,
+    ownerUiRoomLayoutId: string,
+  ) => {
+    const selected = readSelectedRoomEnvelope();
+    return mountedRef.current
+      && readSelectedBackendRoomId() === ownerBackendRoomId
+      && selected.status === "valid"
+      && selected.selection.uiRoomLayoutId === ownerUiRoomLayoutId
+      && isActiveLayoutWorkflowCurrent(token, expectedSession)
+      && hasSameNullableLayoutSession(getActiveLayoutSaveState().session, expectedSession);
+  };
+
+  const installLayoutResult = (
+    nextSession: LayoutSession,
+    nextLayout: RoomLayout,
+  ) => {
+    const previousStoredSession = readLayoutSession();
+    const previousActiveSession = getActiveLayoutSaveState().session;
+
+    if (isLayoutSessionConfirmed(nextSession)) {
+      throw new Error("Cannot install an already confirmed layout session");
+    }
+
+    try {
+      writeLayoutSession(nextSession);
+      const previousSession = previousStoredSession ?? previousActiveSession;
+      const draftCleared = previousSession
+        ? clearActiveLayoutSaveStateIfOwned(previousSession)
+        : true;
+      if (!draftCleared) {
+        console.warn("이전 배치 draft를 제거하지 못해 다음 복구 시 owner 기준으로 폐기합니다.");
+      }
+      setActiveLayoutSession(nextSession);
+      replaceRoomLayout(nextLayout);
+      layoutIdRef.current = nextSession.layoutId;
+      setLayoutId(nextSession.layoutId);
+    } catch (error) {
+      const previousSession = previousStoredSession ?? previousActiveSession;
+      try {
+        if (previousSession) {
+          writeLayoutSession(previousSession);
+          if (!getActiveLayoutSaveState().session && !isLayoutSessionConfirmed(previousSession)) {
+            setActiveLayoutSession(previousSession);
+          }
+        } else {
+          clearLayoutSession();
+        }
+      } catch (restoreError) {
+        console.error("새 배치 설치 실패 후 이전 세션을 복원하지 못했습니다.", restoreError);
+      }
+      throw error;
+    }
   };
 
   const handleRecommend = async () => {
-    if (!roomLayout) {
+    const currentLayout = roomLayoutRef.current;
+    if (!currentLayout) {
       setErrorMessage("먼저 /rooms에서 샘플 방을 선택해 주세요.");
       return;
     }
 
-    const roomId = loadBackendRoomId();
+    const ownerBackendRoomId = readSelectedBackendRoomId();
+    if (!ownerBackendRoomId) {
+      setErrorMessage("현재 선택된 백엔드 방 ID를 확인할 수 없습니다.");
+      return;
+    }
+
+    let expectedSession: LayoutSession | null;
+    try {
+      expectedSession = readConsistentSession();
+      if (expectedSession && !isLayoutSessionOwnedBy(expectedSession, ownerBackendRoomId, currentLayout.id)) {
+        throw new Error("Current room does not own the layout session");
+      }
+    } catch (error) {
+      console.error("추천 전 배치 세션을 확인하지 못했습니다.", error);
+      setErrorMessage("현재 방의 배치 세션을 확인할 수 없어 추천을 시작하지 않았습니다.");
+      return;
+    }
+
+    let workflow: ReturnType<typeof startEditorWorkflow>;
+    try {
+      workflow = startEditorWorkflow("recommend", expectedSession);
+    } catch (error) {
+      console.error("다른 배치 작업이 진행 중입니다.", error);
+      setErrorMessage("다른 배치 작업이 끝난 뒤 다시 시도해 주세요.");
+      return;
+    }
 
     setIsRecommending(true);
     setErrorMessage("");
     setInterpretedIntent(null);
 
     try {
-      const context = await createDefaultAgentContext(roomId);
-      const result = await recommendLayout(roomId, context.contextId);
+      if (expectedSession) {
+        setActiveLayoutSession(expectedSession);
+        recoverActiveLayoutSave();
+        await flushActiveLayoutSave();
+      }
 
-      setRoomLayout(applyBackendFurnitureToLayout(roomLayout, result.recommendedFurniture));
-      setLayoutId(result.layoutId);
+      let activeRoomSave = getActiveRoomFurnitureSaveState().session;
+      const roomDraft = getPersistedRoomFurnitureSaveDraft();
+      if (!activeRoomSave && roomDraft) {
+        if (
+          roomDraft.ownerBackendRoomId !== ownerBackendRoomId
+          || roomDraft.ownerUiRoomLayoutId !== currentLayout.id
+        ) {
+          throw new Error("Current room does not own the persisted Room draft");
+        }
+        setActiveRoomFurnitureSaveSession({
+          ownerBackendRoomId,
+          ownerUiRoomLayoutId: currentLayout.id,
+        });
+        const recovery = recoverActiveRoomFurnitureSave();
+        if (recovery.status === "recovered") {
+          replaceRoomLayout(recovery.snapshot);
+        }
+        activeRoomSave = getActiveRoomFurnitureSaveState().session;
+      }
+      if (
+        activeRoomSave
+        && (activeRoomSave.ownerBackendRoomId !== ownerBackendRoomId
+          || activeRoomSave.ownerUiRoomLayoutId !== currentLayout.id)
+      ) {
+        throw new Error("Current room does not own the active Room save");
+      }
+      await flushActiveRoomFurnitureSave();
+      if (activeRoomSave) {
+        clearActiveRoomFurnitureSaveStateIfOwned(activeRoomSave);
+      }
+
+      if (!isEditorWorkflowCurrent(workflow.token, expectedSession, ownerBackendRoomId, currentLayout.id)) {
+        return;
+      }
+      const stableLayout = roomLayoutRef.current ?? currentLayout;
+
+      const context = await createDefaultAgentContext(ownerBackendRoomId, workflow.controller.signal);
+      const result = await recommendLayout(ownerBackendRoomId, context.contextId, workflow.controller.signal);
+      if (!isEditorWorkflowCurrent(workflow.token, expectedSession, ownerBackendRoomId, currentLayout.id)) {
+        return;
+      }
+
+      const nextLayout = applyBackendFurnitureToLayout(stableLayout, result.recommendedFurniture);
+      const nextSession: LayoutSession = {
+        version: 1,
+        layoutId: result.layoutId,
+        ownerBackendRoomId,
+        ownerUiRoomLayoutId: nextLayout.id,
+      };
+
+      installLayoutResult(nextSession, nextLayout);
       setScoreSummary(result.scoreSummary);
       setValidationResult(result.validationResult);
     } catch (error) {
       console.error(error);
-      setErrorMessage("AI 추천 생성에 실패했습니다. 백엔드 서버 상태를 확인해 주세요.");
+      if (mountedRef.current && isActiveLayoutWorkflowCurrent(workflow.token)) {
+        setErrorMessage("AI 추천 생성에 실패했습니다. 백엔드 서버 상태를 확인해 주세요.");
+      }
     } finally {
-      setIsRecommending(false);
+      finishEditorWorkflow(workflow.token);
+      if (mountedRef.current) {
+        setIsRecommending(false);
+      }
     }
   };
 
   const handleFeedback = async () => {
-    if (!roomLayout) {
+    const currentLayout = roomLayoutRef.current;
+    const currentLayoutId = layoutIdRef.current;
+    const ownerBackendRoomId = readSelectedBackendRoomId();
+    let session: LayoutSession | null;
+    try {
+      session = readConsistentSession();
+    } catch (error) {
+      console.error("피드백 전 배치 세션을 확인하지 못했습니다.", error);
+      setErrorMessage("현재 방과 배치 세션이 일치하지 않아 피드백을 적용할 수 없습니다.");
+      return;
+    }
+
+    if (!currentLayout) {
       setErrorMessage("먼저 /rooms에서 샘플 방을 선택해 주세요.");
       return;
     }
 
-    if (!layoutId) {
+    if (!currentLayoutId) {
       setErrorMessage("먼저 AI 추천 생성을 실행해 주세요.");
+      return;
+    }
+
+    if (
+      !ownerBackendRoomId
+      || !session
+      || session.layoutId !== currentLayoutId
+      || !isLayoutSessionOwnedBy(session, ownerBackendRoomId, currentLayout.id)
+    ) {
+      setErrorMessage("현재 방과 배치 세션이 일치하지 않아 피드백을 적용할 수 없습니다.");
       return;
     }
 
@@ -207,22 +681,59 @@ export default function EditorPlaceholder() {
       return;
     }
 
+    let workflow: ReturnType<typeof startEditorWorkflow>;
+    try {
+      workflow = startEditorWorkflow("feedback", session);
+    } catch (error) {
+      console.error("다른 배치 작업이 진행 중입니다.", error);
+      setErrorMessage("다른 배치 작업이 끝난 뒤 다시 시도해 주세요.");
+      return;
+    }
+
     setIsApplyingFeedback(true);
     setErrorMessage("");
 
     try {
-      const result = await applyLayoutFeedback(layoutId, feedback.trim());
+      setActiveLayoutSession(session);
+      recoverActiveLayoutSave();
+      await flushActiveLayoutSave();
+      if (!isEditorWorkflowCurrent(workflow.token, session, ownerBackendRoomId, currentLayout.id)) {
+        return;
+      }
+      const stableLayout = roomLayoutRef.current ?? currentLayout;
 
-      setRoomLayout(applyBackendFurnitureToLayout(roomLayout, result.recommendedFurniture));
-      setLayoutId(result.layoutId);
+      const result = await applyLayoutFeedback(
+        currentLayoutId,
+        feedback.trim(),
+        workflow.controller.signal,
+      );
+      if (!isEditorWorkflowCurrent(workflow.token, session, ownerBackendRoomId, currentLayout.id)) {
+        return;
+      }
+
+      const nextLayout = applyBackendFurnitureToLayout(stableLayout, result.recommendedFurniture);
+      const nextSession: LayoutSession = {
+        version: 1,
+        layoutId: result.layoutId,
+        ownerBackendRoomId,
+        ownerUiRoomLayoutId: nextLayout.id,
+      };
+
+      installLayoutResult(nextSession, nextLayout);
       setScoreSummary(result.scoreSummary);
       setValidationResult(result.validationResult);
       setInterpretedIntent(result.interpretedIntent ?? null);
+
     } catch (error) {
       console.error(error);
-      setErrorMessage("피드백 반영에 실패했습니다. 지원하지 않는 피드백이거나 서버 요청이 실패했을 수 있습니다.");
+      if (mountedRef.current && isActiveLayoutWorkflowCurrent(workflow.token)) {
+        setErrorMessage("피드백 반영에 실패했습니다. 지원하지 않는 피드백이거나 서버 요청이 실패했을 수 있습니다.");
+      }
     } finally {
-      setIsApplyingFeedback(false);
+      finishEditorWorkflow(workflow.token);
+      if (mountedRef.current) {
+        setIsApplyingFeedback(false);
+      }
     }
   };
 
@@ -239,6 +750,13 @@ export default function EditorPlaceholder() {
   }
 
   const warnings = validationResult?.warnings ?? [];
+  const visibleFurniture = roomLayout.furniture.filter((item) => item.status !== "deleted");
+  const isEditorWorkflowLocked = layoutWorkflowState.kind !== "idle";
+  const layoutSaveErrorMessage = layoutId
+    && layoutSaveState.session?.layoutId === layoutId
+    && layoutSaveState.error
+    ? "배치를 저장하지 못했습니다. 최신 편집 상태는 유지되며 다음 단계에서 다시 저장을 시도합니다."
+    : "";
 
   return (
     <main className="min-h-[calc(100vh-76px)] bg-[#fbfbfb] text-[#141414]">
@@ -248,7 +766,7 @@ export default function EditorPlaceholder() {
             <div className="flex min-w-0 flex-wrap items-center gap-3">
               <h1 className="min-w-0 truncate text-2xl font-extrabold ml-2">{roomLayout.name}</h1>
               <span className="rounded-full bg-[#eeeeee] px-3 py-1 text-xs font-bold text-[#777777]">
-                가구 {roomLayout.furniture.length}개
+                가구 {visibleFurniture.length}개
               </span>
               <span className="rounded-full bg-[#eeeeee] px-3 py-1 text-xs font-bold text-[#777777]">
                 {roomLayout.width}m × {roomLayout.depth}m
@@ -272,7 +790,7 @@ export default function EditorPlaceholder() {
               furniture={roomLayout.furniture}
               selectedFurnitureId={selectedFurnitureId}
               onSelectFurniture={setSelectedFurnitureId}
-              onMoveFurniture={handleMoveFurniture}
+              onMoveFurniture={isEditorWorkflowLocked ? () => undefined : handleMoveFurniture}
               hideEntranceWalls={hideEntranceWalls}
               alignCameraToEntrance
               showEditingHelpers
@@ -283,14 +801,14 @@ export default function EditorPlaceholder() {
             <EditorToolButton
               label="90° 회전"
               icon={<span className="text-[11px] font-extrabold leading-none">90°</span>}
-              onClick={selectedFurnitureId ? () => handleRotateFurniture(selectedFurnitureId) : undefined}
+              onClick={!isEditorWorkflowLocked && selectedFurnitureId ? () => handleRotateFurniture(selectedFurnitureId) : undefined}
             />
             <EditorToolButton
               label="가구 삭제"
               icon={<FiTrash2 />}
-              onClick={selectedFurnitureId ? () => handleDeleteFurniture(selectedFurnitureId) : undefined}
+              onClick={!isEditorWorkflowLocked && selectedFurnitureId ? () => handleDeleteFurniture(selectedFurnitureId) : undefined}
             />
-            <EditorToolButton label="초기화" icon={<FiRotateCcw />} onClick={handleResetFurniture} />
+            <EditorToolButton label="초기화" icon={<FiRotateCcw />} onClick={isEditorWorkflowLocked ? undefined : handleResetFurniture} />
           </div>
         </section>
 
@@ -306,7 +824,7 @@ export default function EditorPlaceholder() {
                 <button
                   type="button"
                   onClick={handleRecommend}
-                  disabled={isRecommending}
+                  disabled={isRecommending || isEditorWorkflowLocked}
                   className="mt-4 w-full rounded-lg bg-[#111111] px-5 py-3 text-sm font-extrabold text-white transition-colors hover:bg-[#333333] disabled:cursor-not-allowed disabled:bg-[#999999]"
                 >
                   {isRecommending ? "AI 추천 생성 중..." : "AI 추천 생성하기"}
@@ -321,6 +839,7 @@ export default function EditorPlaceholder() {
                 <textarea
                   value={feedback}
                   onChange={(event) => setFeedback(event.target.value)}
+                  disabled={isEditorWorkflowLocked}
                   className="mt-4 min-h-28 w-full resize-none rounded-lg border border-[#dddddd] bg-[#fbfbfb] p-4 text-sm font-semibold outline-none focus:border-[#111111]"
                   placeholder="(예) 책상을 조금 더 넓게 쓰고 싶어"
                 />
@@ -328,7 +847,7 @@ export default function EditorPlaceholder() {
                 <button
                   type="button"
                   onClick={handleFeedback}
-                  disabled={isApplyingFeedback}
+                  disabled={isApplyingFeedback || isEditorWorkflowLocked}
                   className="mt-3 w-full rounded-lg bg-[#111111] px-5 py-3 text-sm font-extrabold text-white transition-colors hover:bg-[#333333] disabled:cursor-not-allowed disabled:bg-[#bbbbbb]"
                 >
                   {isApplyingFeedback ? "피드백 반영 중..." : "피드백 반영"}
@@ -382,6 +901,12 @@ export default function EditorPlaceholder() {
                   </ul>
                 </div>
               )}
+            </section>
+          )}
+
+          {layoutSaveErrorMessage && (
+            <section className="rounded-xl border border-[#ffd8d8] bg-[#fff5f5] p-5 text-sm font-bold text-[#c0392b]">
+              {layoutSaveErrorMessage}
             </section>
           )}
 

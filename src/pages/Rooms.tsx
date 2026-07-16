@@ -9,6 +9,54 @@ import {
   type SampleRoomCard,
   type UploadedRoomCard,
 } from "../api/rooms";
+import {
+  clearActiveLayoutSaveStateIfOwned,
+  discardPersistedActiveLayoutDraft,
+  flushActiveLayoutSave,
+  getActiveLayoutSaveState,
+  getPersistedActiveLayoutDraft,
+  recoverActiveLayoutSave,
+  setActiveLayoutSession,
+} from "../api/layoutSaveCoordinator";
+import {
+  clearLayoutConfirmAttemptForOwner,
+  discardConfirmedLayoutStaleState,
+  isLayoutSessionConfirmed,
+} from "../api/layoutConfirmation";
+import {
+  clearActiveRoomFurnitureSaveStateIfOwned,
+  discardPersistedRoomFurnitureSaveDraftIfOwned,
+  flushActiveRoomFurnitureSave,
+  getActiveRoomFurnitureSaveState,
+  getPersistedRoomFurnitureSaveDraft,
+  recoverActiveRoomFurnitureSave,
+  setActiveRoomFurnitureSaveSession,
+} from "../api/roomFurnitureSaveCoordinator";
+import {
+  clearLayoutSessionForOwner,
+  hasSameLayoutOwnership,
+  isLayoutOwnershipForRoom,
+  readLayoutSession,
+  readSelectedBackendRoomId,
+  toLayoutSession,
+  writeLayoutSession,
+  type LayoutSession,
+} from "../api/layoutSession";
+import {
+  beginActiveLayoutWorkflow,
+  endActiveLayoutWorkflow,
+  useActiveLayoutWorkflowState,
+  type ActiveLayoutWorkflowToken,
+} from "../api/layoutWorkflow";
+import {
+  clearSelectedRoomEnvelopeForOwner,
+  commitStagedSelectedRoomEnvelope,
+  readSelectedRoomEnvelope,
+  restoreSelectedRoomEnvelope,
+  stageSelectedRoomEnvelope,
+  type SelectedRoomEnvelope,
+} from "../api/roomSelectionStorage";
+import { safeStorageGet, safeStorageRemove, safeStorageSet } from "../api/safeStorage";
 import { RoomViewer } from "../components/room/RoomViewer";
 import { hasConfirmedLayout } from "../config/confirmedLayouts";
 import { applyPreferencesToStorage, getRoomPreferences } from "../config/roomPreferences";
@@ -16,14 +64,6 @@ import { captureCanvasThumbnail, getRoomThumbnail, saveRoomThumbnail } from "../
 import type { RoomLayout } from "../types";
 
 const filters = ["전체", "원룸", "사무실"];
-const selectedRoomStorageKeys = [
-  "roomfit:backendRoomId",
-  "roomfit:selectedRoomId",
-  "roomfit:selectedRoomTitle",
-  "roomfit:selectedRoomType",
-  "roomfit:selectedRoomSize",
-  "roomfit:selectedRoomLayout",
-];
 const roomsVisitedKey = "roomfit:visited:rooms";
 
 export default function Rooms() {
@@ -34,9 +74,12 @@ export default function Rooms() {
   const [isUploadsLoading, setIsUploadsLoading] = useState(true);
   const [uploadNotice, setUploadNotice] = useState(false);
   const [deletingRoomId, setDeletingRoomId] = useState<number | null>(null);
+  const [isSwitchingRoom, setIsSwitchingRoom] = useState(false);
   const [deleteError, setDeleteError] = useState("");
   const knownUploadIds = useRef<Set<number> | null>(null);
   const deletedUploadIds = useRef(new Set<number>());
+  const roomSwitchPending = useRef(false);
+  const layoutWorkflowState = useActiveLayoutWorkflowState();
 
   const [selectedRoomId, setSelectedRoomId] = useState(() => getInitialSelectedRoomId());
   // Ticks up after every background capture completes, purely to force
@@ -143,12 +186,84 @@ export default function Rooms() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [roomSamples, uploadedRooms, thumbnailCaptureTick]);
 
-  const selectRoom = (room: SampleRoomCard) => {
-    localStorage.setItem("roomfit:selectedRoomId", room.layoutId);
-    localStorage.setItem("roomfit:backendRoomId", String(room.roomId));
-    localStorage.setItem("roomfit:selectedRoomTitle", room.title);
-    localStorage.setItem("roomfit:selectedRoomType", room.category);
-    localStorage.setItem("roomfit:selectedRoomSize", room.size);
+  const selectRoom = async (room: SampleRoomCard) => {
+    if (roomSwitchPending.current || layoutWorkflowState.kind !== "idle") {
+      return;
+    }
+
+    roomSwitchPending.current = true;
+    setIsSwitchingRoom(true);
+    setDeleteError("");
+    let workflowToken: ActiveLayoutWorkflowToken | null = null;
+
+    try {
+      const expectedSession = readConsistentActiveSession();
+      workflowToken = beginActiveLayoutWorkflow("room-transition", expectedSession);
+      const selectedResult = readSelectedRoomEnvelope();
+      if (selectedResult.status === "storage-error") {
+        throw selectedResult.error;
+      }
+      const previousSelection = selectedResult.status === "valid" ? selectedResult.selection : null;
+      const selectedBackendRoomId = previousSelection?.backendRoomId ?? null;
+      const selectedUiRoomLayoutId = previousSelection?.uiRoomLayoutId ?? null;
+      const isCurrentRoom = selectedBackendRoomId === room.roomId
+        && selectedUiRoomLayoutId === room.layoutId;
+      const currentSession = isCurrentRoom
+        ? findLayoutSessionForRoom(room.roomId, room.layoutId)
+        : null;
+
+      if (currentSession) {
+        await flushRoomFurnitureSaveForTransition();
+        const confirmedCleanup = discardConfirmedLayoutStaleState(currentSession, {
+          clearCoordinator: () => clearConfirmedLayoutCoordinatorState(currentSession),
+          clearSession: () => {
+            clearLayoutSessionForOwner(room.roomId);
+          },
+        });
+        if (confirmedCleanup.confirmed && !confirmedCleanup.complete) {
+          console.warn("확정된 배치의 stale 상태를 일부 정리하지 못했습니다.", confirmedCleanup.warnings);
+        }
+        if (confirmedCleanup.confirmed) {
+          setSelectedRoomId(room.layoutId);
+          return;
+        }
+        if (getActiveRoomFurnitureSaveState().latestRevision > 0) {
+          clearLayoutSessionAfterRoomSave(currentSession);
+          setSelectedRoomId(room.layoutId);
+          return;
+        }
+        writeLayoutSession(currentSession);
+        setActiveLayoutSession(currentSession);
+        recoverActiveLayoutSave();
+        setSelectedRoomId(room.layoutId);
+        return;
+      }
+
+      const previousLayoutSession = await flushCurrentLayoutSessionForTransition();
+      await flushRoomFurnitureSaveForTransition();
+      const nextSelection = toSelectedRoomEnvelope(room);
+      stageSelectedRoomEnvelope(nextSelection);
+      commitStagedSelectedRoomEnvelope(nextSelection);
+
+      try {
+        if (previousLayoutSession) {
+          clearLayoutSessionAfterRoomSave(previousLayoutSession);
+        }
+        clearCurrentRoomFurnitureSaveState(previousSelection);
+        setActiveRoomFurnitureSaveSession({
+          ownerBackendRoomId: nextSelection.backendRoomId,
+          ownerUiRoomLayoutId: nextSelection.uiRoomLayoutId,
+        });
+      } catch (error) {
+        if (!restoreSelectedRoomEnvelope(previousSelection)) {
+          throw new Error("Room transition cleanup and selection rollback both failed", { cause: error });
+        }
+        throw error;
+      }
+
+      // The selected Room envelope is authoritative. Preference and thumbnail
+      // mirrors below are optional and must not roll this selection back.
+      setSelectedRoomId(room.layoutId);
 
     // Deliberately always the raw as-uploaded room, never a previously
     // confirmed result — this room can be run through /preference's
@@ -162,8 +277,6 @@ export default function Rooms() {
     // every retry just looks like whatever was confirmed first. The
     // "확정된 배치 있음" badge (see hasConfirmedLayout below) is still the
     // visible record that a confirm happened, without resuming its data here.
-    localStorage.setItem("roomfit:selectedRoomLayout", JSON.stringify(room.layout));
-
     // roomfit:confirmedRoomLayout (see confirmedLayouts.ts's
     // getLiveMirrorForSelectedRoom) mirrors *any* edit made in /editor this
     // session, id-matched against roomfit:selectedRoomId — since that id
@@ -171,7 +284,10 @@ export default function Rooms() {
     // over from a previous full run-through would otherwise still match and
     // get picked up the moment /editor opens again, silently overriding the
     // fresh raw layout just set above with the old scenario's result.
-    localStorage.removeItem("roomfit:confirmedRoomLayout");
+      const mirrorRemoval = safeStorageRemove("local", "roomfit:confirmedRoomLayout");
+      if (mirrorRemoval.status === "storage-error") {
+        console.warn("이전 Room live mirror를 정리하지 못했습니다.", mirrorRemoval.error);
+      }
 
     // /preference, /reference-image, /add-furniture each keep their pick in
     // one global localStorage key that only resets once per browser session
@@ -181,9 +297,20 @@ export default function Rooms() {
     // picks (or blanking them out if it's never been through this before)
     // means every fresh room actually starts fresh, while an already-
     // confirmed room reopens showing what it was actually confirmed with.
-    applyPreferencesToStorage(getRoomPreferences(room.layoutId));
-
-    setSelectedRoomId(room.layoutId);
+      const preferenceWarnings = applyPreferencesToStorage(getRoomPreferences(room.layoutId));
+      if (preferenceWarnings.length > 0) {
+        console.warn("Room은 선택했지만 일부 취향 mirror를 적용하지 못했습니다.", preferenceWarnings);
+      }
+    } catch (error) {
+      console.error("현재 방의 배치를 저장하지 못해 방을 전환하지 않았습니다.", error);
+      setDeleteError("현재 방의 배치를 저장하지 못해 다른 방으로 이동하지 않았습니다.");
+    } finally {
+      if (workflowToken) {
+        endActiveLayoutWorkflow(workflowToken);
+      }
+      roomSwitchPending.current = false;
+      setIsSwitchingRoom(false);
+    }
   };
 
   const removeUploadedRoom = async (
@@ -191,26 +318,84 @@ export default function Rooms() {
     room: UploadedRoomCard,
   ) => {
     event.stopPropagation();
+    if (roomSwitchPending.current || deletingRoomId !== null || layoutWorkflowState.kind !== "idle") return;
     if (!window.confirm("이 업로드 방을 삭제할까요?")) return;
 
+    roomSwitchPending.current = true;
+    setIsSwitchingRoom(true);
     setDeletingRoomId(room.roomId);
     setDeleteError("");
 
+    let backendDeleted = false;
+    let workflowToken: ActiveLayoutWorkflowToken | null = null;
     try {
+      workflowToken = beginActiveLayoutWorkflow("room-delete", readConsistentActiveSession());
+      const ownedSession = findLayoutSessionForRoom(room.roomId, room.layoutId);
+      if (ownedSession && !isLayoutSessionConfirmed(ownedSession)) {
+        const activeSession = getActiveLayoutSaveState().session;
+        if (!activeSession || hasSameLayoutOwnership(activeSession, ownedSession)) {
+          setActiveLayoutSession(ownedSession);
+          recoverActiveLayoutSave();
+          await flushActiveLayoutSave();
+        }
+      }
+      await flushRoomFurnitureSaveForOwner(room.roomId, room.layoutId, true);
+
       await deleteUploadedRoom(room.roomId);
+      backendDeleted = true;
+      clearDeletedRoomFurnitureSaveState({
+        ownerBackendRoomId: room.roomId,
+        ownerUiRoomLayoutId: room.layoutId,
+      });
+      if (!clearLayoutConfirmAttemptForOwner(room.roomId)) {
+        console.warn("삭제된 방의 확정 기록을 제거하지 못했습니다.");
+      }
+
       deletedUploadIds.current.add(room.roomId);
       knownUploadIds.current?.delete(room.roomId);
       setUploadedRooms((current) => current.filter((item) => item.roomId !== room.roomId));
 
-      const selectedBackendRoomId = localStorage.getItem("roomfit:backendRoomId");
-      if (selectedRoomId === room.layoutId || selectedBackendRoomId === String(room.roomId)) {
-        selectedRoomStorageKeys.forEach((key) => localStorage.removeItem(key));
+      if (ownedSession) {
+        if (!clearConfirmedLayoutCoordinatorState(ownedSession)) {
+          setDeleteError("방은 삭제되었지만 로컬 미저장 배치 정리에 실패했습니다.");
+        }
+        try {
+          clearLayoutSessionForOwner(room.roomId);
+        } catch (error) {
+          console.warn("삭제된 방의 배치 세션을 정리하지 못했습니다.", error);
+        }
+      }
+
+      const selected = readSelectedRoomEnvelope();
+      if (
+        selectedRoomId === room.layoutId
+        || (selected.status === "valid" && selected.selection.backendRoomId === room.roomId)
+      ) {
+        try {
+          if (!clearSelectedRoomEnvelopeForOwner(room.roomId)) {
+            throw new Error("Selected Room storage cleanup failed");
+          }
+          safeStorageRemove("local", "roomfit:confirmedRoomLayout");
+          clearLayoutSessionForOwner(room.roomId);
+        } catch (error) {
+          console.warn("삭제된 방의 선택 정보를 정리하지 못했습니다.", error);
+        }
         setSelectedRoomId("");
       }
     } catch (error) {
-      setDeleteError(error instanceof Error ? error.message : "업로드 방을 삭제하지 못했습니다.");
+      if (backendDeleted) {
+        console.warn("삭제된 방의 로컬 정보를 완전히 정리하지 못했습니다.", error);
+        setDeleteError("방은 삭제되었지만 일부 로컬 정보를 정리하지 못했습니다.");
+      } else {
+        setDeleteError(error instanceof Error ? error.message : "업로드 방을 삭제하지 못했습니다.");
+      }
     } finally {
+      if (workflowToken) {
+        endActiveLayoutWorkflow(workflowToken);
+      }
       setDeletingRoomId(null);
+      setIsSwitchingRoom(false);
+      roomSwitchPending.current = false;
     }
   };
 
@@ -309,9 +494,9 @@ export default function Rooms() {
                   >
                     <button
                       type="button"
-                      onClick={() => selectRoom(room)}
+                      onClick={() => void selectRoom(room)}
                       aria-pressed={selectedRoomId === room.layoutId}
-                      disabled={deletingRoomId === room.roomId}
+                      disabled={deletingRoomId === room.roomId || isSwitchingRoom || layoutWorkflowState.kind !== "idle"}
                       className="block w-full p-5 text-left disabled:cursor-wait"
                     >
                       <div className="mb-4 flex min-h-6 items-center justify-between gap-3 pr-10">
@@ -349,7 +534,7 @@ export default function Rooms() {
                       type="button"
                       title="업로드 방 삭제"
                       aria-label={`${room.title} 삭제`}
-                      disabled={deletingRoomId !== null}
+                      disabled={deletingRoomId !== null || isSwitchingRoom || layoutWorkflowState.kind !== "idle"}
                       onClick={(event) => void removeUploadedRoom(event, room)}
                       className="absolute right-5 bottom-7 z-20 grid h-9 w-9 place-items-center rounded-md bg-white text-[#555555] transition-colors hover:border-[#b42318] hover:text-[#b42318] disabled:cursor-wait disabled:opacity-50"
                     >
@@ -399,8 +584,9 @@ export default function Rooms() {
                   <button
                     key={`${room.layoutId}-${room.title}`}
                     type="button"
-                    onClick={() => selectRoom(room)}
+                    onClick={() => void selectRoom(room)}
                     aria-pressed={selectedRoomId === room.layoutId}
+                    disabled={isSwitchingRoom || deletingRoomId !== null || layoutWorkflowState.kind !== "idle"}
                     className={`group relative overflow-hidden rounded-lg border bg-white p-5 text-left transition-all hover:-translate-y-1 hover:shadow-[0_18px_35px_rgba(0,0,0,0.08)] ${
                       selectedRoomId === room.layoutId
                         ? "border-[#111111] shadow-[0_18px_35px_rgba(0,0,0,0.08)]"
@@ -473,13 +659,228 @@ function formatUploadedAt(createdAt: string) {
 }
 
 function getInitialSelectedRoomId() {
-  if (!sessionStorage.getItem(roomsVisitedKey)) {
-    selectedRoomStorageKeys.forEach((key) => localStorage.removeItem(key));
-    sessionStorage.setItem(roomsVisitedKey, "true");
-    return "";
+  const visited = safeStorageGet("session", roomsVisitedKey);
+  if (visited.status === "missing") {
+    const write = safeStorageSet("session", roomsVisitedKey, "true");
+    if (write.status === "storage-error") {
+      console.warn("Room 방문 상태를 저장하지 못했습니다.", write.error);
+    }
+  }
+  const selected = readSelectedRoomEnvelope();
+  return selected.status === "valid" ? selected.selection.uiRoomLayoutId : "";
+}
+
+function readConsistentActiveSession(): LayoutSession | null {
+  const storedSession = readLayoutSession();
+  const memorySession = getActiveLayoutSaveState().session;
+  if (storedSession && memorySession && !hasSameLayoutOwnership(storedSession, memorySession)) {
+    throw new Error("Stored and active layout sessions do not match");
+  }
+  return storedSession ?? memorySession;
+}
+
+async function flushCurrentLayoutSessionForTransition(): Promise<LayoutSession | null> {
+  const storedSession = readLayoutSession();
+  const memorySession = getActiveLayoutSaveState().session;
+  const draft = getPersistedActiveLayoutDraft();
+  const selectedBackendRoomId = readSelectedBackendRoomId();
+  const selected = readSelectedRoomEnvelope();
+  const selectedUiRoomLayoutId = selected.status === "valid" ? selected.selection.uiRoomLayoutId : null;
+
+  if (storedSession && memorySession && !hasSameLayoutOwnership(storedSession, memorySession)) {
+    throw new Error("Stored and active layout sessions do not match");
+  }
+  let session = storedSession ?? memorySession;
+
+  if (!session && draft) {
+    if (
+      selectedBackendRoomId
+      && selectedUiRoomLayoutId
+      && isLayoutOwnershipForRoom(draft, selectedBackendRoomId, selectedUiRoomLayoutId)
+    ) {
+      session = toLayoutSession(draft);
+      writeLayoutSession(session);
+    } else {
+      discardPersistedActiveLayoutDraft(draft);
+      console.warn("선택된 방과 다른 미저장 배치를 폐기했습니다.");
+    }
   }
 
-  return localStorage.getItem("roomfit:selectedRoomId") ?? "";
+  if (!session) {
+    return null;
+  }
+  if (
+    !selectedBackendRoomId
+    || !selectedUiRoomLayoutId
+    || !isLayoutOwnershipForRoom(session, selectedBackendRoomId, selectedUiRoomLayoutId)
+  ) {
+    throw new Error("Active layout session does not belong to the selected room");
+  }
+
+  if (isLayoutSessionConfirmed(session)) {
+    return session;
+  }
+
+  setActiveLayoutSession(session);
+  recoverActiveLayoutSave();
+  await flushActiveLayoutSave();
+  return session;
+}
+
+function clearLayoutSessionAfterRoomSave(session: LayoutSession): void {
+  const confirmedCleanup = discardConfirmedLayoutStaleState(session, {
+    clearCoordinator: () => clearConfirmedLayoutCoordinatorState(session),
+    clearSession: () => {
+      clearLayoutSessionForOwner(session.ownerBackendRoomId);
+    },
+  });
+  if (confirmedCleanup.confirmed) {
+    if (!confirmedCleanup.complete) {
+      throw new Error("Confirmed Layout cleanup failed after Room save");
+    }
+    return;
+  }
+
+  if (!clearConfirmedLayoutCoordinatorState(session)) {
+    throw new Error("Layout draft cleanup failed after Room save");
+  }
+  clearLayoutSessionForOwner(session.ownerBackendRoomId);
+}
+
+function clearConfirmedLayoutCoordinatorState(session: LayoutSession): boolean {
+  const activeSession = getActiveLayoutSaveState().session;
+  if (activeSession && hasSameLayoutOwnership(activeSession, session)) {
+    return clearActiveLayoutSaveStateIfOwned(session);
+  }
+
+  const draft = getPersistedActiveLayoutDraft();
+  if (draft && hasSameLayoutOwnership(draft, session)) {
+    return discardPersistedActiveLayoutDraft(draft);
+  }
+  return true;
+}
+
+async function flushRoomFurnitureSaveForTransition(): Promise<void> {
+  const selected = readSelectedRoomEnvelope();
+  if (selected.status === "storage-error") {
+    throw selected.error;
+  }
+  if (selected.status !== "valid") {
+    return;
+  }
+  await flushRoomFurnitureSaveForOwner(
+    selected.selection.backendRoomId,
+    selected.selection.uiRoomLayoutId,
+  );
+}
+
+function clearCurrentRoomFurnitureSaveState(previous: SelectedRoomEnvelope | null): void {
+  if (previous) {
+    const cleared = clearActiveRoomFurnitureSaveStateIfOwned({
+      ownerBackendRoomId: previous.backendRoomId,
+      ownerUiRoomLayoutId: previous.uiRoomLayoutId,
+    });
+    if (!cleared) {
+      throw new Error("Previous Room save owner could not be cleared");
+    }
+  }
+}
+
+async function flushRoomFurnitureSaveForOwner(
+  ownerBackendRoomId: number,
+  ownerUiRoomLayoutId: string,
+  allowForeignActive = false,
+): Promise<void> {
+  const active = getActiveRoomFurnitureSaveState().session;
+  if (
+    active
+    && (active.ownerBackendRoomId !== ownerBackendRoomId
+      || active.ownerUiRoomLayoutId !== ownerUiRoomLayoutId)
+  ) {
+    if (allowForeignActive) {
+      return;
+    }
+    throw new Error("Active Room save belongs to a different Room");
+  }
+  const persisted = getPersistedRoomFurnitureSaveDraft();
+  if (!active && persisted) {
+    if (
+      persisted.ownerBackendRoomId !== ownerBackendRoomId
+      || persisted.ownerUiRoomLayoutId !== ownerUiRoomLayoutId
+    ) {
+      return;
+    }
+    setActiveRoomFurnitureSaveSession({ ownerBackendRoomId, ownerUiRoomLayoutId });
+    recoverActiveRoomFurnitureSave();
+  }
+  const current = getActiveRoomFurnitureSaveState().session;
+  if (
+    current
+    && (current.ownerBackendRoomId !== ownerBackendRoomId
+      || current.ownerUiRoomLayoutId !== ownerUiRoomLayoutId)
+  ) {
+    throw new Error("Active Room save belongs to a different Room");
+  }
+  await flushActiveRoomFurnitureSave();
+}
+
+function clearDeletedRoomFurnitureSaveState(
+  deletedOwner: { ownerBackendRoomId: number; ownerUiRoomLayoutId: string },
+): void {
+  const active = getActiveRoomFurnitureSaveState().session;
+  if (
+    active
+    && active.ownerBackendRoomId === deletedOwner.ownerBackendRoomId
+    && active.ownerUiRoomLayoutId === deletedOwner.ownerUiRoomLayoutId
+  ) {
+    if (!clearActiveRoomFurnitureSaveStateIfOwned(deletedOwner)) {
+      throw new Error("Deleted Room save state could not be cleared");
+    }
+    return;
+  }
+  if (!discardPersistedRoomFurnitureSaveDraftIfOwned(deletedOwner)) {
+    throw new Error("Deleted Room draft could not be cleared");
+  }
+}
+
+function toSelectedRoomEnvelope(room: SampleRoomCard): SelectedRoomEnvelope {
+  return {
+    version: 1,
+    backendRoomId: room.roomId,
+    uiRoomLayoutId: room.layoutId,
+    title: room.title,
+    category: room.category,
+    size: room.size,
+    roomLayout: room.layout,
+  };
+}
+
+function findLayoutSessionForRoom(
+  ownerBackendRoomId: number,
+  ownerUiRoomLayoutId: string,
+): LayoutSession | null {
+  const storedSession = readLayoutSession();
+  const memorySession = getActiveLayoutSaveState().session;
+  const storedMatches = storedSession
+    && isLayoutOwnershipForRoom(storedSession, ownerBackendRoomId, ownerUiRoomLayoutId);
+  const memoryMatches = memorySession
+    && isLayoutOwnershipForRoom(memorySession, ownerBackendRoomId, ownerUiRoomLayoutId);
+  if (storedMatches && memoryMatches && !hasSameLayoutOwnership(storedSession, memorySession)) {
+    throw new Error("Stored and active layout sessions do not match");
+  }
+  if (storedMatches) {
+    return storedSession;
+  }
+  if (memoryMatches) {
+    return memorySession;
+  }
+
+  const draft = getPersistedActiveLayoutDraft();
+  if (draft && isLayoutOwnershipForRoom(draft, ownerBackendRoomId, ownerUiRoomLayoutId)) {
+    return toLayoutSession(draft);
+  }
+
+  return null;
 }
 
 function InfoRow({

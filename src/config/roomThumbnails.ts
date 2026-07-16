@@ -6,27 +6,44 @@
 // ManageFurniture.tsx) since that actually shows the room's real furniture
 // with color/materials, unlike the iOS snapshot which is a flat, textureless
 // RoomPlan mesh capture.
+import { safeStorageGet, safeStorageSet } from "../api/safeStorage";
+
 const ROOM_THUMBNAILS_KEY = "roomfit:roomThumbnailsByLayoutId";
 
 function readAll(): Record<string, string> {
-  const raw = localStorage.getItem(ROOM_THUMBNAILS_KEY);
+  const result = safeStorageGet("local", ROOM_THUMBNAILS_KEY);
+  if (result.status === "storage-error") {
+    console.warn("Room 썸네일을 읽지 못해 기본 이미지를 사용합니다.", result.error);
+    return {};
+  }
+  const raw = result.status === "success" ? result.value : null;
 
   if (!raw) {
     return {};
   }
 
   try {
-    const parsed = JSON.parse(raw);
-    return parsed && typeof parsed === "object" ? parsed : {};
+    const parsed = JSON.parse(raw) as unknown;
+    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+      return {};
+    }
+    return Object.fromEntries(
+      Object.entries(parsed).filter((entry): entry is [string, string] => typeof entry[1] === "string"),
+    );
   } catch {
     return {};
   }
 }
 
-export function saveRoomThumbnail(roomLayoutId: string, dataUrl: string): void {
+export function saveRoomThumbnail(roomLayoutId: string, dataUrl: string): boolean {
   const all = readAll();
   all[roomLayoutId] = dataUrl;
-  localStorage.setItem(ROOM_THUMBNAILS_KEY, JSON.stringify(all));
+  const result = safeStorageSet("local", ROOM_THUMBNAILS_KEY, JSON.stringify(all));
+  if (result.status === "storage-error") {
+    console.warn("Room 썸네일을 저장하지 못했습니다.", result.error);
+    return false;
+  }
+  return true;
 }
 
 export function getRoomThumbnail(roomLayoutId: string): string | undefined {

@@ -77,7 +77,7 @@ export function RoomViewer({
 
           <RoomShell room={room} hideEntranceWalls={hideEntranceWalls} />
 
-          {furniture.map((item) => (
+          {furniture.filter((item) => item.status !== "deleted").map((item) => (
             <FurnitureMesh
               key={item.id}
               item={item}

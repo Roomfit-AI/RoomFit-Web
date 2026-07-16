@@ -1,4 +1,5 @@
 import type { Furniture, Opening, RoomLayout, WallSegment } from "../types";
+import { safeStorageGet } from "../api/safeStorage";
 
 // Two fixed demo moods, triggered from the "AI 추천 생성" button in
 // /editor (see EditorPlaceholder.tsx) instead of the real backend call for
@@ -1192,5 +1193,14 @@ export function applyScenario(room: RoomLayout, scenario: Scenario): RoomLayout 
 // EditorPlaceholder.tsx) to check whether the room's saved purpose/style has
 // a matching scripted demo mood at all.
 export function currentScenario(): Scenario | undefined {
-  return findScenario(localStorage.getItem("roomfit:selectedPurpose"), localStorage.getItem("roomfit:selectedStyle"));
+  const purpose = safeStorageGet("local", "roomfit:selectedPurpose");
+  const style = safeStorageGet("local", "roomfit:selectedStyle");
+  if (purpose.status === "storage-error" || style.status === "storage-error") {
+    console.warn("현재 시나리오 설정을 읽지 못해 기본 화면을 사용합니다.");
+    return undefined;
+  }
+  return findScenario(
+    purpose.status === "success" ? purpose.value : null,
+    style.status === "success" ? style.value : null,
+  );
 }
