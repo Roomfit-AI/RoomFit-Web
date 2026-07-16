@@ -1,29 +1,25 @@
+import { furnitureVisuals, type FurnitureVisualType } from "./FurnitureVisuals";
+
 // Shared between AddFurniture.tsx's catalog grid and LayoutConfirm.tsx's
-// shopping-list thumbnails. The CSS visuals themselves (.furniture-card-*,
-// see index.css) are hand-drawn at a fixed 110x82px, so a smaller use site
-// (a compact list thumbnail vs. a full catalog card) scales that same
-// artwork down via `scale` instead of needing a second, separately
-// hand-tuned set of dimensions per visual.
+// shopping-list thumbnails. Each product owns a distinct SVG illustration in
+// FurnitureVisuals.tsx; `scale` is kept for compact thumbnail use sites.
 export default function FurnitureVisual({
   type,
   className = "h-36",
   scale = 1,
 }: {
-  type: string;
+  type: FurnitureVisualType;
   className?: string;
   scale?: number;
 }) {
+  const Visual = furnitureVisuals[type];
+
   return (
     <div className={`relative grid place-items-center overflow-hidden rounded-lg bg-[#f3f0eb] ${className}`}>
-      <div
-        className={`furniture-card-visual furniture-card-${type}`}
+      <Visual
+        className="h-[82px] w-[110px]"
         style={scale !== 1 ? { transform: `scale(${scale})` } : undefined}
-      >
-        <span />
-        <span />
-        <span />
-        <span />
-      </div>
+      />
     </div>
   );
 }

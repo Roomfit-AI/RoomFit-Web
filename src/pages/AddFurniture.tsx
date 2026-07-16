@@ -2,29 +2,72 @@ import { useEffect, useState } from "react";
 import { FiCheck, FiPlus } from "react-icons/fi";
 
 import FurnitureVisual from "../components/ui/FurnitureVisual";
+import type { FurnitureVisualType } from "../components/ui/FurnitureVisuals";
 
-const categories = ["전체", "소파", "테이블", "의자", "수납장", "조명", "러그", "데코 / 소품", "식물"];
+const categories = [
+  "전체",
+  "침대",
+  "소파",
+  "테이블",
+  "책상",
+  "의자",
+  "선반",
+  "수납",
+  "전자기기",
+  "조명",
+  "데코",
+] as const;
+type FurnitureCategory = (typeof categories)[number];
+
+type FurnitureItem = {
+  id: string;
+  category: Exclude<FurnitureCategory, "전체">;
+  name: string;
+  visual: FurnitureVisualType;
+};
 const addFurnitureVisitedKey = "roomfit:visited:add-furniture";
 
-const furnitureItems = [
-  { id: "sofa-modern", category: "소파", name: "모던 패브릭 소파", visual: "sofa" },
-  { id: "sofa-round", category: "소파", name: "라운드 소파", visual: "roundSofa" },
-  { id: "table-round", category: "테이블", name: "라운드 커피테이블", visual: "table" },
-  { id: "tv-stand", category: "수납장", name: "우드 TV 장식장", visual: "tvStand" },
-  { id: "shelf-open", category: "수납장", name: "오픈 책장", visual: "shelf" },
-  { id: "bookshelf", category: "수납장", name: "책장", visual: "bookshelf" },
-  { id: "chair-rattan", category: "의자", name: "라탄 암체어", visual: "chair" },
-  { id: "dining-table", category: "테이블", name: "우드 다이닝 테이블", visual: "dining" },
-  { id: "green-sofa", category: "소파", name: "벨벳 1인 소파", visual: "greenChair" },
-  { id: "stool", category: "의자", name: "스툴", visual: "stool" },
-  { id: "floor-lamp", category: "조명", name: "플로어 램프", visual: "lamp" },
-  { id: "pendant", category: "조명", name: "펜던트 조명", visual: "pendant" },
-  { id: "soft-rug", category: "러그", name: "소프트 러그", visual: "rug" },
-  { id: "poster", category: "데코 / 소품", name: "액자 / 포스터", visual: "poster" },
-  { id: "vase", category: "데코 / 소품", name: "도자기 화병", visual: "vase" },
-  { id: "tray", category: "데코 / 소품", name: "우드 트레이", visual: "tray" },
-  { id: "diffuser", category: "데코 / 소품", name: "디퓨저", visual: "diffuser" },
-  { id: "plant", category: "식물", name: "실내 식물", visual: "plant" },
+const furnitureItems: FurnitureItem[] = [
+  // 침대
+  { id: "bed", category: "침대", name: "침대", visual: "bed" },
+  { id: "sofa-bed", category: "침대", name: "소파베드", visual: "sofaBed" },
+
+  // 소파
+  { id: "sofa", category: "소파", name: "소파", visual: "sofa" },
+
+  // 테이블
+  { id: "nightstand", category: "테이블", name: "협탁", visual: "nightstand" },
+  { id: "side-table", category: "테이블", name: "사이드 테이블", visual: "sideTable" },
+  { id: "multi-table", category: "테이블", name: "다용도 테이블", visual: "table" },
+
+  // 책상
+  { id: "desk", category: "책상", name: "책상", visual: "desk" },
+
+  // 의자
+  { id: "desk-chair", category: "의자", name: "책상 의자", visual: "chair" },
+
+  // 선반
+  { id: "bookshelf", category: "선반", name: "책장 / 오픈 선반", visual: "bookshelf" },
+  { id: "hanger", category: "선반", name: "행거", visual: "hanger" },
+  { id: "partition", category: "선반", name: "파티션 · 양면 선반", visual: "partition" },
+
+  // 수납
+  { id: "wardrobe", category: "수납", name: "옷장", visual: "wardrobe" },
+  { id: "drawer", category: "수납", name: "서랍장", visual: "drawer" },
+  { id: "tv-console", category: "수납", name: "TV장 / 미디어 콘솔", visual: "tvStand" },
+
+  // 전자기기
+  { id: "monitor", category: "전자기기", name: "모니터", visual: "monitor" },
+  { id: "tv", category: "전자기기", name: "TV", visual: "tv" },
+
+  // 조명
+  { id: "mood-light", category: "조명", name: "무드등", visual: "lamp" },
+
+  // 데코
+  { id: "rug", category: "데코", name: "러그", visual: "rug" },
+  { id: "plant", category: "데코", name: "화분", visual: "plant" },
+  { id: "mirror", category: "데코", name: "전신거울", visual: "mirror" },
+  { id: "curtain", category: "데코", name: "커튼 · 블라인드", visual: "curtain" },
 ];
 
 export default function AddFurniture() {
