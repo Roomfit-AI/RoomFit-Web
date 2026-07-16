@@ -5,210 +5,9 @@ import { applyLayoutFeedback, createDefaultAgentContext, recommendLayout, update
 import { applyBackendFurnitureToLayout } from "../api/rooms";
 import RoomViewer from "../components/room/RoomViewer";
 import { getLiveMirrorForSelectedRoom } from "../config/confirmedLayouts";
-import { applyLocalFeedback } from "../config/localFeedback";
-import { buildScenarioValidation } from "../config/localValidation";
-import { applyScenario, currentScenario } from "../config/scenarios";
-import { createHobbyCoralRecommendation, isHobbyCoralRecommendationSelected } from "../mock/hobbyCoralRecommendation";
-import type { Furniture, RoomLayout, Vector2D } from "../types";
+import type { RoomLayout, Vector2D } from "../types";
 
-const naturalWoodRestRoomExistingFurnitureIds = new Set(["bed-1", "desk-1", "chair-1"]);
-
-const naturalWoodRestRoomFurniture: Furniture[] = [
-  {
-    id: "natural-wardrobe",
-    name: "루버 우드 옷장",
-    category: "cabinet",
-    geometry: "box",
-    dimensions: { width: 0.88, depth: 0.58, height: 1.78 },
-    position: { x: 2.46, z: 0.2 },
-    rotationY: -Math.PI / 2,
-    color: "#c9955d",
-    material: { type: "wood", color: "#c9955d", roughness: 0.58, metalness: 0 },
-    status: "recommended",
-    removable: true,
-  },
-  {
-    id: "natural-bedside-table",
-    name: "우드 협탁",
-    category: "cabinet",
-    geometry: "box",
-    dimensions: { width: 0.5, depth: 0.42, height: 0.48 },
-    position: { x: -2.6, z: -1.3 },
-    rotationY: 0,
-    color: "#c9955d",
-    material: { type: "wood", color: "#c9955d", roughness: 0.56, metalness: 0 },
-    status: "recommended",
-    removable: true,
-  },
-  {
-    id: "natural-bedside-lamp",
-    name: "침대 옆 스탠드",
-    category: "lighting",
-    geometry: "cylinder",
-    dimensions: { width: 0.18, depth: 0.18, height: 0.48 },
-    position: { x: -2.55, z: -0.92 },
-    rotationY: 0,
-    color: "#d4a96a",
-    material: { type: "metal", color: "#d4a96a", roughness: 0.32, metalness: 0.45 },
-    status: "recommended",
-    removable: true,
-  },
-  {
-    id: "natural-window-plant",
-    name: "바닥 식물",
-    category: "cabinet",
-    geometry: "cylinder",
-    dimensions: { width: 0.42, depth: 0.42, height: 0.76 },
-    position: { x: -2.55, z: 1.62 },
-    rotationY: 0,
-    color: "#3f7d4a",
-    material: { type: "accent", color: "#3f7d4a", roughness: 0.8, metalness: 0 },
-    status: "recommended",
-    removable: true,
-  },
-  {
-    id: "natural-low-bookshelf",
-    name: "낮은 우드 책장",
-    category: "cabinet",
-    geometry: "box",
-    dimensions: { width: 1.1, depth: 0.34, height: 0.7 },
-    position: { x: 1.65, z: -2.18 },
-    rotationY: 0,
-    color: "#c9955d",
-    material: { type: "wood", color: "#c9955d", roughness: 0.56, metalness: 0 },
-    status: "recommended",
-    removable: true,
-  },
-  {
-    id: "natural-shelf-back-left",
-    name: "우드 벽 선반",
-    category: "cabinet",
-    geometry: "box",
-    dimensions: { width: 0.92, depth: 0.18, height: 0.2 },
-    position: { x: 0.1, z: -2.5 },
-    rotationY: 0,
-    color: "#b9824a",
-    material: { type: "wood", color: "#b9824a", roughness: 0.55, metalness: 0 },
-    status: "recommended",
-    removable: true,
-  },
-  {
-    id: "natural-shelf-back-right",
-    name: "우드 벽 선반",
-    category: "cabinet",
-    geometry: "box",
-    dimensions: { width: 0.96, depth: 0.18, height: 0.2 },
-    position: { x: 1.35, z: -2.5 },
-    rotationY: 0,
-    color: "#b9824a",
-    material: { type: "wood", color: "#b9824a", roughness: 0.55, metalness: 0 },
-    status: "recommended",
-    removable: true,
-  },
-  {
-    id: "natural-lounge-chair",
-    name: "세이지 라운지 소파",
-    category: "chair",
-    geometry: "rounded-box",
-    dimensions: { width: 0.78, depth: 0.72, height: 0.78 },
-    position: { x: 1.72, z: 1.6 },
-    rotationY: -Math.PI * 0.58,
-    color: "#8fae76",
-    material: { type: "fabric", color: "#8fae76", roughness: 0.82, metalness: 0 },
-    status: "recommended",
-    removable: true,
-  },
-  {
-    id: "natural-rattan-rug",
-    name: "원형 라탄 러그",
-    category: "rug",
-    geometry: "cylinder",
-    dimensions: { width: 1.55, depth: 1.55, height: 0.035 },
-    position: { x: 0.72, z: 1.36 },
-    rotationY: 0,
-    color: "#d4bd91",
-    material: { type: "fabric", color: "#d4bd91", roughness: 0.9, metalness: 0 },
-    status: "recommended",
-    removable: true,
-  },
-  {
-    id: "natural-coffee-table",
-    name: "원형 우드 테이블",
-    category: "desk",
-    geometry: "cylinder",
-    dimensions: { width: 0.68, depth: 0.68, height: 0.38 },
-    position: { x: 0.72, z: 1.36 },
-    rotationY: 0,
-    color: "#c9955d",
-    material: { type: "wood", color: "#c9955d", roughness: 0.55, metalness: 0 },
-    status: "recommended",
-    removable: true,
-  },
-  {
-    id: "natural-table-plant",
-    name: "화병",
-    category: "cabinet",
-    geometry: "cylinder",
-    dimensions: { width: 0.2, depth: 0.2, height: 0.28 },
-    position: { x: 0.72, z: 1.36 },
-    rotationY: 0,
-    color: "#4e8a55",
-    material: { type: "accent", color: "#4e8a55", roughness: 0.8, metalness: 0 },
-    status: "recommended",
-    removable: true,
-  },
-];
-
-function applyNaturalWoodRestRoom(layout: RoomLayout, sourceFurniture: Furniture[]): RoomLayout {
-  const naturalWoodExistingFurniture = sourceFurniture
-    .filter((item) => naturalWoodRestRoomExistingFurnitureIds.has(item.id))
-    .map((item) => {
-      if (item.id === "bed-1") {
-        return { ...item, position: { x: -1.5, z: -1.12 }, color: "#f5f0e4", material: { type: "fabric" as const, color: "#f5f0e4", roughness: 0.88, metalness: 0 } };
-      }
-      if (item.id === "desk-1") {
-        return { ...item, position: { x: 0.25, z: -1.85 }, rotationY: 0, color: "#d0a46c", material: { type: "wood" as const, color: "#d0a46c", roughness: 0.58, metalness: 0 } };
-      }
-      if (item.id === "chair-1") {
-        return { ...item, position: { x: 0.25, z: -0.98 }, rotationY: Math.PI, color: "#c9955d", material: { type: "wood" as const, color: "#c9955d", roughness: 0.58, metalness: 0 } };
-      }
-      return item;
-    });
-
-  return {
-    ...layout,
-    floor: { size: { width: layout.width, depth: layout.depth }, material: { color: "#d2a86e", roughness: 0.72 } },
-    lighting: { ...layout.lighting, ambient: 0.84, sun: { intensity: 1.9, position: [3.8, 7.5, 4.6] }, environment: "warm-natural-studio" },
-    walls: layout.walls.map((wall) => ({ ...wall, material: { color: "#f3efe7", roughness: 0.84 } })),
-    furniture: [...naturalWoodExistingFurniture, ...naturalWoodRestRoomFurniture],
-  };
-}
-
-function isCollectorRoom(room: RoomLayout): boolean {
-  return room.name === "미드센추리 컬렉터 룸" || room.name === "샘플룸2";
-}
-
-function applyRecommendedRoomLayout(currentRoom: RoomLayout, recommendedLayout: RoomLayout): RoomLayout {
-  // Collector samples intentionally reveal their complete scripted room
-  // only after the backend recommendation call. Other rooms preserve the
-  // existing natural-wood demo transformation.
-  return isCollectorRoom(currentRoom)
-    ? recommendedLayout
-    : applyNaturalWoodRestRoom(recommendedLayout, recommendedLayout.furniture);
-}
-
-// Sentinel layoutId for rooms whose "AI 추천 생성" took the scripted-mood
-// shortcut (see handleRecommend below) instead of a real backend call —
-// there's no backend layoutId to hand to applyLayoutFeedback in that case,
-// but the "AI 피드백" panel only unlocks once layoutId is truthy, so without
-// this the feedback box would stay permanently disabled for every scenario
-// demo run. handleFeedback branches on this value to run applyLocalFeedback
-// instead of hitting the network.
-const LOCAL_SCENARIO_LAYOUT_ID = -1;
-
-// The room as saved from /manage-furniture, unmodified — demo-mood
-// restyling/additions (see config/scenarios.ts) only happen when "AI 추천
-// 생성" is clicked (see handleRecommend below), not at load time. Used by
+// The room as saved from /manage-furniture, unmodified. Used by
 // handleResetFurniture's "초기화" button, which needs the true untouched
 // baseline to discard edits back to — not whatever's currently on screen.
 function loadSelectedRoomLayout(): RoomLayout | null {
@@ -230,8 +29,7 @@ function loadSelectedRoomLayout(): RoomLayout | null {
 // this room already has one, so navigating away (e.g. to /layout-confirm)
 // and back — via "이전 단계" or otherwise — doesn't appear to "reset" the
 // room back to its untouched baseline. Falls back to the true baseline only
-// the very first time a room is opened this session, so the AI 추천 mood
-// reveal still has something to visibly change *from*.
+// the very first time a room is opened this session.
 function loadInitialRoomLayout(): RoomLayout | null {
   return getLiveMirrorForSelectedRoom() ?? loadSelectedRoomLayout();
 }
@@ -266,11 +64,9 @@ export default function EditorPlaceholder() {
 
   // /layout-confirm and Navbar.tsx's own "확정하기" run on a separate page
   // mount, with no direct way to read this component's layoutId state — this
-  // is the only channel that carries a real backend layoutId to them (the
-  // scripted-scenario sentinel is deliberately never written, since there's
-  // no backend Layout for it to confirm).
+  // is the only channel that carries the backend layoutId to them.
   useEffect(() => {
-    if (!layoutId || layoutId === LOCAL_SCENARIO_LAYOUT_ID) {
+    if (!layoutId) {
       localStorage.removeItem("roomfit:backendLayoutId");
       return;
     }
@@ -279,17 +75,15 @@ export default function EditorPlaceholder() {
   }, [layoutId]);
 
   // Mirrors drag/rotate/delete edits onto the backend's Layout (see PUT
-  // /api/layouts/{layoutId}) — only reachable once a real backend layoutId
-  // exists (skipped for the scripted-scenario sentinel, which has no backend
-  // Layout to save to). Without this, edits made after "AI 추천 생성" never
-  // reach the backend, so confirming (which now writes Layout.furniture onto
-  // Room — see RoomFit-Backend's LayoutService.confirmLayout) would persist
-  // the pre-edit recommendation instead of what's actually on screen.
-  // Debounced so a drag doesn't fire a request per frame; best-effort (the
-  // localStorage mirror above already keeps this session's edits safe either
-  // way).
+  // /api/layouts/{layoutId}) — only reachable once "AI 추천 생성" has produced
+  // a real backend layoutId. Without this, edits made after that never reach
+  // the backend, so confirming (which now writes Layout.furniture onto Room
+  // — see RoomFit-Backend's LayoutService.confirmLayout) would persist the
+  // pre-edit recommendation instead of what's actually on screen. Debounced
+  // so a drag doesn't fire a request per frame; best-effort (the localStorage
+  // mirror above already keeps this session's edits safe either way).
   useEffect(() => {
-    if (!roomLayout || !layoutId || layoutId === LOCAL_SCENARIO_LAYOUT_ID) {
+    if (!roomLayout || !layoutId) {
       return;
     }
 
@@ -375,81 +169,22 @@ export default function EditorPlaceholder() {
       return;
     }
 
-    if (isHobbyCoralRecommendationSelected()) {
-      setIsRecommending(true);
-      setErrorMessage("");
-      setInterpretedIntent(null);
-
-      await new Promise((resolve) => setTimeout(resolve, 5000));
-
-      const nextRoom = createHobbyCoralRecommendation(roomLayout);
-      const { scoreSummary, validationResult } = buildScenarioValidation();
-
-      setRoomLayout(nextRoom);
-      setLayoutId(LOCAL_SCENARIO_LAYOUT_ID);
-      setScoreSummary(scoreSummary);
-      setValidationResult(validationResult);
-      setIsRecommending(false);
-      return;
-    }
-
-    // The two scripted demo moods (see config/scenarios.ts) take over here
-    // instead of the real backend call — the backend has no concept of
-    // "rest/minimal/gray" or "work/natural/wood," so for a room whose saved
-    // preference matches one of them, restyle+add locally and skip the
-    // network round trip entirely.
     const roomId = loadBackendRoomId();
-    const scenario = isCollectorRoom(roomLayout) ? undefined : currentScenario();
-
-    if (scenario) {
-      setIsRecommending(true);
-      setErrorMessage("");
-      setInterpretedIntent(null);
-
-      // A fixed 5s pause so "AI 추천 생성 중..." reads as the AI actually
-      // working, instead of an instant swap that gives away the scripted
-      // shortcut this demo path is taking.
-      await new Promise((resolve) => setTimeout(resolve, 5000));
-
-      // The hardcoded "natural wood rest room" layout below is tuned to one
-      // specific sample room's fixed dimensions/coordinates (see
-      // naturalWoodRestRoomFurniture above) — it only makes sense for that
-      // sample room, not for a real ROOMPLAN scan whose geometry can be
-      // anything. Scanned rooms always go through the generic, room-size-
-      // aware applyScenario pipeline instead.
-      const nextRoom =
-        scenario.id === "rest-natural-wood" && roomLayout.source !== "ROOMPLAN"
-          ? applyNaturalWoodRestRoom(roomLayout, roomLayout.furniture)
-          : applyScenario(roomLayout, scenario);
-      const { scoreSummary, validationResult } = buildScenarioValidation();
-
-      setRoomLayout(nextRoom);
-      setLayoutId(LOCAL_SCENARIO_LAYOUT_ID);
-      setScoreSummary(scoreSummary);
-      setValidationResult(validationResult);
-      setIsRecommending(false);
-      return;
-    }
 
     setIsRecommending(true);
     setErrorMessage("");
     setInterpretedIntent(null);
 
     try {
-      // Real backend round trip (used by sample rooms whose purpose/style
-      // don't match a scripted demo mood, e.g. the collector rooms above) —
-      // a local backend answers near-instantly, which read as an instant
-      // swap instead of the AI actually working. Racing it against the same
-      // fixed 5s floor used by the scripted-mood path keeps that "AI 추천
-      // 생성 중..." reading consistent regardless of which path a given
-      // sample room happens to take.
+      // A fixed 5s floor so "AI 추천 생성 중..." reads as the AI actually
+      // working rather than an instant swap — a local backend can otherwise
+      // answer near-instantly.
       const [result] = await Promise.all([
         createDefaultAgentContext(roomId).then((context) => recommendLayout(roomId, context.contextId)),
         new Promise((resolve) => setTimeout(resolve, 5000)),
       ]);
 
-      const recommendedLayout = applyBackendFurnitureToLayout(roomLayout, result.recommendedFurniture);
-      setRoomLayout(applyRecommendedRoomLayout(roomLayout, recommendedLayout));
+      setRoomLayout(applyBackendFurnitureToLayout(roomLayout, result.recommendedFurniture));
       setLayoutId(result.layoutId);
       setScoreSummary(result.scoreSummary);
       setValidationResult(result.validationResult);
@@ -480,32 +215,10 @@ export default function EditorPlaceholder() {
     setIsApplyingFeedback(true);
     setErrorMessage("");
 
-    if (layoutId === LOCAL_SCENARIO_LAYOUT_ID) {
-      // Same fixed 5s pause as the recommend flow above, so "피드백 반영 중..."
-      // reads the same way instead of an instant swap.
-      await new Promise((resolve) => setTimeout(resolve, 5000));
-      const result = applyLocalFeedback(roomLayout, feedback, currentScenario()?.id);
-
-      if ("error" in result) {
-        setErrorMessage(result.error);
-      } else {
-        const { scoreSummary, validationResult } = buildScenarioValidation();
-
-        setRoomLayout(result.room);
-        setInterpretedIntent(result.intent);
-        setScoreSummary(scoreSummary);
-        setValidationResult(validationResult);
-      }
-
-      setIsApplyingFeedback(false);
-      return;
-    }
-
     try {
       const result = await applyLayoutFeedback(layoutId, feedback.trim());
 
-      const recommendedLayout = applyBackendFurnitureToLayout(roomLayout, result.recommendedFurniture);
-      setRoomLayout(applyRecommendedRoomLayout(roomLayout, recommendedLayout));
+      setRoomLayout(applyBackendFurnitureToLayout(roomLayout, result.recommendedFurniture));
       setLayoutId(result.layoutId);
       setScoreSummary(result.scoreSummary);
       setValidationResult(result.validationResult);
