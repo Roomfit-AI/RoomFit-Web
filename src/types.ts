@@ -6,7 +6,7 @@ export type FurnitureCategory =
   | "rug"
   | "lighting";
 
-export type FurnitureStatus = "existing" | "recommended";
+export type FurnitureStatus = "existing" | "deleted" | "recommended" | "user_modified";
 export type FurnitureGeometry = "box" | "rounded-box" | "cylinder" | "plane" | "model";
 export type FurnitureMaterialType = "fabric" | "wood" | "white" | "metal" | "glass" | "accent";
 

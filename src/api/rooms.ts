@@ -3,6 +3,8 @@ import { isAxiosError } from "axios";
 import { apiClient } from "./client";
 import type { Furniture, FurnitureCategory, FurnitureStatus, Opening, RoomLayout, WallSegment } from "../types";
 
+export type BackendFurnitureStatus = "EXISTING" | "DELETED" | "RECOMMENDED" | "USER_MODIFIED";
+
 export interface SampleRoomApiItem {
   roomId: number;
   name: string;
@@ -40,7 +42,7 @@ export interface SampleRoomApiItem {
       z: number;
     };
     rotation: number;
-    status: "EXISTING" | "RECOMMENDED" | string;
+    status: BackendFurnitureStatus;
     productId: string | null;
     styleTags: string[];
   }>;
@@ -524,7 +526,7 @@ function toFurniture(
       roughness: category === "rug" ? 0.96 : materialType === "wood" ? 0.55 : 0.9,
       metalness: materialType === "metal" ? 0.8 : 0,
     },
-    status: toFurnitureStatus(item.status),
+    status: toFrontendFurnitureStatus(item.status),
     removable: true,
   };
 }
@@ -576,8 +578,19 @@ function normalizeRotation(rotation: number): number {
   return -radians;
 }
 
-function toFurnitureStatus(status: string): FurnitureStatus {
-  return status === "EXISTING" ? "existing" : "recommended";
+export function toFrontendFurnitureStatus(status: string): FurnitureStatus {
+  switch (status) {
+    case "EXISTING":
+      return "existing";
+    case "DELETED":
+      return "deleted";
+    case "RECOMMENDED":
+      return "recommended";
+    case "USER_MODIFIED":
+      return "user_modified";
+    default:
+      throw new Error(`Unsupported backend furniture status: ${status}`);
+  }
 }
 
 function materialByCategory(category: FurnitureCategory) {
@@ -642,12 +655,37 @@ export function toBackendRotationDegrees(rotationY: number): number {
   return ((degrees % 360) + 360) % 360;
 }
 
-// The frontend only ever has two statuses (types.ts's FurnitureStatus); a
-// piece the user picked from the manage-furniture catalog or repositioned
-// reads as "USER_MODIFIED" rather than "RECOMMENDED" once saved back —
-// RECOMMENDED is reserved for the backend's own AI-generated suggestions.
-export function toBackendFurnitureStatus(status: Furniture["status"]): "EXISTING" | "USER_MODIFIED" {
-  return status === "existing" ? "EXISTING" : "USER_MODIFIED";
+export function toBackendLayoutFurnitureStatus(status: Furniture["status"]): BackendFurnitureStatus {
+  switch (status) {
+    case "existing":
+      return "EXISTING";
+    case "deleted":
+      return "DELETED";
+    case "recommended":
+      return "RECOMMENDED";
+    case "user_modified":
+      return "USER_MODIFIED";
+    default:
+      throw new Error(`Unsupported frontend furniture status: ${String(status)}`);
+  }
+}
+
+type BackendRoomFurnitureStatus = "EXISTING" | "DELETED" | "USER_MODIFIED";
+
+// Room replacement keeps its existing behavior: catalog and recommended
+// pieces become USER_MODIFIED when the user saves the managed room.
+function toBackendRoomFurnitureStatus(status: Furniture["status"]): BackendRoomFurnitureStatus {
+  switch (status) {
+    case "existing":
+      return "EXISTING";
+    case "deleted":
+      return "DELETED";
+    case "recommended":
+    case "user_modified":
+      return "USER_MODIFIED";
+    default:
+      throw new Error(`Unsupported frontend furniture status: ${String(status)}`);
+  }
 }
 
 export interface RoomFurnitureReplaceItem {
@@ -659,7 +697,7 @@ export interface RoomFurnitureReplaceItem {
   height: number;
   position: { x: number; z: number };
   rotation: number;
-  status: "EXISTING" | "USER_MODIFIED";
+  status: BackendRoomFurnitureStatus;
 }
 
 // Undoes the center-origin shift toWallSegment()/toFurniture() apply on the
@@ -675,18 +713,23 @@ function toBackendFurnitureItem(item: Furniture, roomWidth: number, roomDepth: n
     height: item.dimensions.height,
     position: { x: item.position.x + roomWidth / 2, z: item.position.z + roomDepth / 2 },
     rotation: toBackendRotationDegrees(item.rotationY),
-    status: toBackendFurnitureStatus(item.status),
+    status: toBackendRoomFurnitureStatus(item.status),
   };
 }
 
 // Persists the room's current furniture (manage-furniture add/move/delete/
 // rotate) back to the backend's Room, via the same shape RoomUploadRequest
-// uses — see RoomFit-Backend's PUT /api/rooms/{roomId}/layout. Callers should
-// treat failures as non-fatal (this is a best-effort background sync; the
-// caller's own local state is the source of truth for the current session
-// either way) rather than surfacing an error to the user mid-edit.
-export async function updateRoomFurniture(roomId: number, furniture: Furniture[], roomWidth: number, roomDepth: number): Promise<void> {
+// uses — see RoomFit-Backend's PUT /api/rooms/{roomId}/layout. The Room save
+// coordinator serializes calls and keeps failures pending until an explicit
+// retry, so navigation never silently leaves an unsaved managed Room behind.
+export async function updateRoomFurniture(
+  roomId: number,
+  furniture: Furniture[],
+  roomWidth: number,
+  roomDepth: number,
+  signal?: AbortSignal,
+): Promise<void> {
   await apiClient.put(`/api/rooms/${roomId}/layout`, {
     furniture: furniture.map((item) => toBackendFurnitureItem(item, roomWidth, roomDepth)),
-  });
+  }, { signal });
 }
