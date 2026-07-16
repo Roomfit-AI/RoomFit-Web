@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { FiCheck, FiPlus } from "react-icons/fi";
 
 import FurnitureVisual from "../components/ui/FurnitureVisual";
-import type { FurnitureVisualType } from "../components/ui/FurnitureVisuals";
+import type { FurnitureVisualType } from "../components/ui/furnitureVisualRegistry";
 
 const categories = [
   "전체",
@@ -179,4 +179,3 @@ export default function AddFurniture() {
     </main>
   );
 }
-
