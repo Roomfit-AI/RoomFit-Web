@@ -8,14 +8,12 @@ const categories = [
   "전체",
   "침대",
   "소파",
-  "테이블",
-  "책상",
+  "책상/테이블",
   "의자",
   "선반",
   "수납",
   "전자기기",
-  "조명",
-  "데코",
+  "조명/소품",
 ] as const;
 type FurnitureCategory = (typeof categories)[number];
 
@@ -35,13 +33,11 @@ const furnitureItems: FurnitureItem[] = [
   // 소파
   { id: "sofa", category: "소파", name: "소파", visual: "sofa" },
 
-  // 테이블
-  { id: "nightstand", category: "테이블", name: "협탁", visual: "nightstand" },
-  { id: "side-table", category: "테이블", name: "사이드 테이블", visual: "sideTable" },
-  { id: "multi-table", category: "테이블", name: "다용도 테이블", visual: "table" },
-
-  // 책상
-  { id: "desk", category: "책상", name: "책상", visual: "desk" },
+  // 책상/테이블
+  { id: "desk", category: "책상/테이블", name: "책상", visual: "desk" },
+  { id: "nightstand", category: "책상/테이블", name: "협탁", visual: "nightstand" },
+  { id: "side-table", category: "책상/테이블", name: "사이드 테이블", visual: "sideTable" },
+  { id: "multi-table", category: "책상/테이블", name: "다용도 테이블", visual: "table" },
 
   // 의자
   { id: "desk-chair", category: "의자", name: "책상 의자", visual: "chair" },
@@ -61,13 +57,11 @@ const furnitureItems: FurnitureItem[] = [
   { id: "tv", category: "전자기기", name: "TV", visual: "tv" },
 
   // 조명
-  { id: "mood-light", category: "조명", name: "무드등", visual: "lamp" },
-
-  // 데코
-  { id: "rug", category: "데코", name: "러그", visual: "rug" },
-  { id: "plant", category: "데코", name: "화분", visual: "plant" },
-  { id: "mirror", category: "데코", name: "전신거울", visual: "mirror" },
-  { id: "curtain", category: "데코", name: "커튼 · 블라인드", visual: "curtain" },
+  { id: "mood-light", category: "조명/소품", name: "무드등", visual: "lamp" },
+  { id: "rug", category: "조명/소품", name: "러그", visual: "rug" },
+  { id: "plant", category: "조명/소품", name: "화분", visual: "plant" },
+  { id: "mirror", category: "조명/소품", name: "전신거울", visual: "mirror" },
+  { id: "curtain", category: "조명/소품", name: "커튼 · 블라인드", visual: "curtain" },
 ];
 
 export default function AddFurniture() {
@@ -121,7 +115,7 @@ export default function AddFurniture() {
           <p className="mt-3 text-sm font-semibold text-[#777777]">원하는 아이템을 선택하면 추천에 반영됩니다.</p>
         </header>
 
-        <div className="grid gap-8 lg:grid-cols-[112px_1fr]">
+        <div className="grid gap-8 lg:grid-cols-[128px_1fr]">
           <aside>
             <nav className="flex gap-2 overflow-x-auto rounded-xl bg-[#f2f2f2] p-2 lg:flex-col lg:overflow-visible">
               {categories.map((category) => (
@@ -129,7 +123,7 @@ export default function AddFurniture() {
                   key={category}
                   type="button"
                   onClick={() => setActiveCategory(category)}
-                  className={`shrink-0 rounded-lg px-4 py-3 text-left text-sm font-extrabold transition-colors ${
+                  className={`shrink-0 rounded-lg px-4 py-3 text-left text-sm font-extrabold transition-colors whitespace-nowrap ${
                     activeCategory === category ? "bg-white text-[#111111] shadow-sm" : "text-[#555555] hover:bg-white/70"
                   }`}
                 >
