@@ -42,6 +42,7 @@ export interface SampleRoomApiItem {
     rotation: number;
     status: "EXISTING" | "RECOMMENDED" | string;
     productId: string | null;
+    variantId: string | null;
     styleTags: string[];
   }>;
   source: string;
@@ -509,6 +510,9 @@ function toFurniture(
     id: item.id,
     name: item.label,
     category,
+    productId: item.productId,
+    variantId: item.variantId,
+    styleTags: [...item.styleTags],
     geometry: collectorAppearance?.geometry ?? geometryByType(item.type, category),
     dimensions: {
       width: item.width,
