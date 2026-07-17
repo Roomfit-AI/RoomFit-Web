@@ -4,6 +4,7 @@ import { FiChevronDown, FiChevronUp, FiMoreHorizontal, FiPlus, FiRotateCcw, FiTr
 import { getSampleRoomLayouts } from "../api/rooms";
 import { RoomViewer } from "../components/room/RoomViewer";
 import { getLiveMirrorForSelectedRoom } from "../config/confirmedLayouts";
+import { getRoomPreferredColorTone } from "../config/roomPreferences";
 import { captureCanvasThumbnail, saveRoomThumbnail } from "../config/roomThumbnails";
 import { sampleRoomLayouts } from "../mock/interiorPlacementMock";
 import { sampleRoom } from "../mock/sampleRoom";
@@ -102,6 +103,10 @@ const specs: Record<FurnitureCategory, string> = {
 export default function ManageFurniture() {
   const [selectedRoom, setSelectedRoom] = useState<RoomLayout>(() => getSelectedRoom());
   const selectedRoomMeta = useMemo(() => getSelectedRoomMeta(selectedRoom), [selectedRoom]);
+  const preferredColorTone = useMemo(
+    () => getRoomPreferredColorTone(selectedRoom.id),
+    [selectedRoom.id],
+  );
   const [furniture, setFurniture] = useState<Furniture[]>(() => cloneFurniture(selectedRoom.furniture));
   // The as-uploaded baseline for the "초기화" button. Kept out of localStorage
   // on purpose — the persist effect below overwrites `roomfit:selectedRoomLayout`
@@ -291,6 +296,7 @@ export default function ManageFurniture() {
               hideEntranceWalls={hideEntranceWalls}
               alignCameraToEntrance
               showEditingHelpers
+              preferredColorTone={preferredColorTone}
             />
           </div>
 
