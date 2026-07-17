@@ -12,9 +12,32 @@ import Sofa from "./Sofa";
 import Storage from "./Storage";
 import Table from "./Table";
 import Television from "./Television";
+import { FurnitureVariantRenderer } from "./variants/FurnitureVariantRenderer";
+import {
+  getFurnitureVariantLocalYOffset,
+  getProductionFurnitureVariantRenderResources,
+  resolveFurnitureVariant,
+  warnFurnitureVariantDimensionMismatch,
+} from "./variants/furnitureVariantRouting";
 import type { Furniture } from "../../types";
 
 export default function FurnitureRenderer({ item }: { item: Furniture }) {
+  const variant = resolveFurnitureVariant(item.variantId);
+
+  if (variant) {
+    const { materialPresets, registry } = getProductionFurnitureVariantRenderResources();
+    warnFurnitureVariantDimensionMismatch(variant.variantId, item.dimensions, variant.dimensions);
+
+    return (
+      <FurnitureVariantRenderer
+        variantId={variant.variantId}
+        registry={registry}
+        materialPresets={materialPresets}
+        layoutPosition={[0, getFurnitureVariantLocalYOffset(item.dimensions.height), 0]}
+      />
+    );
+  }
+
   const name = `${item.id} ${item.name}`.toLowerCase();
   const material = materialFromConfig(item.material, item.color);
 

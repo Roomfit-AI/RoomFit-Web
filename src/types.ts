@@ -32,6 +32,9 @@ export interface Furniture {
   id: string;
   name: string;
   category: FurnitureCategory;
+  productId?: string | null;
+  variantId?: string | null;
+  styleTags?: string[];
   dimensions: Size3D;
   position: Vector2D;
   rotationY: number;
