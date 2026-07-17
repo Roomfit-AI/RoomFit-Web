@@ -1,0 +1,131 @@
+import { MeshStandardMaterial } from "three";
+import type { MeshStandardMaterialParameters } from "three";
+
+export interface MaterialPreset {
+  color: string;
+  roughness?: number;
+  metalness?: number;
+  transparent?: boolean;
+  opacity?: number;
+  emissive?: string;
+  emissiveIntensity?: number;
+}
+
+export type MaterialPresetCatalog = Record<string, MaterialPreset>;
+
+export function parseMaterialPresetCatalog(input: unknown): MaterialPresetCatalog {
+  if (!isRecord(input)) {
+    throw new Error("Material preset catalog must be an object");
+  }
+
+  const entries = Object.entries(input).map(([presetId, rawPreset]) => {
+    if (presetId.trim().length === 0) {
+      throw new Error("Material preset ID must not be blank");
+    }
+    if (!isRecord(rawPreset)) {
+      throw new Error(`Material preset "${presetId}" must be an object`);
+    }
+
+    return [presetId, parseMaterialPreset(presetId, rawPreset)] as const;
+  });
+
+  return Object.fromEntries(entries);
+}
+
+export function resolveMaterialPreset(
+  presetId: string,
+  catalog: Readonly<MaterialPresetCatalog>,
+): MeshStandardMaterialParameters {
+  if (!Object.hasOwn(catalog, presetId)) {
+    throw new Error(`Unknown material preset "${presetId}"`);
+  }
+
+  const preset = catalog[presetId];
+  const opacity = preset.opacity ?? 1;
+  return {
+    color: preset.color,
+    roughness: preset.roughness,
+    metalness: preset.metalness,
+    transparent: preset.transparent ?? opacity < 1,
+    opacity,
+    emissive: preset.emissive,
+    emissiveIntensity: preset.emissiveIntensity,
+  };
+}
+
+export function createMaterialFromPreset(
+  presetId: string,
+  catalog: Readonly<MaterialPresetCatalog>,
+): MeshStandardMaterial {
+  return new MeshStandardMaterial(resolveMaterialPreset(presetId, catalog));
+}
+
+function parseMaterialPreset(presetId: string, input: Record<string, unknown>): MaterialPreset {
+  const color = readNonBlankString(input.color, `Material preset "${presetId}" color`);
+  const roughness = readOptionalUnitInterval(input.roughness, `Material preset "${presetId}" roughness`);
+  const metalness = readOptionalUnitInterval(input.metalness, `Material preset "${presetId}" metalness`);
+  const opacity = readOptionalUnitInterval(input.opacity, `Material preset "${presetId}" opacity`);
+  const transparent = readOptionalBoolean(input.transparent, `Material preset "${presetId}" transparent`);
+  const emissive = input.emissive === undefined
+    ? undefined
+    : readNonBlankString(input.emissive, `Material preset "${presetId}" emissive`);
+  const emissiveIntensity = readOptionalNonNegativeNumber(
+    input.emissiveIntensity,
+    `Material preset "${presetId}" emissiveIntensity`,
+  );
+
+  return {
+    color,
+    roughness,
+    metalness,
+    transparent,
+    opacity,
+    emissive,
+    emissiveIntensity,
+  };
+}
+
+function readNonBlankString(value: unknown, label: string): string {
+  if (typeof value !== "string" || value.trim().length === 0) {
+    throw new Error(`${label} must be a non-blank string`);
+  }
+  return value;
+}
+
+function readOptionalUnitInterval(value: unknown, label: string): number | undefined {
+  if (value === undefined) {
+    return undefined;
+  }
+  if (!isFiniteNumber(value) || value < 0 || value > 1) {
+    throw new Error(`${label} must be a finite number between 0 and 1`);
+  }
+  return value;
+}
+
+function readOptionalNonNegativeNumber(value: unknown, label: string): number | undefined {
+  if (value === undefined) {
+    return undefined;
+  }
+  if (!isFiniteNumber(value) || value < 0) {
+    throw new Error(`${label} must be a non-negative finite number`);
+  }
+  return value;
+}
+
+function readOptionalBoolean(value: unknown, label: string): boolean | undefined {
+  if (value === undefined) {
+    return undefined;
+  }
+  if (typeof value !== "boolean") {
+    throw new Error(`${label} must be a boolean`);
+  }
+  return value;
+}
+
+function isFiniteNumber(value: unknown): value is number {
+  return typeof value === "number" && Number.isFinite(value);
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
