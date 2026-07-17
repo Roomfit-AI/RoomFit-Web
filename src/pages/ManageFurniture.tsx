@@ -3,8 +3,8 @@ import { FiChevronDown, FiChevronUp, FiMoreHorizontal, FiPlus, FiRotateCcw, FiTr
 
 import { getSampleRoomLayouts } from "../api/rooms";
 import { RoomViewer } from "../components/room/RoomViewer";
+import { resolveRoomLayoutPreferredColorTone } from "../config/appliedColorTone";
 import { getLiveMirrorForSelectedRoom } from "../config/confirmedLayouts";
-import { getRoomPreferredColorTone } from "../config/roomPreferences";
 import { captureCanvasThumbnail, saveRoomThumbnail } from "../config/roomThumbnails";
 import { sampleRoomLayouts } from "../mock/interiorPlacementMock";
 import { sampleRoom } from "../mock/sampleRoom";
@@ -104,8 +104,8 @@ export default function ManageFurniture() {
   const [selectedRoom, setSelectedRoom] = useState<RoomLayout>(() => getSelectedRoom());
   const selectedRoomMeta = useMemo(() => getSelectedRoomMeta(selectedRoom), [selectedRoom]);
   const preferredColorTone = useMemo(
-    () => getRoomPreferredColorTone(selectedRoom.id),
-    [selectedRoom.id],
+    () => resolveRoomLayoutPreferredColorTone(selectedRoom),
+    [selectedRoom],
   );
   const [furniture, setFurniture] = useState<Furniture[]>(() => cloneFurniture(selectedRoom.furniture));
   // The as-uploaded baseline for the "초기화" button. Kept out of localStorage

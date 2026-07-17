@@ -11,6 +11,10 @@ import RoomViewer from "../components/room/RoomViewer";
 import { getLiveMirrorForSelectedRoom } from "../config/confirmedLayouts";
 import { applyLocalFeedback } from "../config/localFeedback";
 import { buildScenarioValidation } from "../config/localValidation";
+import {
+  resolveRoomLayoutPreferredColorTone,
+  withAppliedPreferredColorTone,
+} from "../config/appliedColorTone";
 import { applyScenario, currentScenario } from "../config/scenarios";
 import { createHobbyCoralRecommendation, isHobbyCoralRecommendationSelected } from "../mock/hobbyCoralRecommendation";
 import { readPreferredColorTone } from "../config/preferredColorTone";
@@ -238,7 +242,9 @@ function loadBackendRoomId(): number | null {
 
 export default function EditorPlaceholder() {
   const [roomLayout, setRoomLayout] = useState<RoomLayout | null>(() => loadInitialRoomLayout());
-  const preferredColorTone = readPreferredColorTone();
+  const preferredColorTone = roomLayout
+    ? resolveRoomLayoutPreferredColorTone(roomLayout)
+    : null;
   const [selectedFurnitureId, setSelectedFurnitureId] = useState<string | null>(null);
   const [layoutId, setLayoutId] = useState<number | null>(null);
   const [feedback, setFeedback] = useState("");
@@ -331,6 +337,8 @@ export default function EditorPlaceholder() {
       return;
     }
 
+    const recommendationColorTone = readPreferredColorTone() ?? preferredColorTone;
+
     if (isHobbyCoralRecommendationSelected()) {
       setIsRecommending(true);
       setErrorMessage("");
@@ -341,7 +349,7 @@ export default function EditorPlaceholder() {
       const nextRoom = createHobbyCoralRecommendation(roomLayout);
       const { scoreSummary, validationResult } = buildScenarioValidation();
 
-      setRoomLayout(nextRoom);
+      setRoomLayout(withAppliedPreferredColorTone(nextRoom, recommendationColorTone));
       setLayoutId(LOCAL_SCENARIO_LAYOUT_ID);
       setScoreSummary(scoreSummary);
       setValidationResult(validationResult);
@@ -377,7 +385,7 @@ export default function EditorPlaceholder() {
           : applyScenario(roomLayout, scenario);
       const { scoreSummary, validationResult } = buildScenarioValidation();
 
-      setRoomLayout(nextRoom);
+      setRoomLayout(withAppliedPreferredColorTone(nextRoom, recommendationColorTone));
       setLayoutId(LOCAL_SCENARIO_LAYOUT_ID);
       setScoreSummary(scoreSummary);
       setValidationResult(validationResult);
@@ -409,7 +417,7 @@ export default function EditorPlaceholder() {
       ]);
 
       const recommendedLayout = applyBackendFurnitureToLayout(roomLayout, result.recommendedFurniture);
-      setRoomLayout(recommendedLayout);
+      setRoomLayout(withAppliedPreferredColorTone(recommendedLayout, recommendationColorTone));
       setLayoutId(result.layoutId);
       setScoreSummary(result.scoreSummary);
       setValidationResult(result.validationResult);

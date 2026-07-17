@@ -91,6 +91,16 @@ export function getRoomPreferredColorTone(
   return getRoomPreferences(roomLayoutId, storage).palette || null;
 }
 
+export function createAppliedRoomPreferences(
+  preferences: RoomPreferences,
+  appliedPreferredColorTone: unknown,
+): RoomPreferences {
+  return {
+    ...normalizeRoomPreferences(preferences),
+    palette: normalizePreferredColorToneId(appliedPreferredColorTone) ?? "",
+  };
+}
+
 export function hasRoomPreferences(
   roomLayoutId: string,
   storage: RoomPreferencesStorage = localStorage,
