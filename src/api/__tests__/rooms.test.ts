@@ -75,6 +75,30 @@ describe("applyBackendFurnitureToLayout", () => {
     expect(result.furniture[0].variantId).toBe("future-desk-variant");
   });
 
+  it("preserves a midcentury desk product and variant for the registered renderer", () => {
+    const result = applyBackendFurnitureToLayout(baseLayout, [
+      createBackendFurniture({
+        id: "desk-midcentury-rec-1",
+        label: "미드센추리 글라스 책상",
+        productId: "desk-midcentury-glass-01",
+        variantId: "desk-midcentury-glass",
+        width: 1.75,
+        depth: 0.74,
+        height: 0.812,
+        styleTags: ["midcentury", "modern"],
+      }),
+    ]);
+
+    expect(result.furniture).toHaveLength(1);
+    expect(result.furniture[0]).toMatchObject({
+      id: "desk-midcentury-rec-1",
+      productId: "desk-midcentury-glass-01",
+      variantId: "desk-midcentury-glass",
+      styleTags: ["midcentury", "modern"],
+      dimensions: { width: 1.75, depth: 0.74, height: 0.812 },
+    });
+  });
+
   it("uses the same metadata-preserving mapper for a subsequent feedback result", () => {
     const recommended = applyBackendFurnitureToLayout(baseLayout, [createBackendFurniture()]);
     const feedback = applyBackendFurnitureToLayout(recommended, [

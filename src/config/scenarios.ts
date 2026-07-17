@@ -2,7 +2,7 @@ import type { Furniture, Opening, RoomLayout, WallSegment } from "../types";
 
 // Two fixed demo moods, triggered from the "AI 추천 생성" button in
 // /editor (see EditorPlaceholder.tsx) instead of the real backend call for
-// rooms whose saved purpose/style match one of these — real per-mood
+// rooms whose saved purpose/style/palette match one of these — real per-mood
 // recommendation isn't implemented anywhere in this app, so this is a
 // scripted stand-in scoped to exactly the two moods the demo needs.
 //
@@ -1127,8 +1127,17 @@ export const scenarios: Scenario[] = [
   },
 ];
 
-export function findScenario(purpose: string | null, style: string | null): Scenario | undefined {
-  return scenarios.find((scenario) => scenario.purpose === purpose && scenario.style === style);
+export function findScenario(
+  purpose: string | null,
+  style: string | null,
+  palette: string | null,
+): Scenario | undefined {
+  return scenarios.find(
+    (scenario) =>
+      scenario.purpose === purpose &&
+      scenario.style === style &&
+      scenario.palette === palette,
+  );
 }
 
 // Removes pieces that don't fit the mood, restyles (color/material/theme)
@@ -1189,8 +1198,14 @@ export function applyScenario(room: RoomLayout, scenario: Scenario): RoomLayout 
 }
 
 // Convenience used by /editor's "AI 추천 생성" handler (see
-// EditorPlaceholder.tsx) to check whether the room's saved purpose/style has
-// a matching scripted demo mood at all.
-export function currentScenario(): Scenario | undefined {
-  return findScenario(localStorage.getItem("roomfit:selectedPurpose"), localStorage.getItem("roomfit:selectedStyle"));
+// EditorPlaceholder.tsx) to check whether the room's saved
+// purpose/style/palette has a matching scripted demo mood at all.
+type ScenarioStorageReader = Pick<Storage, "getItem">;
+
+export function currentScenario(storage: ScenarioStorageReader = localStorage): Scenario | undefined {
+  return findScenario(
+    storage.getItem("roomfit:selectedPurpose"),
+    storage.getItem("roomfit:selectedStyle"),
+    storage.getItem("roomfit:selectedPalette"),
+  );
 }

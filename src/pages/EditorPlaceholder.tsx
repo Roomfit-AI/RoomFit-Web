@@ -2,6 +2,10 @@ import { useEffect, useState } from "react";
 import { FiRotateCcw, FiTrash2 } from "react-icons/fi";
 
 import { applyLayoutFeedback, createDefaultAgentContext, recommendLayout, type InterpretedIntent, type LayoutValidationResult, type ScoreSummary } from "../api/layouts";
+import {
+  AgentContextRequestValidationError,
+  normalizeBackendRoomId,
+} from "../api/agentContextRequest";
 import { applyBackendFurnitureToLayout } from "../api/rooms";
 import RoomViewer from "../components/room/RoomViewer";
 import { getLiveMirrorForSelectedRoom } from "../config/confirmedLayouts";
@@ -188,15 +192,6 @@ function isCollectorRoom(room: RoomLayout): boolean {
   return room.name === "미드센추리 컬렉터 룸" || room.name === "샘플룸2";
 }
 
-function applyRecommendedRoomLayout(currentRoom: RoomLayout, recommendedLayout: RoomLayout): RoomLayout {
-  // Collector samples intentionally reveal their complete scripted room
-  // only after the backend recommendation call. Other rooms preserve the
-  // existing natural-wood demo transformation.
-  return isCollectorRoom(currentRoom)
-    ? recommendedLayout
-    : applyNaturalWoodRestRoom(recommendedLayout, recommendedLayout.furniture);
-}
-
 // Sentinel layoutId for rooms whose "AI 추천 생성" took the scripted-mood
 // shortcut (see handleRecommend below) instead of a real backend call —
 // there's no backend layoutId to hand to applyLayoutFeedback in that case,
@@ -236,11 +231,8 @@ function loadInitialRoomLayout(): RoomLayout | null {
   return getLiveMirrorForSelectedRoom() ?? loadSelectedRoomLayout();
 }
 
-function loadBackendRoomId(): number {
-  const raw = localStorage.getItem("roomfit:backendRoomId");
-  const parsed = Number(raw);
-
-  return Number.isFinite(parsed) && parsed > 0 ? parsed : 1;
+function loadBackendRoomId(): number | null {
+  return normalizeBackendRoomId(localStorage.getItem("roomfit:backendRoomId"));
 }
 
 export default function EditorPlaceholder() {
@@ -355,11 +347,9 @@ export default function EditorPlaceholder() {
       return;
     }
 
-    // The two scripted demo moods (see config/scenarios.ts) take over here
-    // instead of the real backend call — the backend has no concept of
-    // "rest/minimal/gray" or "work/natural/wood," so for a room whose saved
-    // preference matches one of them, restyle+add locally and skip the
-    // network round trip entirely.
+    // The two exact scripted demo moods (see config/scenarios.ts) take over
+    // here instead of the real backend call. Every other supported
+    // purpose/style/palette combination continues through the backend.
     const roomId = loadBackendRoomId();
     const scenario = isCollectorRoom(roomLayout) ? undefined : currentScenario();
 
@@ -393,13 +383,19 @@ export default function EditorPlaceholder() {
       return;
     }
 
+    if (roomId === null) {
+      setErrorMessage("유효한 백엔드 방을 다시 선택해 주세요.");
+      return;
+    }
+
     setIsRecommending(true);
     setErrorMessage("");
     setInterpretedIntent(null);
 
     try {
-      // Real backend round trip (used by sample rooms whose purpose/style
-      // don't match a scripted demo mood, e.g. the collector rooms above) —
+      // Real backend round trip (used by sample rooms whose
+      // purpose/style/palette don't match a scripted demo mood, e.g. the
+      // collector rooms above) —
       // a local backend answers near-instantly, which read as an instant
       // swap instead of the AI actually working. Racing it against the same
       // fixed 5s floor used by the scripted-mood path keeps that "AI 추천
@@ -411,13 +407,17 @@ export default function EditorPlaceholder() {
       ]);
 
       const recommendedLayout = applyBackendFurnitureToLayout(roomLayout, result.recommendedFurniture);
-      setRoomLayout(applyRecommendedRoomLayout(roomLayout, recommendedLayout));
+      setRoomLayout(recommendedLayout);
       setLayoutId(result.layoutId);
       setScoreSummary(result.scoreSummary);
       setValidationResult(result.validationResult);
     } catch (error) {
       console.error(error);
-      setErrorMessage("AI 추천 생성에 실패했습니다. 백엔드 서버 상태를 확인해 주세요.");
+      setErrorMessage(
+        error instanceof AgentContextRequestValidationError
+          ? error.message
+          : "AI 추천 생성에 실패했습니다. 백엔드 서버 상태를 확인해 주세요.",
+      );
     } finally {
       setIsRecommending(false);
     }
@@ -467,7 +467,7 @@ export default function EditorPlaceholder() {
       const result = await applyLayoutFeedback(layoutId, feedback.trim());
 
       const recommendedLayout = applyBackendFurnitureToLayout(roomLayout, result.recommendedFurniture);
-      setRoomLayout(applyRecommendedRoomLayout(roomLayout, recommendedLayout));
+      setRoomLayout(recommendedLayout);
       setLayoutId(result.layoutId);
       setScoreSummary(result.scoreSummary);
       setValidationResult(result.validationResult);

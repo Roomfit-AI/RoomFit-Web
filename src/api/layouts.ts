@@ -1,5 +1,18 @@
 import { apiClient } from "./client";
+import {
+  buildAgentContextRequest,
+  type DesignStyleApiValue,
+  type FurnitureTypeApiValue,
+  type LifestyleGoalApiValue,
+} from "./agentContextRequest";
+import type { PreferredColorToneApiValue } from "../config/preferredColorTone";
 import type { BackendFurnitureApiItem } from "./rooms";
+
+export type {
+  AgentContextRequest,
+  DesignStyleApiValue,
+  LifestyleGoalApiValue,
+} from "./agentContextRequest";
 
 interface ApiResponse<T> {
   success: boolean;
@@ -13,13 +26,14 @@ interface ApiResponse<T> {
 export interface AgentContextResponse {
   contextId: number;
   roomId: number;
-  lifestyleGoal: string;
-  designStyle: string[];
-  requiredItems: string[];
-  optionalItems: string[];
+  lifestyleGoal: LifestyleGoalApiValue;
+  designStyle: DesignStyleApiValue[];
+  requiredItems: FurnitureTypeApiValue[];
+  optionalItems: FurnitureTypeApiValue[];
   selectedImageIds: number[];
   selectedProductIds: string[];
   styleTags: string[];
+  preferredColorTone: PreferredColorToneApiValue | null;
 }
 
 export interface ScoreSummary {
@@ -59,93 +73,34 @@ export interface LayoutResponse {
   interpretedIntent?: InterpretedIntent;
 }
 
-function readStringArrayFromStorage(key: string, fallback: string[]): string[] {
+function readStringArrayFromStorage(key: string): string[] {
   const raw = localStorage.getItem(key);
 
   if (!raw) {
-    return fallback;
+    return [];
   }
 
   try {
     const parsed = JSON.parse(raw);
 
-    return Array.isArray(parsed) ? parsed.filter((item): item is string => typeof item === "string") : fallback;
+    return Array.isArray(parsed) ? parsed.filter((item): item is string => typeof item === "string") : [];
   } catch {
-    return fallback;
+    return [];
   }
-}
-
-function getWorkflowLifestyleGoal(): string {
-  const purpose = localStorage.getItem("roomfit:selectedPurpose") ?? "work";
-
-  if (purpose === "work" || purpose === "hobby") {
-    return "STUDY_FOCUSED";
-  }
-
-  return "STUDY_FOCUSED";
-}
-
-function getWorkflowDesignStyle(): string[] {
-  const selectedStyle = localStorage.getItem("roomfit:selectedStyle") ?? "minimal";
-  const selectedPalette = localStorage.getItem("roomfit:selectedPalette") ?? "ivory";
-  const designStyle = new Set<string>();
-
-  if (selectedStyle === "minimal") {
-    designStyle.add("MINIMAL");
-  }
-
-  if (selectedPalette === "ivory") {
-    designStyle.add("WHITE_TONE");
-  }
-
-  if (designStyle.size === 0) {
-    designStyle.add("MINIMAL");
-    designStyle.add("WHITE_TONE");
-  }
-
-  return Array.from(designStyle);
-}
-
-function getWorkflowOptionalItems(): string[] {
-  const selectedIds = readStringArrayFromStorage("roomfit:selectedAdditionalFurnitureIds", ["floor-lamp", "soft-rug"]);
-  const optionalItems = new Set<string>(["storage"]);
-
-  if (selectedIds.some((id) => id.includes("lamp") || id.includes("pendant"))) {
-    optionalItems.add("lamp");
-  }
-
-  if (selectedIds.some((id) => id.includes("rug"))) {
-    optionalItems.add("rug");
-  }
-
-  if (selectedIds.some((id) => id.includes("shelf") || id.includes("tv") || id.includes("storage"))) {
-    optionalItems.add("storage");
-  }
-
-  return Array.from(optionalItems);
-}
-
-function getWorkflowSelectedProductIds(): string[] {
-  const selectedIds = readStringArrayFromStorage("roomfit:selectedAdditionalFurnitureIds", ["floor-lamp", "soft-rug"]);
-  const productIds = new Set<string>(["desk-01", "chair-01"]);
-
-  if (selectedIds.some((id) => id.includes("lamp") || id.includes("pendant"))) {
-    productIds.add("lamp-01");
-  }
-
-  return Array.from(productIds);
 }
 
 export async function createDefaultAgentContext(roomId: number): Promise<AgentContextResponse> {
-  const response = await apiClient.post<ApiResponse<AgentContextResponse>>("/api/agent/context", {
+  const request = buildAgentContextRequest({
     roomId,
-    lifestyleGoal: getWorkflowLifestyleGoal(),
-    designStyle: getWorkflowDesignStyle(),
-    requiredItems: ["bed", "desk", "chair"],
-    optionalItems: getWorkflowOptionalItems(),
-    selectedImageIds: [1, 3],
-    selectedProductIds: getWorkflowSelectedProductIds(),
+    purpose: localStorage.getItem("roomfit:selectedPurpose"),
+    style: localStorage.getItem("roomfit:selectedStyle"),
+    palette: localStorage.getItem("roomfit:selectedPalette"),
+    additionalFurnitureIds: readStringArrayFromStorage("roomfit:selectedAdditionalFurnitureIds"),
   });
+  const response = await apiClient.post<ApiResponse<AgentContextResponse>>(
+    "/api/agent/context",
+    request,
+  );
 
   return response.data.data;
 }
