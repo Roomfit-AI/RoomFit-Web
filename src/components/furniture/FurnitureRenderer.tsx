@@ -20,8 +20,16 @@ import {
   warnFurnitureVariantDimensionMismatch,
 } from "./variants/furnitureVariantRouting";
 import type { Furniture } from "../../types";
+import type { PreferredColorToneId } from "../../config/preferredColorTone";
+import { applyPreferredColorToneToLegacyFurniture } from "./materialPalette";
 
-export default function FurnitureRenderer({ item }: { item: Furniture }) {
+export default function FurnitureRenderer({
+  item,
+  preferredColorTone,
+}: {
+  item: Furniture;
+  preferredColorTone?: PreferredColorToneId | null;
+}) {
   const variant = resolveFurnitureVariant(item.variantId);
 
   if (variant) {
@@ -34,41 +42,43 @@ export default function FurnitureRenderer({ item }: { item: Furniture }) {
         registry={registry}
         materialPresets={materialPresets}
         layoutPosition={[0, getFurnitureVariantLocalYOffset(item.dimensions.height), 0]}
+        preferredColorTone={preferredColorTone}
       />
     );
   }
 
-  const name = `${item.id} ${item.name}`.toLowerCase();
-  const material = materialFromConfig(item.material, item.color);
+  const renderedItem = applyPreferredColorToneToLegacyFurniture(item, preferredColorTone);
+  const name = `${renderedItem.id} ${renderedItem.name}`.toLowerCase();
+  const material = materialFromConfig(renderedItem.material, renderedItem.color);
 
-  if (item.geometry === "model" && item.model) {
-    return <ModelFurniture item={item} />;
+  if (renderedItem.geometry === "model" && renderedItem.model) {
+    return <ModelFurniture item={renderedItem} />;
   }
 
-  if (name.includes("plant") || item.name.includes("화병")) {
-    return <Plant item={item} />;
+  if (name.includes("plant") || renderedItem.name.includes("화병")) {
+    return <Plant item={renderedItem} />;
   }
 
-  if (item.id.startsWith("collector-") || item.id.startsWith("studio-")) {
-    return <MidCenturyCollectorFurniture item={item} />;
+  if (renderedItem.id.startsWith("collector-") || renderedItem.id.startsWith("studio-")) {
+    return <MidCenturyCollectorFurniture item={renderedItem} />;
   }
 
-  if (item.category === "lighting") {
-    return <Lamp item={item} />;
+  if (renderedItem.category === "lighting") {
+    return <Lamp item={renderedItem} />;
   }
 
-  if (item.category === "rug" || item.geometry === "plane") {
-    if (item.geometry === "cylinder") {
+  if (renderedItem.category === "rug" || renderedItem.geometry === "plane") {
+    if (renderedItem.geometry === "cylinder") {
       return (
         <group>
-          <mesh receiveShadow position={[0, -item.dimensions.height / 2 + 0.018, 0]}>
-            <cylinderGeometry args={[item.dimensions.width / 2, item.dimensions.width / 2, item.dimensions.height, 64]} />
+          <mesh receiveShadow position={[0, -renderedItem.dimensions.height / 2 + 0.018, 0]}>
+            <cylinderGeometry args={[renderedItem.dimensions.width / 2, renderedItem.dimensions.width / 2, renderedItem.dimensions.height, 64]} />
             <Material {...material} roughness={material.roughness ?? 0.96} />
           </mesh>
           {name.includes("라탄") &&
             [0.32, 0.53, 0.73, 0.9].map((ratio) => (
-              <mesh key={ratio} position={[0, -item.dimensions.height / 2 + 0.027, 0]} rotation={[Math.PI / 2, 0, 0]} receiveShadow>
-                <torusGeometry args={[item.dimensions.width * ratio * 0.5, 0.009, 8, 64]} />
+              <mesh key={ratio} position={[0, -renderedItem.dimensions.height / 2 + 0.027, 0]} rotation={[Math.PI / 2, 0, 0]} receiveShadow>
+                <torusGeometry args={[renderedItem.dimensions.width * ratio * 0.5, 0.009, 8, 64]} />
                 <meshStandardMaterial color="#b18a58" roughness={0.9} />
               </mesh>
             ))}
@@ -77,52 +87,52 @@ export default function FurnitureRenderer({ item }: { item: Furniture }) {
     }
 
     return (
-      <mesh receiveShadow position={[0, -item.dimensions.height / 2 + 0.018, 0]}>
-        <boxGeometry args={[item.dimensions.width, item.dimensions.height, item.dimensions.depth]} />
+      <mesh receiveShadow position={[0, -renderedItem.dimensions.height / 2 + 0.018, 0]}>
+        <boxGeometry args={[renderedItem.dimensions.width, renderedItem.dimensions.height, renderedItem.dimensions.depth]} />
         <Material {...material} roughness={material.roughness ?? 0.96} />
       </mesh>
     );
   }
 
-  if (item.category === "bed") {
-    return <Bed item={item} />;
+  if (renderedItem.category === "bed") {
+    return <Bed item={renderedItem} />;
   }
 
-  if (item.category === "desk") {
-    return <Table item={item} />;
+  if (renderedItem.category === "desk") {
+    return <Table item={renderedItem} />;
   }
 
-  if (item.category === "chair") {
+  if (renderedItem.category === "chair") {
     // "chair" covers both real chairs and sofas (rooms.ts collapses both
     // furniture types into this one category) — only render the wide
     // cushioned Sofa for items actually labeled as one, a single-seat Chair
     // otherwise, so a desk chair doesn't get mistaken for a couch.
     if (name.includes("소파") || name.includes("sofa") || name.includes("couch")) {
-      return <Sofa item={item} />;
+      return <Sofa item={renderedItem} />;
     }
-    return <Chair item={item} />;
+    return <Chair item={renderedItem} />;
   }
 
   if (name.includes("tv") && !name.includes("stand")) {
-    return <Television item={item} />;
+    return <Television item={renderedItem} />;
   }
 
-  if (item.name.includes("선반")) {
-    return <FloatingShelf item={item} />;
+  if (renderedItem.name.includes("선반")) {
+    return <FloatingShelf item={renderedItem} />;
   }
 
-  if (item.name.includes("책장") || name.includes("shelf")) {
-    return <Bookshelf item={item} />;
+  if (renderedItem.name.includes("책장") || name.includes("shelf")) {
+    return <Bookshelf item={renderedItem} />;
   }
 
-  if (item.category === "cabinet") {
-    return <Storage item={item} />;
+  if (renderedItem.category === "cabinet") {
+    return <Storage item={renderedItem} />;
   }
 
-  if (item.geometry === "cylinder") {
+  if (renderedItem.geometry === "cylinder") {
     return (
       <mesh castShadow receiveShadow>
-        <cylinderGeometry args={[item.dimensions.width / 2, item.dimensions.width / 2, item.dimensions.height, 48]} />
+        <cylinderGeometry args={[renderedItem.dimensions.width / 2, renderedItem.dimensions.width / 2, renderedItem.dimensions.height, 48]} />
         <Material {...material} />
       </mesh>
     );
@@ -130,7 +140,7 @@ export default function FurnitureRenderer({ item }: { item: Furniture }) {
 
   return (
     <mesh castShadow receiveShadow>
-      <boxGeometry args={[item.dimensions.width, item.dimensions.height, item.dimensions.depth]} />
+      <boxGeometry args={[renderedItem.dimensions.width, renderedItem.dimensions.height, renderedItem.dimensions.depth]} />
       <Material {...material} />
     </mesh>
   );

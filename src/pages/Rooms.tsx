@@ -14,6 +14,7 @@ import { hasConfirmedLayout } from "../config/confirmedLayouts";
 import { applyPreferencesToStorage, getRoomPreferences } from "../config/roomPreferences";
 import { captureCanvasThumbnail, getRoomThumbnail, saveRoomThumbnail } from "../config/roomThumbnails";
 import type { RoomLayout } from "../types";
+import type { PreferredColorToneId } from "../config/preferredColorTone";
 
 const filters = ["전체", "원룸", "사무실"];
 const selectedRoomStorageKeys = [
@@ -453,6 +454,7 @@ export default function Rooms() {
         <HiddenThumbnailCapture
           key={roomNeedingCapture.layoutId}
           room={roomNeedingCapture.layout}
+          preferredColorTone={getRoomPreferences(roomNeedingCapture.layoutId).palette || null}
           onDone={() => setThumbnailCaptureTick((tick) => tick + 1)}
         />
       )}
@@ -537,7 +539,15 @@ function RoomPreview({ tone, thumbnailUrl, alt }: { tone: string; thumbnailUrl?:
 // Renders one room invisibly just long enough to grab a real 3D thumbnail
 // of it, then reports back so the caller can move on to the next room still
 // missing one.
-function HiddenThumbnailCapture({ room, onDone }: { room: RoomLayout; onDone: () => void }) {
+function HiddenThumbnailCapture({
+  room,
+  preferredColorTone,
+  onDone,
+}: {
+  room: RoomLayout;
+  preferredColorTone: PreferredColorToneId | null;
+  onDone: () => void;
+}) {
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -583,6 +593,7 @@ function HiddenThumbnailCapture({ room, onDone }: { room: RoomLayout; onDone: ()
         onMoveFurniture={() => undefined}
         hideEntranceWalls
         alignCameraToEntrance
+        preferredColorTone={preferredColorTone}
       />
     </div>
   );

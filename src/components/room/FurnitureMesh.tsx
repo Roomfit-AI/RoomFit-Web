@@ -4,6 +4,7 @@ import { useEffect, useRef } from "react";
 import * as THREE from "three";
 import FurnitureRenderer from "../furniture/FurnitureRenderer";
 import type { Furniture, Vector2D } from "../../types";
+import type { PreferredColorToneId } from "../../config/preferredColorTone";
 
 interface FurnitureMeshProps {
   item: Furniture;
@@ -12,6 +13,7 @@ interface FurnitureMeshProps {
   showSelectionIndicator: boolean;
   onSelect: (id: string) => void;
   onMove: (id: string, position: Vector2D) => void;
+  preferredColorTone?: PreferredColorToneId | null;
 }
 
 export function FurnitureMesh({
@@ -21,6 +23,7 @@ export function FurnitureMesh({
   showSelectionIndicator,
   onSelect,
   onMove,
+  preferredColorTone,
 }: FurnitureMeshProps) {
   const groupRef = useRef<THREE.Group>(null!);
   const heightOffset = item.dimensions.height / 2;
@@ -57,7 +60,7 @@ export function FurnitureMesh({
       rotation={[0, item.rotationY, 0]}
       onPointerDown={handlePointerDown}
     >
-      <FurnitureRenderer item={item} />
+      <FurnitureRenderer item={item} preferredColorTone={preferredColorTone} />
       {isSelected && showSelectionIndicator && (
         <mesh position={[0, item.dimensions.height / 2 + 0.045, 0]}>
           <boxGeometry args={[item.dimensions.width + 0.1, 0.035, item.dimensions.depth + 0.1]} />

@@ -14,8 +14,13 @@ import {
 import RoomViewer from "../components/room/RoomViewer";
 import PageStepHeader from "../components/ui/PageStepHeader";
 import { resolveCurrentRoomLayout, saveConfirmedLayout } from "../config/confirmedLayouts";
+import { resolveRoomLayoutPreferredColorTone } from "../config/appliedColorTone";
 import { NATURAL_SCENARIO_SHOPPING_LIST } from "../config/naturalScenarioShoppingList";
-import { readCurrentPreferences, saveRoomPreferences } from "../config/roomPreferences";
+import {
+  createAppliedRoomPreferences,
+  readCurrentPreferences,
+  saveRoomPreferences,
+} from "../config/roomPreferences";
 import { captureCanvasThumbnail, saveRoomThumbnail } from "../config/roomThumbnails";
 import { currentScenario } from "../config/scenarios";
 
@@ -36,6 +41,7 @@ const SHOPPING_LIST_ICONS: Record<string, typeof MdOutlineBed> = {
 export default function LayoutConfirm() {
   const navigate = useNavigate();
   const roomLayout = resolveCurrentRoomLayout();
+  const preferredColorTone = resolveRoomLayoutPreferredColorTone(roomLayout);
   const furnitureCount = roomLayout.furniture.length;
   // Actual scanned width x depth (matches how Rooms.tsx shows room size on
   // its cards) rather than a computed ㎡ figure — a real width/depth pair
@@ -64,7 +70,10 @@ export default function LayoutConfirm() {
     // used — Rooms.tsx's selectRoom restores this the next time this same
     // room is picked, so reopening a confirmed room shows its own real
     // choices instead of whatever room was selected most recently elsewhere.
-    saveRoomPreferences(roomLayout.id, readCurrentPreferences());
+    saveRoomPreferences(
+      roomLayout.id,
+      createAppliedRoomPreferences(readCurrentPreferences(), preferredColorTone),
+    );
 
     // /manage-furniture also captures a thumbnail (its "내부 보기" toggle),
     // but that happens early in the flow, before /preference's style pick or
@@ -137,6 +146,7 @@ export default function LayoutConfirm() {
                 onMoveFurniture={() => undefined}
                 hideEntranceWalls
                 alignCameraToEntrance
+                preferredColorTone={preferredColorTone}
               />
             </div>
           </section>

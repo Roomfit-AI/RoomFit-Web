@@ -8,6 +8,7 @@ import Lighting from "./Lighting";
 import Wall from "./Wall";
 import Window from "./Window";
 import type { Furniture, RoomLayout, Vector2D, WallSegment } from "../../types";
+import type { PreferredColorToneId } from "../../config/preferredColorTone";
 
 interface RoomViewerProps {
   room: RoomLayout;
@@ -19,6 +20,7 @@ interface RoomViewerProps {
   hideEntranceWalls?: boolean;
   alignCameraToEntrance?: boolean;
   showEditingHelpers?: boolean;
+  preferredColorTone?: PreferredColorToneId | null;
 }
 
 export function RoomViewer({
@@ -31,6 +33,7 @@ export function RoomViewer({
   hideEntranceWalls = false,
   alignCameraToEntrance = false,
   showEditingHelpers = false,
+  preferredColorTone,
 }: RoomViewerProps) {
   const camera = room.camera ?? {
     type: "orthographic" as const,
@@ -86,6 +89,7 @@ export function RoomViewer({
               showSelectionIndicator={showEditingHelpers}
               onSelect={onSelectFurniture}
               onMove={onMoveFurniture}
+              preferredColorTone={preferredColorTone}
             />
           ))}
 

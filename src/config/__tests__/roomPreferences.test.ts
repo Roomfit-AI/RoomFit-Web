@@ -1,11 +1,14 @@
 import { describe, expect, it } from "vitest";
 import {
+  applyPreferencesToStorage,
   getRoomPreferences,
+  getRoomPreferredColorTone,
   hasRoomPreferences,
   normalizeRoomPreferences,
   saveRoomPreferences,
   shouldClearInitialPreferences,
 } from "../roomPreferences";
+import { readPreferredColorTone } from "../preferredColorTone";
 
 const ROOM_PREFERENCES_KEY = "roomfit:preferencesByRoomId";
 
@@ -97,6 +100,59 @@ describe("roomPreferences", () => {
     expect(hasRoomPreferences("missing-room", storage)).toBe(false);
   });
 
+  it("resolves each selected room's own preferred color tone", () => {
+    const storage = new MemoryStorage();
+    saveRoomPreferences("room-blue", {
+      purpose: "work",
+      palette: "blue",
+      style: "modern",
+      additionalFurnitureIds: ["desk"],
+    }, storage);
+    saveRoomPreferences("room-brown", {
+      purpose: "rest",
+      palette: "brown",
+      style: "natural",
+      additionalFurnitureIds: ["bed"],
+    }, storage);
+
+    expect(getRoomPreferredColorTone("room-blue", storage)).toBe("blue");
+    expect(getRoomPreferredColorTone("room-brown", storage)).toBe("brown");
+  });
+
+  it("uses the original material path when a room has no preference", () => {
+    expect(getRoomPreferredColorTone("room-without-preferences", new MemoryStorage())).toBeNull();
+  });
+
+  it("uses the original material path for an invalid stored palette", () => {
+    const storage = new MemoryStorage();
+    seedRoomPreferences(storage, {
+      "room-invalid": {
+        purpose: "work",
+        palette: "purple",
+        style: "modern",
+        additionalFurnitureIds: ["desk"],
+      },
+    });
+
+    expect(getRoomPreferredColorTone("room-invalid", storage)).toBeNull();
+  });
+
+  it("keeps the selected room ID while restoring its live preferences", () => {
+    const storage = new MemoryStorage();
+    storage.setItem("roomfit:selectedRoomId", "room-blue");
+    saveRoomPreferences("room-blue", {
+      purpose: "work",
+      palette: "blue",
+      style: "modern",
+      additionalFurnitureIds: ["desk"],
+    }, storage);
+
+    applyPreferencesToStorage(getRoomPreferences("room-blue", storage), storage);
+
+    expect(storage.getItem("roomfit:selectedRoomId")).toBe("room-blue");
+    expect(getRoomPreferredColorTone(storage.getItem("roomfit:selectedRoomId") ?? "", storage)).toBe("blue");
+  });
+
   it("round-trips without sharing mutable furniture ID arrays", () => {
     const storage = new MemoryStorage();
     const additionalFurnitureIds = ["desk", "chair"];
@@ -117,6 +173,20 @@ describe("roomPreferences", () => {
       "desk",
       "chair",
     ]);
+  });
+
+  it("restores the same palette into the live room preference boundary", () => {
+    const storage = new MemoryStorage();
+    saveRoomPreferences("room-a", {
+      purpose: "work",
+      palette: "brown",
+      style: "modern",
+      additionalFurnitureIds: ["desk"],
+    }, storage);
+
+    applyPreferencesToStorage(getRoomPreferences("room-a", storage), storage);
+
+    expect(readPreferredColorTone(storage)).toBe("brown");
   });
 
   it("clears only a new first visit, not a restored room or later revisit", () => {

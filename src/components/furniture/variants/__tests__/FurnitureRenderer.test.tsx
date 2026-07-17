@@ -4,6 +4,7 @@ import FurnitureRenderer from "../../FurnitureRenderer";
 import Table from "../../Table";
 import type { Furniture } from "../../../../types";
 import { FurnitureVariantRenderer } from "../FurnitureVariantRenderer";
+import { FURNITURE_MATERIAL_PALETTES } from "../../materialPalette";
 
 function createDesk(overrides: Partial<Furniture> = {}): Furniture {
   return {
@@ -39,10 +40,26 @@ describe("FurnitureRenderer variant adapter", () => {
     expect(element.props.scale).toBeUndefined();
   });
 
+  it("passes the selected color tone to the registered variant renderer", () => {
+    const element = FurnitureRenderer({
+      item: createDesk(),
+      preferredColorTone: "blue",
+    }) as ReactElement<{ preferredColorTone?: string }>;
+
+    expect(element.type).toBe(FurnitureVariantRenderer);
+    expect(element.props.preferredColorTone).toBe("blue");
+  });
+
   it("keeps the legacy renderer for furniture without a variantId", () => {
-    const element = FurnitureRenderer({ item: createDesk({ variantId: null }) });
+    const element = FurnitureRenderer({
+      item: createDesk({ variantId: null }),
+      preferredColorTone: "brown",
+    }) as ReactElement<{ item: Furniture }>;
 
     expect(element.type).toBe(Table);
+    expect(element.props.item.color).toBe(FURNITURE_MATERIAL_PALETTES.brown.wood);
+    expect(element.props.item.productId).toBe("desk-compact-01");
+    expect(element.props.item.variantId).toBeNull();
   });
 
   it("keeps the legacy renderer for an unknown variantId", () => {
