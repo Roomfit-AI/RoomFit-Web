@@ -21,7 +21,8 @@ import type {
 const DEFAULT_ROUNDED_BOX_RADIUS = 0.02;
 const DEFAULT_ROUNDED_BOX_SMOOTHNESS = 4;
 const DEFAULT_CYLINDER_SEGMENTS = 32;
-const MAX_ROUNDED_BOX_RADIUS_RATIO = 0.35;
+const DEFAULT_ROUNDED_BOX_RADIUS_RATIO = 0.35;
+const MAX_ROUNDED_BOX_RADIUS_RATIO = 0.5;
 
 export function createFurniturePartGeometry(
   definition: FurniturePart | ValidatedFurniturePart,
@@ -30,10 +31,10 @@ export function createFurniturePartGeometry(
     case "box":
       return new BoxGeometry(...definition.size);
     case "roundedBox": {
-      const radius = Math.min(
-        definition.radius ?? DEFAULT_ROUNDED_BOX_RADIUS,
-        Math.min(...definition.size) * MAX_ROUNDED_BOX_RADIUS_RATIO,
-      );
+      const smallestSize = Math.min(...definition.size);
+      const radius = definition.radius === undefined
+        ? Math.min(DEFAULT_ROUNDED_BOX_RADIUS, smallestSize * DEFAULT_ROUNDED_BOX_RADIUS_RATIO)
+        : Math.min(definition.radius, smallestSize * MAX_ROUNDED_BOX_RADIUS_RATIO);
       return new RoundedBoxGeometry(
         definition.size[0],
         definition.size[1],

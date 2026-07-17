@@ -1,0 +1,220 @@
+{
+  "schemaVersion": "1.0",
+  "name": "수납 결합 책상",
+  "furnitureType": "책상",
+  "variant": "수납 결합형",
+  "units": "meter",
+  "coordinateSystem": {
+    "origin": "floor-center",
+    "axes": {
+      "x": "right",
+      "y": "up",
+      "z": "front"
+    }
+  },
+  "rotationUnit": "radian",
+  "dimensions": {
+    "width": 1.4,
+    "depth": 0.62,
+    "height": 0.73
+  },
+  "materials": [
+    "woodLight",
+    "wood",
+    "woodDark",
+    "metal"
+  ],
+  "parts": [
+    {
+      "id": "top",
+      "geometry": "box",
+      "size": [
+        1.4,
+        0.035,
+        0.62
+      ],
+      "position": [
+        0,
+        0.7125,
+        0
+      ],
+      "material": "woodLight"
+    },
+    {
+      "id": "left-panel",
+      "geometry": "box",
+      "size": [
+        0.035,
+        0.695,
+        0.56
+      ],
+      "position": [
+        -0.6825,
+        0.3475,
+        0
+      ],
+      "material": "wood"
+    },
+    {
+      "id": "pedestal-body",
+      "geometry": "box",
+      "size": [
+        0.34,
+        0.695,
+        0.56
+      ],
+      "position": [
+        0.51,
+        0.3475,
+        0
+      ],
+      "material": "wood"
+    },
+    {
+      "id": "drawer-1",
+      "geometry": "box",
+      "size": [
+        0.3,
+        0.18,
+        0.03
+      ],
+      "position": [
+        0.51,
+        0.585,
+        0.285
+      ],
+      "material": "woodDark"
+    },
+    {
+      "id": "drawer-2",
+      "geometry": "box",
+      "size": [
+        0.3,
+        0.18,
+        0.03
+      ],
+      "position": [
+        0.51,
+        0.385,
+        0.285
+      ],
+      "material": "woodDark"
+    },
+    {
+      "id": "drawer-3",
+      "geometry": "box",
+      "size": [
+        0.3,
+        0.16,
+        0.03
+      ],
+      "position": [
+        0.51,
+        0.195,
+        0.285
+      ],
+      "material": "woodDark"
+    },
+    {
+      "id": "handle-1",
+      "geometry": "box",
+      "size": [
+        0.1,
+        0.015,
+        0.015
+      ],
+      "position": [
+        0.51,
+        0.585,
+        0.3025
+      ],
+      "material": "metal"
+    },
+    {
+      "id": "handle-2",
+      "geometry": "box",
+      "size": [
+        0.1,
+        0.015,
+        0.015
+      ],
+      "position": [
+        0.51,
+        0.385,
+        0.3025
+      ],
+      "material": "metal"
+    },
+    {
+      "id": "handle-3",
+      "geometry": "box",
+      "size": [
+        0.1,
+        0.015,
+        0.015
+      ],
+      "position": [
+        0.51,
+        0.195,
+        0.3025
+      ],
+      "material": "metal"
+    },
+    {
+      "id": "open-shelf",
+      "geometry": "box",
+      "size": [
+        1.02,
+        0.04,
+        0.5
+      ],
+      "position": [
+        -0.16,
+        0.18,
+        0
+      ],
+      "material": "wood"
+    },
+    {
+      "id": "modesty-panel",
+      "geometry": "box",
+      "size": [
+        1.02,
+        0.34,
+        0.03
+      ],
+      "position": [
+        -0.16,
+        0.47,
+        -0.275
+      ],
+      "material": "woodDark"
+    },
+    {
+      "id": "front-apron",
+      "geometry": "box",
+      "size": [
+        1.02,
+        0.08,
+        0.04
+      ],
+      "position": [
+        -0.16,
+        0.655,
+        0.27
+      ],
+      "material": "woodDark"
+    }
+  ],
+  "variantId": "desk-storage",
+  "furnitureTypeCode": "DESK",
+  "styleTags": [
+    "natural",
+    "classic"
+  ],
+  "lifestyleTags": [
+    "WORK_STUDY",
+    "STORAGE"
+  ],
+  "purchaseUrl": "https://www.ikea.com/kr/ko/p/micke-desk-black-brown-60354277/"
+}

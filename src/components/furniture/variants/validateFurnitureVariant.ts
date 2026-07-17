@@ -17,7 +17,7 @@ import type {
 
 const STYLE_TAGS = new Set<string>(FURNITURE_STYLE_TAGS);
 const LIFESTYLE_TAGS = new Set<string>(FURNITURE_LIFESTYLE_TAGS);
-const MAX_ROUNDED_BOX_RADIUS_RATIO = 0.35;
+const MAX_ROUNDED_BOX_RADIUS_RATIO = 0.5;
 
 export class FurnitureVariantValidationError extends Error {
   constructor(message: string) {
@@ -155,11 +155,13 @@ function readPartGeometry(
       const size = readPositiveTuple3(part.size, "size", variantId, partId);
       const radius = readOptionalPositiveNumber(part.radius, "radius", variantId, partId);
       if (radius !== undefined && radius > Math.min(...size) * MAX_ROUNDED_BOX_RADIUS_RATIO) {
-        fail(variantId, "radius must not exceed 35% of the smallest size", partId);
+        fail(variantId, "radius must not exceed 50% of the smallest size", partId);
       }
-      const smoothness = readOptionalPositiveInteger(
+      const smoothness = readOptionalIntegerInRange(
         part.smoothness,
         "smoothness",
+        1,
+        10,
         variantId,
         partId,
       );
@@ -196,15 +198,22 @@ function readPartGeometry(
 
 function readCoordinateSystem(value: unknown, variantId: string): FurnitureCoordinateSystem {
   const coordinateSystem = readRecord(value, `Invalid furniture variant "${variantId}": coordinateSystem must be an object`);
+  const axes = readRecord(
+    coordinateSystem.axes,
+    `Invalid furniture variant "${variantId}": coordinateSystem.axes must be an object`,
+  );
   if (
     coordinateSystem.origin !== "floor-center"
-    || coordinateSystem.xAxis !== "right"
-    || coordinateSystem.yAxis !== "up"
-    || coordinateSystem.zAxis !== "front"
+    || axes.x !== "right"
+    || axes.y !== "up"
+    || axes.z !== "front"
   ) {
     fail(variantId, "coordinateSystem must use floor-center, +X right, +Y up, +Z front");
   }
-  return { origin: "floor-center", xAxis: "right", yAxis: "up", zAxis: "front" };
+  return {
+    origin: "floor-center",
+    axes: { x: "right", y: "up", z: "front" },
+  };
 }
 
 function readDimensions(value: unknown, variantId: string): FurnitureVariantDimensions {
@@ -319,6 +328,23 @@ function readOptionalPositiveInteger(
   }
   if (!Number.isInteger(value) || (value as number) <= 0) {
     fail(variantId, `${label} must be a positive integer`, partId);
+  }
+  return value as number;
+}
+
+function readOptionalIntegerInRange(
+  value: unknown,
+  label: string,
+  minimum: number,
+  maximum: number,
+  variantId: string,
+  partId: string,
+): number | undefined {
+  if (value === undefined) {
+    return undefined;
+  }
+  if (!Number.isInteger(value) || (value as number) < minimum || (value as number) > maximum) {
+    fail(variantId, `${label} must be an integer between ${minimum} and ${maximum}`, partId);
   }
   return value as number;
 }

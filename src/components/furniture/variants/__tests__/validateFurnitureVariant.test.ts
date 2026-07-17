@@ -137,6 +137,32 @@ describe("validateFurnitureVariant", () => {
 
     expectInvalid(variant, "Unsupported geometry type");
   });
+
+  it("accepts roundedBox smoothness from 1 through 10", () => {
+    const minimum = makeValidFurnitureVariant();
+    asMutableRecord(minimum.parts[0]).smoothness = 1;
+    expect(validateFurnitureVariant(minimum, makeTestMaterialCatalog()).parts[0]).toMatchObject({
+      geometry: "roundedBox",
+      smoothness: 1,
+    });
+
+    const maximum = makeValidFurnitureVariant();
+    asMutableRecord(maximum.parts[0]).smoothness = 10;
+    expect(validateFurnitureVariant(maximum, makeTestMaterialCatalog()).parts[0]).toMatchObject({
+      geometry: "roundedBox",
+      smoothness: 10,
+    });
+  });
+
+  it.each([0, 11, 1.5, Number.NaN, Number.POSITIVE_INFINITY])(
+    "rejects invalid roundedBox smoothness %s",
+    (smoothness) => {
+      const variant = makeValidFurnitureVariant();
+      asMutableRecord(variant.parts[0]).smoothness = smoothness;
+
+      expectInvalid(variant, "smoothness must be an integer between 1 and 10");
+    },
+  );
 });
 
 function expectInvalid(variant: unknown, message: string): void {
