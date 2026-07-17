@@ -1,5 +1,7 @@
 import { MeshStandardMaterial } from "three";
 import type { MeshStandardMaterialParameters } from "three";
+import { applyPreferredColorToneToMaterialPreset } from "../materialPalette";
+import type { PreferredColorToneId } from "../../../config/preferredColorTone";
 
 export interface MaterialPreset {
   color: string;
@@ -55,12 +57,17 @@ export function parseMaterialPresetCatalog(input: unknown): MaterialPresetCatalo
 export function resolveMaterialPreset(
   presetId: string,
   catalog: Readonly<MaterialPresetCatalog>,
+  preferredColorTone?: PreferredColorToneId | null,
 ): MeshStandardMaterialParameters {
   if (!Object.hasOwn(catalog, presetId)) {
     throw new Error(`Unknown material preset "${presetId}"`);
   }
 
-  const preset = catalog[presetId];
+  const preset = applyPreferredColorToneToMaterialPreset(
+    presetId,
+    catalog[presetId],
+    preferredColorTone,
+  );
   const opacity = preset.opacity ?? 1;
   return {
     color: preset.color,
@@ -76,8 +83,9 @@ export function resolveMaterialPreset(
 export function createMaterialFromPreset(
   presetId: string,
   catalog: Readonly<MaterialPresetCatalog>,
+  preferredColorTone?: PreferredColorToneId | null,
 ): MeshStandardMaterial {
-  return new MeshStandardMaterial(resolveMaterialPreset(presetId, catalog));
+  return new MeshStandardMaterial(resolveMaterialPreset(presetId, catalog, preferredColorTone));
 }
 
 function parseMaterialPreset(presetId: string, input: Record<string, unknown>): MaterialPreset {

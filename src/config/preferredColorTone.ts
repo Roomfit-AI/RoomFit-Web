@@ -65,3 +65,13 @@ export function toPreferredColorToneApiValue(value: unknown): PreferredColorTone
   const normalized = normalizePreferredColorToneId(value);
   return normalized ? PREFERRED_COLOR_TONE_API_VALUES[normalized] : null;
 }
+
+export function readPreferredColorTone(
+  storage: Pick<Storage, "getItem"> = localStorage,
+): PreferredColorToneId | null {
+  try {
+    return normalizePreferredColorToneId(storage.getItem("roomfit:selectedPalette"));
+  } catch {
+    return null;
+  }
+}

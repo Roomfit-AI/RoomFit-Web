@@ -13,6 +13,7 @@ import { applyLocalFeedback } from "../config/localFeedback";
 import { buildScenarioValidation } from "../config/localValidation";
 import { applyScenario, currentScenario } from "../config/scenarios";
 import { createHobbyCoralRecommendation, isHobbyCoralRecommendationSelected } from "../mock/hobbyCoralRecommendation";
+import { readPreferredColorTone } from "../config/preferredColorTone";
 import type { Furniture, RoomLayout, Vector2D } from "../types";
 
 const naturalWoodRestRoomExistingFurnitureIds = new Set(["bed-1", "desk-1", "chair-1"]);
@@ -237,6 +238,7 @@ function loadBackendRoomId(): number | null {
 
 export default function EditorPlaceholder() {
   const [roomLayout, setRoomLayout] = useState<RoomLayout | null>(() => loadInitialRoomLayout());
+  const preferredColorTone = readPreferredColorTone();
   const [selectedFurnitureId, setSelectedFurnitureId] = useState<string | null>(null);
   const [layoutId, setLayoutId] = useState<number | null>(null);
   const [feedback, setFeedback] = useState("");
@@ -530,6 +532,7 @@ export default function EditorPlaceholder() {
               hideEntranceWalls={hideEntranceWalls}
               alignCameraToEntrance
               showEditingHelpers
+              preferredColorTone={preferredColorTone}
             />
           </div>
 

@@ -18,6 +18,7 @@ import { NATURAL_SCENARIO_SHOPPING_LIST } from "../config/naturalScenarioShoppin
 import { readCurrentPreferences, saveRoomPreferences } from "../config/roomPreferences";
 import { captureCanvasThumbnail, saveRoomThumbnail } from "../config/roomThumbnails";
 import { currentScenario } from "../config/scenarios";
+import { readPreferredColorTone } from "../config/preferredColorTone";
 
 // Single-glyph icons instead of the .furniture-card-* illustrations — always
 // centered within their own viewBox by design, so every row's thumbnail
@@ -36,6 +37,7 @@ const SHOPPING_LIST_ICONS: Record<string, typeof MdOutlineBed> = {
 export default function LayoutConfirm() {
   const navigate = useNavigate();
   const roomLayout = resolveCurrentRoomLayout();
+  const preferredColorTone = readPreferredColorTone();
   const furnitureCount = roomLayout.furniture.length;
   // Actual scanned width x depth (matches how Rooms.tsx shows room size on
   // its cards) rather than a computed ㎡ figure — a real width/depth pair
@@ -137,6 +139,7 @@ export default function LayoutConfirm() {
                 onMoveFurniture={() => undefined}
                 hideEntranceWalls
                 alignCameraToEntrance
+                preferredColorTone={preferredColorTone}
               />
             </div>
           </section>

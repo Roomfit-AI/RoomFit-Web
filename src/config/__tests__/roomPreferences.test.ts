@@ -1,11 +1,13 @@
 import { describe, expect, it } from "vitest";
 import {
+  applyPreferencesToStorage,
   getRoomPreferences,
   hasRoomPreferences,
   normalizeRoomPreferences,
   saveRoomPreferences,
   shouldClearInitialPreferences,
 } from "../roomPreferences";
+import { readPreferredColorTone } from "../preferredColorTone";
 
 const ROOM_PREFERENCES_KEY = "roomfit:preferencesByRoomId";
 
@@ -117,6 +119,20 @@ describe("roomPreferences", () => {
       "desk",
       "chair",
     ]);
+  });
+
+  it("restores the same palette into the live room preference boundary", () => {
+    const storage = new MemoryStorage();
+    saveRoomPreferences("room-a", {
+      purpose: "work",
+      palette: "brown",
+      style: "modern",
+      additionalFurnitureIds: ["desk"],
+    }, storage);
+
+    applyPreferencesToStorage(getRoomPreferences("room-a", storage), storage);
+
+    expect(readPreferredColorTone(storage)).toBe("brown");
   });
 
   it("clears only a new first visit, not a restored room or later revisit", () => {
