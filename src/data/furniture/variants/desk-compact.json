@@ -1,0 +1,233 @@
+{
+  "schemaVersion": "1.0",
+  "name": "컴팩트 책상",
+  "furnitureType": "책상",
+  "variant": "컴팩트형",
+  "units": "meter",
+  "coordinateSystem": {
+    "origin": "floor-center",
+    "axes": {
+      "x": "right",
+      "y": "up",
+      "z": "front"
+    }
+  },
+  "rotationUnit": "radian",
+  "dimensions": {
+    "width": 1.2,
+    "depth": 0.6,
+    "height": 0.73
+  },
+  "materials": [
+    "woodLight",
+    "metal",
+    "metalLight"
+  ],
+  "parts": [
+    {
+      "id": "top",
+      "geometry": "box",
+      "size": [
+        1.2,
+        0.035,
+        0.6
+      ],
+      "position": [
+        0,
+        0.7125,
+        0
+      ],
+      "material": "woodLight"
+    },
+    {
+      "id": "left-frame-front",
+      "geometry": "box",
+      "size": [
+        0.04,
+        0.695,
+        0.04
+      ],
+      "position": [
+        -0.52,
+        0.3475,
+        0.24
+      ],
+      "material": "metal"
+    },
+    {
+      "id": "left-frame-back",
+      "geometry": "box",
+      "size": [
+        0.04,
+        0.695,
+        0.04
+      ],
+      "position": [
+        -0.52,
+        0.3475,
+        -0.24
+      ],
+      "material": "metal"
+    },
+    {
+      "id": "right-frame-front",
+      "geometry": "box",
+      "size": [
+        0.04,
+        0.695,
+        0.04
+      ],
+      "position": [
+        0.52,
+        0.3475,
+        0.24
+      ],
+      "material": "metal"
+    },
+    {
+      "id": "right-frame-back",
+      "geometry": "box",
+      "size": [
+        0.04,
+        0.695,
+        0.04
+      ],
+      "position": [
+        0.52,
+        0.3475,
+        -0.24
+      ],
+      "material": "metal"
+    },
+    {
+      "id": "left-foot",
+      "geometry": "box",
+      "size": [
+        0.06,
+        0.04,
+        0.54
+      ],
+      "position": [
+        -0.52,
+        0.02,
+        0
+      ],
+      "material": "metal"
+    },
+    {
+      "id": "right-foot",
+      "geometry": "box",
+      "size": [
+        0.06,
+        0.04,
+        0.54
+      ],
+      "position": [
+        0.52,
+        0.02,
+        0
+      ],
+      "material": "metal"
+    },
+    {
+      "id": "left-upper-rail",
+      "geometry": "box",
+      "size": [
+        0.04,
+        0.055,
+        0.48
+      ],
+      "position": [
+        -0.52,
+        0.67,
+        0
+      ],
+      "material": "metal"
+    },
+    {
+      "id": "right-upper-rail",
+      "geometry": "box",
+      "size": [
+        0.04,
+        0.055,
+        0.48
+      ],
+      "position": [
+        0.52,
+        0.67,
+        0
+      ],
+      "material": "metal"
+    },
+    {
+      "id": "rear-brace",
+      "geometry": "box",
+      "size": [
+        1.04,
+        0.04,
+        0.04
+      ],
+      "position": [
+        0,
+        0.36,
+        -0.24
+      ],
+      "material": "metal"
+    },
+    {
+      "id": "cable-tray",
+      "geometry": "box",
+      "size": [
+        0.48,
+        0.03,
+        0.18
+      ],
+      "position": [
+        0.15,
+        0.66,
+        -0.16
+      ],
+      "material": "metalLight"
+    },
+    {
+      "id": "cable-tray-bracket-left",
+      "geometry": "box",
+      "size": [
+        0.03,
+        0.05,
+        0.03
+      ],
+      "position": [
+        -0.02,
+        0.68,
+        -0.16
+      ],
+      "material": "metal"
+    },
+    {
+      "id": "cable-tray-bracket-right",
+      "geometry": "box",
+      "size": [
+        0.03,
+        0.05,
+        0.03
+      ],
+      "position": [
+        0.32,
+        0.68,
+        -0.16
+      ],
+      "material": "metal"
+    }
+  ],
+  "variantId": "desk-compact",
+  "furnitureTypeCode": "DESK",
+  "styleTags": [
+    "minimal",
+    "classic"
+  ],
+  "lifestyleTags": [
+    "WORK_STUDY"
+  ],
+  "purchaseUrl": "https://www.ikea.com/kr/ko/p/lagkapten-adils-desk-white-s09416759/"
+}

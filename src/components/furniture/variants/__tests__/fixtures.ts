@@ -34,9 +34,11 @@ export function makeValidFurnitureVariant(): FurnitureVariant {
     units: "meter",
     coordinateSystem: {
       origin: "floor-center",
-      xAxis: "right",
-      yAxis: "up",
-      zAxis: "front",
+      axes: {
+        x: "right",
+        y: "up",
+        z: "front",
+      },
     },
     rotationUnit: "radian",
     dimensions: { width: 1, depth: 0.6, height: 0.75 },

@@ -28,9 +28,11 @@ export interface FurnitureVariantDimensions {
 
 export interface FurnitureCoordinateSystem {
   origin: "floor-center";
-  xAxis: "right";
-  yAxis: "up";
-  zAxis: "front";
+  axes: {
+    x: "right";
+    y: "up";
+    z: "front";
+  };
 }
 
 interface FurniturePartBase {

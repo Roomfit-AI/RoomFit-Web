@@ -1,0 +1,260 @@
+{
+  "schemaVersion": "1.0",
+  "name": "미드센추리 글라스 책상",
+  "furnitureType": "책상",
+  "variant": "미드센추리 글라스형",
+  "units": "meter",
+  "coordinateSystem": {
+    "origin": "floor-center",
+    "axes": {
+      "x": "right",
+      "y": "up",
+      "z": "front"
+    }
+  },
+  "rotationUnit": "radian",
+  "dimensions": {
+    "width": 1.75,
+    "depth": 0.74,
+    "height": 0.812
+  },
+  "materials": [
+    "glass",
+    "woodDark",
+    "brass"
+  ],
+  "parts": [
+    {
+      "id": "glass-top",
+      "geometry": "roundedBox",
+      "size": [
+        1.75,
+        0.018,
+        0.74
+      ],
+      "radius": 0.009,
+      "smoothness": 5,
+      "position": [
+        0,
+        0.803,
+        0
+      ],
+      "material": "glass"
+    },
+    {
+      "id": "left-runner",
+      "geometry": "roundedBox",
+      "size": [
+        0.12,
+        0.08,
+        0.54
+      ],
+      "radius": 0.025,
+      "smoothness": 4,
+      "position": [
+        -0.62,
+        0.04,
+        0
+      ],
+      "material": "woodDark"
+    },
+    {
+      "id": "right-runner",
+      "geometry": "roundedBox",
+      "size": [
+        0.12,
+        0.08,
+        0.54
+      ],
+      "radius": 0.025,
+      "smoothness": 4,
+      "position": [
+        0.62,
+        0.04,
+        0
+      ],
+      "material": "woodDark"
+    },
+    {
+      "id": "left-leg-front",
+      "geometry": "cylinder",
+      "size": [
+        0.035,
+        0.06,
+        0.72
+      ],
+      "position": [
+        -0.62,
+        0.36,
+        0.22
+      ],
+      "material": "woodDark"
+    },
+    {
+      "id": "left-leg-back",
+      "geometry": "cylinder",
+      "size": [
+        0.035,
+        0.06,
+        0.72
+      ],
+      "position": [
+        -0.62,
+        0.36,
+        -0.22
+      ],
+      "material": "woodDark"
+    },
+    {
+      "id": "right-leg-front",
+      "geometry": "cylinder",
+      "size": [
+        0.035,
+        0.06,
+        0.72
+      ],
+      "position": [
+        0.62,
+        0.36,
+        0.22
+      ],
+      "material": "woodDark"
+    },
+    {
+      "id": "right-leg-back",
+      "geometry": "cylinder",
+      "size": [
+        0.035,
+        0.06,
+        0.72
+      ],
+      "position": [
+        0.62,
+        0.36,
+        -0.22
+      ],
+      "material": "woodDark"
+    },
+    {
+      "id": "left-trestle",
+      "geometry": "roundedBox",
+      "size": [
+        0.12,
+        0.08,
+        0.56
+      ],
+      "radius": 0.02,
+      "smoothness": 4,
+      "position": [
+        -0.62,
+        0.72,
+        0
+      ],
+      "material": "woodDark"
+    },
+    {
+      "id": "right-trestle",
+      "geometry": "roundedBox",
+      "size": [
+        0.12,
+        0.08,
+        0.56
+      ],
+      "radius": 0.02,
+      "smoothness": 4,
+      "position": [
+        0.62,
+        0.72,
+        0
+      ],
+      "material": "woodDark"
+    },
+    {
+      "id": "center-stretcher",
+      "geometry": "roundedBox",
+      "size": [
+        1.24,
+        0.08,
+        0.08
+      ],
+      "radius": 0.02,
+      "smoothness": 4,
+      "position": [
+        0,
+        0.7,
+        0
+      ],
+      "material": "woodDark"
+    },
+    {
+      "id": "brass-cap-left-front",
+      "geometry": "cylinder",
+      "size": [
+        0.035,
+        0.035,
+        0.04
+      ],
+      "position": [
+        -0.62,
+        0.777,
+        0.22
+      ],
+      "material": "brass"
+    },
+    {
+      "id": "brass-cap-left-back",
+      "geometry": "cylinder",
+      "size": [
+        0.035,
+        0.035,
+        0.04
+      ],
+      "position": [
+        -0.62,
+        0.777,
+        -0.22
+      ],
+      "material": "brass"
+    },
+    {
+      "id": "brass-cap-right-front",
+      "geometry": "cylinder",
+      "size": [
+        0.035,
+        0.035,
+        0.04
+      ],
+      "position": [
+        0.62,
+        0.777,
+        0.22
+      ],
+      "material": "brass"
+    },
+    {
+      "id": "brass-cap-right-back",
+      "geometry": "cylinder",
+      "size": [
+        0.035,
+        0.035,
+        0.04
+      ],
+      "position": [
+        0.62,
+        0.777,
+        -0.22
+      ],
+      "material": "brass"
+    }
+  ],
+  "variantId": "desk-midcentury-glass",
+  "furnitureTypeCode": "DESK",
+  "styleTags": [
+    "midcentury",
+    "modern"
+  ],
+  "lifestyleTags": [
+    "WORK_STUDY"
+  ],
+  "purchaseUrl": "https://www.oldbonesco.com/products/denali-glass-top-desk"
+}

@@ -37,6 +37,10 @@ describe("createFurniturePartGeometry", () => {
     });
 
     expect(geometry).toBeInstanceOf(RoundedBoxGeometry);
+    expect((geometry as RoundedBoxGeometry).parameters).toMatchObject({
+      segments: 3,
+      radius: 0.02,
+    });
     geometry.dispose();
   });
 
@@ -48,6 +52,11 @@ describe("createFurniturePartGeometry", () => {
     });
 
     expect(geometry).toBeInstanceOf(RoundedBoxGeometry);
+    expect((geometry as RoundedBoxGeometry).parameters).toMatchObject({
+      segments: 4,
+    });
+    const parameters = (geometry as RoundedBoxGeometry).parameters as unknown as { radius: number };
+    expect(parameters.radius).toBeCloseTo(0.014);
     geometry.dispose();
   });
 

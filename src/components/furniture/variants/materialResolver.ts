@@ -3,8 +3,8 @@ import type { MeshStandardMaterialParameters } from "three";
 
 export interface MaterialPreset {
   color: string;
-  roughness?: number;
-  metalness?: number;
+  roughness: number;
+  metalness: number;
   transparent?: boolean;
   opacity?: number;
   emissive?: string;
@@ -12,6 +12,26 @@ export interface MaterialPreset {
 }
 
 export type MaterialPresetCatalog = Record<string, MaterialPreset>;
+
+export const MATERIAL_CATALOG_SCHEMA_VERSION = "1.0" as const;
+
+export interface MaterialCatalogDocument {
+  schemaVersion: typeof MATERIAL_CATALOG_SCHEMA_VERSION;
+  materials: MaterialPresetCatalog;
+}
+
+export function parseMaterialCatalogDocument(input: unknown): MaterialPresetCatalog {
+  if (!isRecord(input)) {
+    throw new Error("Material catalog document must be an object");
+  }
+  if (input.schemaVersion !== MATERIAL_CATALOG_SCHEMA_VERSION) {
+    throw new Error(`Material catalog schemaVersion must be "${MATERIAL_CATALOG_SCHEMA_VERSION}"`);
+  }
+  if (!isRecord(input.materials) || Object.keys(input.materials).length === 0) {
+    throw new Error("Material catalog materials must be a non-empty object");
+  }
+  return parseMaterialPresetCatalog(input.materials);
+}
 
 export function parseMaterialPresetCatalog(input: unknown): MaterialPresetCatalog {
   if (!isRecord(input)) {
@@ -62,8 +82,8 @@ export function createMaterialFromPreset(
 
 function parseMaterialPreset(presetId: string, input: Record<string, unknown>): MaterialPreset {
   const color = readNonBlankString(input.color, `Material preset "${presetId}" color`);
-  const roughness = readOptionalUnitInterval(input.roughness, `Material preset "${presetId}" roughness`);
-  const metalness = readOptionalUnitInterval(input.metalness, `Material preset "${presetId}" metalness`);
+  const roughness = readUnitInterval(input.roughness, `Material preset "${presetId}" roughness`);
+  const metalness = readUnitInterval(input.metalness, `Material preset "${presetId}" metalness`);
   const opacity = readOptionalUnitInterval(input.opacity, `Material preset "${presetId}" opacity`);
   const transparent = readOptionalBoolean(input.transparent, `Material preset "${presetId}" transparent`);
   const emissive = input.emissive === undefined
@@ -96,6 +116,13 @@ function readOptionalUnitInterval(value: unknown, label: string): number | undef
   if (value === undefined) {
     return undefined;
   }
+  if (!isFiniteNumber(value) || value < 0 || value > 1) {
+    throw new Error(`${label} must be a finite number between 0 and 1`);
+  }
+  return value;
+}
+
+function readUnitInterval(value: unknown, label: string): number {
   if (!isFiniteNumber(value) || value < 0 || value > 1) {
     throw new Error(`${label} must be a finite number between 0 and 1`);
   }
