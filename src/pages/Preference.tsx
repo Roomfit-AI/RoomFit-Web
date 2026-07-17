@@ -1,6 +1,15 @@
 import { useEffect, useState } from "react";
 import { FiBookOpen, FiBriefcase, FiCheck, FiCoffee, FiHome } from "react-icons/fi";
 import PageStepHeader from "../components/ui/PageStepHeader";
+import {
+  normalizePreferredColorToneId,
+  PREFERRED_COLOR_TONE_OPTIONS,
+  type PreferredColorToneId,
+} from "../config/preferredColorTone";
+import {
+  hasRoomPreferences,
+  shouldClearInitialPreferences,
+} from "../config/roomPreferences";
 
 const purposes = [
   { id: "rest", title: "휴식", description: "편안하게 쉴 수 있는 목적", icon: FiCoffee },
@@ -9,28 +18,14 @@ const purposes = [
   { id: "storage", title: "수납", description: "수납을 많이 할 수 있는 목적", icon: FiHome },
 ];
 
-// Two-word titles ("A / B") get one color per word, split half-and-half in
-// the swatch below — a single title-word (그레이) keeps a single color
-// instead of forcing an arbitrary second shade that isn't in the label.
-const palettes = [
-  { id: "ivory", title: "화이트 / 아이보리", colors: ["#ffffff", "#f0e6d2"] },
-  { id: "beige", title: "베이지 / 샌드", colors: ["#d9c8ad", "#e3cba0"] },
-  { id: "gray", title: "그레이", colors: ["#b9b9b9"] },
-  { id: "brown", title: "브라운 / 우드", colors: ["#6b4a35", "#b08968"] },
-  { id: "green", title: "그린 / 올리브", colors: ["#3f6b44", "#6b6b3f"] },
-  { id: "blue", title: "블루 / 네이비", colors: ["#3a5a8c", "#152238"] },
-  { id: "pink", title: "핑크 / 코랄", colors: ["#f0b8c8", "#e8735a"] },
-  { id: "black", title: "블랙 / 다크", colors: ["#0a0a0a", "#2b2b2b"] },
-];
 const preferenceVisitedKey = "roomfit:visited:preference";
 
 export default function Preference() {
-  const [selectedPurpose, setSelectedPurpose] = useState(() => {
-    return getInitialPreferenceValue("roomfit:selectedPurpose");
-  });
-  const [selectedPalette, setSelectedPalette] = useState(() => {
-    return getInitialPreferenceValue("roomfit:selectedPalette");
-  });
+  const [initialPreferences] = useState(getInitialPreferenceValues);
+  const [selectedPurpose, setSelectedPurpose] = useState(initialPreferences.purpose);
+  const [selectedPalette, setSelectedPalette] = useState<PreferredColorToneId | "">(
+    initialPreferences.palette,
+  );
 
   useEffect(() => {
     if (selectedPurpose) {
@@ -91,7 +86,7 @@ export default function Preference() {
         <section>
           <h2 className="mb-5 text-base font-extrabold">선호하는 색감 톤</h2>
           <div className="grid gap-5 sm:grid-cols-4 lg:grid-cols-8">
-            {palettes.map((palette) => {
+            {PREFERRED_COLOR_TONE_OPTIONS.map((palette) => {
               const selected = selectedPalette === palette.id;
 
               return (
@@ -114,7 +109,7 @@ export default function Preference() {
                   >
                     {selected && <FiCheck className="h-5 w-5 text-white mix-blend-difference" />}
                   </span>
-                  <span className="text-xs font-bold text-[#333333]">{palette.title}</span>
+                  <span className="text-xs font-bold text-[#333333]">{palette.label}</span>
                 </button>
               );
             })}
@@ -125,13 +120,27 @@ export default function Preference() {
   );
 }
 
-function getInitialPreferenceValue(key: string) {
-  if (!sessionStorage.getItem(preferenceVisitedKey)) {
+function getInitialPreferenceValues(): {
+  purpose: string;
+  palette: PreferredColorToneId | "";
+} {
+  const hasVisitedPreferencePage = Boolean(sessionStorage.getItem(preferenceVisitedKey));
+  const selectedRoomId = localStorage.getItem("roomfit:selectedRoomId");
+  const hasRestoredRoomPreferences = selectedRoomId
+    ? hasRoomPreferences(selectedRoomId)
+    : false;
+
+  if (shouldClearInitialPreferences(hasVisitedPreferencePage, hasRestoredRoomPreferences)) {
     localStorage.removeItem("roomfit:selectedPurpose");
     localStorage.removeItem("roomfit:selectedPalette");
-    sessionStorage.setItem(preferenceVisitedKey, "true");
-    return "";
   }
 
-  return localStorage.getItem(key) ?? "";
+  if (!hasVisitedPreferencePage) {
+    sessionStorage.setItem(preferenceVisitedKey, "true");
+  }
+
+  return {
+    purpose: localStorage.getItem("roomfit:selectedPurpose") ?? "",
+    palette: normalizePreferredColorToneId(localStorage.getItem("roomfit:selectedPalette")) ?? "",
+  };
 }
