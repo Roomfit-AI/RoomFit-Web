@@ -1,9 +1,11 @@
 import type { Furniture, RoomLayout } from "../types";
 
-export function isHobbyCoralRecommendationSelected() {
+type StorageReader = Pick<Storage, "getItem">;
+
+export function isHobbyCoralRecommendationSelected(storage: StorageReader = localStorage) {
   return (
-    localStorage.getItem("roomfit:selectedPurpose") === "hobby" &&
-    localStorage.getItem("roomfit:selectedPalette") === "pink"
+    storage.getItem("roomfit:selectedPurpose") === "hobby" &&
+    storage.getItem("roomfit:selectedPalette") === "pink"
   );
 }
 
