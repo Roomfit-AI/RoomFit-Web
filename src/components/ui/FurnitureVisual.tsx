@@ -1,4 +1,4 @@
-import { furnitureVisuals, type FurnitureVisualType } from "./FurnitureVisuals";
+import { furnitureVisuals, type FurnitureVisualType } from "./furnitureVisualRegistry";
 
 // Shared between AddFurniture.tsx's catalog grid and LayoutConfirm.tsx's
 // shopping-list thumbnails. Each product owns a distinct SVG illustration in
