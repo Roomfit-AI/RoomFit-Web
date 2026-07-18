@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { FiRotateCcw, FiTrash2 } from "react-icons/fi";
 
 import { applyLayoutFeedback, createDefaultAgentContext, recommendLayout, type InterpretedIntent, type LayoutValidationResult, type ScoreSummary } from "../api/layouts";
@@ -7,6 +7,7 @@ import {
   normalizeBackendRoomId,
 } from "../api/agentContextRequest";
 import { applyBackendFurnitureToLayout } from "../api/rooms";
+import { ensureCustomRoomBackendRoom } from "../api/customRoomBackend";
 import RoomViewer from "../components/room/RoomViewer";
 import { getLiveMirrorForSelectedRoom } from "../config/confirmedLayouts";
 import { applyLocalFeedback } from "../config/localFeedback";
@@ -255,6 +256,8 @@ export default function EditorPlaceholder() {
   const [scoreSummary, setScoreSummary] = useState<ScoreSummary | null>(null);
   const [validationResult, setValidationResult] = useState<LayoutValidationResult | null>(null);
   const [interpretedIntent, setInterpretedIntent] = useState<InterpretedIntent | null>(null);
+  const recommendationInFlightRef = useRef(false);
+  const customRoomCreationRef = useRef<Promise<number> | null>(null);
 
   useEffect(() => {
     if (!roomLayout) {
@@ -337,6 +340,11 @@ export default function EditorPlaceholder() {
       return;
     }
 
+    if (recommendationInFlightRef.current) {
+      return;
+    }
+    recommendationInFlightRef.current = true;
+
     const recommendationColorTone = readPreferredColorTone() ?? preferredColorTone;
 
     if (isHobbyCoralRecommendationSelected()) {
@@ -354,14 +362,17 @@ export default function EditorPlaceholder() {
       setScoreSummary(scoreSummary);
       setValidationResult(validationResult);
       setIsRecommending(false);
+      recommendationInFlightRef.current = false;
       return;
     }
 
     // The two exact scripted demo moods (see config/scenarios.ts) take over
     // here instead of the real backend call. Every other supported
     // purpose/style/palette combination continues through the backend.
-    const roomId = loadBackendRoomId();
-    const scenario = isCollectorRoom(roomLayout) ? undefined : currentScenario();
+    let roomId = loadBackendRoomId();
+    const scenario = roomLayout.source === "CUSTOM" || isCollectorRoom(roomLayout)
+      ? undefined
+      : currentScenario();
 
     if (scenario) {
       setIsRecommending(true);
@@ -390,11 +401,32 @@ export default function EditorPlaceholder() {
       setScoreSummary(scoreSummary);
       setValidationResult(validationResult);
       setIsRecommending(false);
+      recommendationInFlightRef.current = false;
       return;
+    }
+
+    if (roomLayout.source === "CUSTOM") {
+      setIsRecommending(true);
+      setErrorMessage("");
+      setInterpretedIntent(null);
+
+      try {
+        const customRoomSnapshot = loadSelectedRoomLayout() ?? roomLayout;
+        customRoomCreationRef.current ??= ensureCustomRoomBackendRoom({ room: customRoomSnapshot });
+        roomId = await customRoomCreationRef.current;
+      } catch {
+        setErrorMessage("커스텀 방을 백엔드에 저장하지 못했습니다. 잠시 후 다시 시도해 주세요.");
+        setIsRecommending(false);
+        recommendationInFlightRef.current = false;
+        return;
+      } finally {
+        customRoomCreationRef.current = null;
+      }
     }
 
     if (roomId === null) {
       setErrorMessage("유효한 백엔드 방을 다시 선택해 주세요.");
+      recommendationInFlightRef.current = false;
       return;
     }
 
@@ -430,6 +462,7 @@ export default function EditorPlaceholder() {
       );
     } finally {
       setIsRecommending(false);
+      recommendationInFlightRef.current = false;
     }
   };
 
