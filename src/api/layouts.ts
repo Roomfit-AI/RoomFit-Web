@@ -67,6 +67,49 @@ export interface InterpretedIntent {
   fallbackUsed?: boolean;
 }
 
+export type FeedbackStatus =
+  | "SUCCESS"
+  | "PARTIAL_SUCCESS"
+  | "FAILED"
+  | "NEEDS_CLARIFICATION";
+
+export type FeedbackOperationStatus =
+  | "APPLIED"
+  | "FAILED"
+  | "SKIPPED_DEPENDENCY"
+  | "NEEDS_CLARIFICATION";
+
+export interface FeedbackOperationResult {
+  operationId: string;
+  operationType: string;
+  status: FeedbackOperationStatus;
+  reasonCode?: string | null;
+  message: string;
+  targetFurnitureId?: string | null;
+  resultFurnitureId?: string | null;
+  productId?: string | null;
+  variantId?: string | null;
+}
+
+export interface FeedbackClarificationCandidate {
+  furnitureId: string;
+  type?: string | null;
+  label?: string | null;
+}
+
+export interface FeedbackClarification {
+  reasonCode: string;
+  question: string;
+  operationId?: string | null;
+  requiredField?: string | null;
+  candidates?: FeedbackClarificationCandidate[];
+}
+
+export interface FeedbackExecutionSummary {
+  summary?: string | null;
+  noChangeReason?: string | null;
+}
+
 export interface LayoutResponse {
   layoutId: number;
   roomId: number;
@@ -78,6 +121,16 @@ export interface LayoutResponse {
   scoreSummary: ScoreSummary;
   validationResult: LayoutValidationResult;
   interpretedIntent?: InterpretedIntent;
+}
+
+export interface FeedbackResponse extends Omit<LayoutResponse, "layoutId"> {
+  layoutId?: number | null;
+  message?: string;
+  feedbackStatus?: FeedbackStatus;
+  operationResults?: FeedbackOperationResult[];
+  clarification?: FeedbackClarification | null;
+  clarifications?: FeedbackClarification[];
+  feedbackResult?: FeedbackExecutionSummary | null;
 }
 
 export interface ConfirmResponse {
@@ -178,13 +231,41 @@ export async function confirmLayout(layoutId: number): Promise<ConfirmResponse> 
   return response.data.data;
 }
 
-export async function applyLayoutFeedback(layoutId: number, feedback: string): Promise<LayoutResponse> {
-  const response = await apiClient.post<ApiResponse<LayoutResponse>>("/api/layouts/feedback", {
+export async function applyLayoutFeedback(layoutId: number, feedback: string): Promise<FeedbackResponse> {
+  const response = await apiClient.post<ApiResponse<unknown>>("/api/layouts/feedback", {
     layoutId,
     feedback,
   });
 
-  return response.data.data;
+  return normalizeFeedbackResponse(response.data.data);
+}
+
+export function normalizeFeedbackResponse(value: unknown): FeedbackResponse {
+  if (!isRecord(value)
+    || !isPositiveInteger(value.roomId)
+    || !Array.isArray(value.recommendedFurniture)) {
+    throw new Error("Invalid layout feedback response");
+  }
+
+  const response = value as unknown as FeedbackResponse;
+  const feedbackStatus = parseFeedbackStatus(value.feedbackStatus);
+  const operationResults = parseOperationResults(value.operationResults);
+  const clarification = parseClarification(value.clarification);
+  const clarifications = parseClarifications(value.clarifications);
+  const message = readOptionalString(value.message);
+  const feedbackResult = parseFeedbackExecutionSummary(value.feedbackResult);
+  const layoutId = isPositiveInteger(value.layoutId) ? value.layoutId : null;
+
+  return {
+    ...response,
+    layoutId,
+    message,
+    feedbackStatus,
+    operationResults,
+    clarification,
+    clarifications,
+    feedbackResult,
+  };
 }
 
 export function toFurniturePositionRequest(room: RoomLayout, item: Furniture) {
@@ -211,4 +292,126 @@ function toFurnitureStatusApiValue(status: Furniture["status"]): string {
 
 function normalizeDegrees(value: number): number {
   return ((value % 360) + 360) % 360;
+}
+
+function parseFeedbackStatus(value: unknown): FeedbackStatus | undefined {
+  return value === "SUCCESS"
+    || value === "PARTIAL_SUCCESS"
+    || value === "FAILED"
+    || value === "NEEDS_CLARIFICATION"
+    ? value
+    : undefined;
+}
+
+function parseFeedbackOperationStatus(value: unknown): FeedbackOperationStatus | undefined {
+  return value === "APPLIED"
+    || value === "FAILED"
+    || value === "SKIPPED_DEPENDENCY"
+    || value === "NEEDS_CLARIFICATION"
+    ? value
+    : undefined;
+}
+
+function parseOperationResults(value: unknown): FeedbackOperationResult[] | undefined {
+  if (!Array.isArray(value)) return undefined;
+
+  return value.flatMap((item) => {
+    if (!isRecord(item)) return [];
+    const operationId = readRequiredString(item.operationId);
+    const operationType = readRequiredString(item.operationType);
+    const status = parseFeedbackOperationStatus(item.status);
+    const message = typeof item.message === "string" ? item.message : undefined;
+
+    if (!operationId || !operationType || !status || message === undefined) return [];
+
+    return [{
+      operationId,
+      operationType,
+      status,
+      message,
+      ...readNullableStringProperty(item, "reasonCode"),
+      ...readNullableStringProperty(item, "targetFurnitureId"),
+      ...readNullableStringProperty(item, "resultFurnitureId"),
+      ...readNullableStringProperty(item, "productId"),
+      ...readNullableStringProperty(item, "variantId"),
+    }];
+  });
+}
+
+function parseClarification(value: unknown): FeedbackClarification | null | undefined {
+  if (value === null) return null;
+  if (!isRecord(value)) return undefined;
+
+  const reasonCode = readRequiredString(value.reasonCode);
+  const question = readRequiredString(value.question);
+  if (!reasonCode || !question) return undefined;
+
+  const candidates = Array.isArray(value.candidates)
+    ? value.candidates.flatMap((candidate) => {
+      if (!isRecord(candidate)) return [];
+      const furnitureId = readRequiredString(candidate.furnitureId);
+      if (!furnitureId) return [];
+      return [{
+        furnitureId,
+        ...readNullableStringProperty(candidate, "type"),
+        ...readNullableStringProperty(candidate, "label"),
+      }];
+    })
+    : undefined;
+
+  return {
+    reasonCode,
+    question,
+    ...readNullableStringProperty(value, "operationId"),
+    ...readNullableStringProperty(value, "requiredField"),
+    ...(candidates !== undefined ? { candidates } : {}),
+  };
+}
+
+function parseClarifications(value: unknown): FeedbackClarification[] | undefined {
+  if (!Array.isArray(value)) return undefined;
+  return value.flatMap((item) => {
+    const clarification = parseClarification(item);
+    return clarification && clarification !== null ? [clarification] : [];
+  });
+}
+
+function parseFeedbackExecutionSummary(value: unknown): FeedbackExecutionSummary | null | undefined {
+  if (value === null) return null;
+  if (!isRecord(value)) return undefined;
+
+  const summary = readOptionalNullableString(value.summary);
+  const noChangeReason = readOptionalNullableString(value.noChangeReason);
+  return {
+    ...(summary !== undefined ? { summary } : {}),
+    ...(noChangeReason !== undefined ? { noChangeReason } : {}),
+  };
+}
+
+function readNullableStringProperty<K extends string>(
+  value: Record<string, unknown>,
+  key: K,
+): Partial<Record<K, string | null>> {
+  const property = readOptionalNullableString(value[key]);
+  return property === undefined ? {} : { [key]: property } as Record<K, string | null>;
+}
+
+function readRequiredString(value: unknown): string | undefined {
+  return typeof value === "string" && value.trim() ? value : undefined;
+}
+
+function readOptionalString(value: unknown): string | undefined {
+  return typeof value === "string" ? value : undefined;
+}
+
+function readOptionalNullableString(value: unknown): string | null | undefined {
+  return value === null || typeof value === "string" ? value : undefined;
+}
+
+function isPositiveInteger(value: unknown): value is number {
+  return typeof value === "number" && Number.isInteger(value) && value > 0;
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
 }

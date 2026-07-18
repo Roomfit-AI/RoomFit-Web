@@ -23,6 +23,7 @@ import {
 } from "../config/roomPreferences";
 import { captureCanvasThumbnail, saveRoomThumbnail } from "../config/roomThumbnails";
 import { currentScenario } from "../config/scenarios";
+import { completeRoomSetupSession } from "../config/roomSetupSession";
 import { confirmActiveLayout, refreshActiveDraftNavigationState } from "../config/layoutEditingWorkflow";
 import {
   isSessionForRoom,
@@ -148,6 +149,7 @@ export default function LayoutConfirm() {
         saveRoomThumbnail(layoutToConfirm.id, dataUrl);
       }
 
+      completeRoomSetupSession();
       setJustConfirmed(true);
     } catch {
       setConfirmError("배치를 확정하지 못했습니다. 저장 상태를 확인한 뒤 다시 시도해 주세요.");

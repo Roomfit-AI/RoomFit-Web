@@ -102,7 +102,15 @@ export interface RoomUploadApiRequest {
     height: number;
     thickness: number;
   }>;
-  openings: [];
+  openings: Array<{
+    id: string;
+    type: "door" | "window";
+    wall: "north" | "east" | "south" | "west";
+    offset: number;
+    width: number;
+    height: number;
+    sillHeight: number | null;
+  }>;
   furniture: Array<{
     id: string;
     type: string;
@@ -204,9 +212,10 @@ export function toRoomUploadRequest(room: RoomLayout): RoomUploadApiRequest {
       height: wall.height ?? room.height ?? 2.4,
       thickness: wall.thickness ?? 0.12,
     })),
-    // Custom rooms currently have no opening editor. Do not invent door or
-    // window coordinates merely to satisfy the upload DTO.
-    openings: [],
+    openings: [
+      ...room.doors.map((opening) => toRoomUploadOpening(room, opening, "door")),
+      ...room.windows.map((opening) => toRoomUploadOpening(room, opening, "window")),
+    ],
     furniture: room.furniture.map((item) => ({
       id: item.id,
       type: item.category,
@@ -222,6 +231,46 @@ export function toRoomUploadRequest(room: RoomLayout): RoomUploadApiRequest {
       status: item.status === "recommended" ? "RECOMMENDED" : "EXISTING",
     })),
   };
+}
+
+function toRoomUploadOpening(
+  room: RoomLayout,
+  opening: Opening,
+  type: "door" | "window",
+): RoomUploadApiRequest["openings"][number] {
+  const wall = resolveOpeningWall(room, opening);
+  const rawOffset = wall === "north" || wall === "south"
+    ? opening.position.x + room.width / 2
+    : opening.position.z + room.depth / 2;
+  const wallLength = wall === "north" || wall === "south" ? room.width : room.depth;
+
+  return {
+    id: opening.id,
+    type,
+    wall,
+    offset: Math.min(Math.max(rawOffset, opening.dimensions.width / 2), wallLength - opening.dimensions.width / 2),
+    width: opening.dimensions.width,
+    height: opening.dimensions.height,
+    sillHeight: type === "window" ? 0.9 : null,
+  };
+}
+
+function resolveOpeningWall(
+  room: RoomLayout,
+  opening: Opening,
+): "north" | "east" | "south" | "west" {
+  if (opening.wallId === "north" || opening.wallId === "east"
+    || opening.wallId === "south" || opening.wallId === "west") {
+    return opening.wallId;
+  }
+
+  const distances = [
+    ["north", Math.abs(opening.position.z + room.depth / 2)],
+    ["east", Math.abs(opening.position.x - room.width / 2)],
+    ["south", Math.abs(opening.position.z - room.depth / 2)],
+    ["west", Math.abs(opening.position.x + room.width / 2)],
+  ] as const;
+  return distances.reduce((nearest, candidate) => candidate[1] < nearest[1] ? candidate : nearest)[0];
 }
 
 function normalizeDegrees(value: number): number {

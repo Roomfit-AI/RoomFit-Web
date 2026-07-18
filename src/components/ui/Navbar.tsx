@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import Button from "./Button";
 import {
@@ -7,6 +7,10 @@ import {
   prepareManagedFurnitureDraft,
   refreshActiveDraftNavigationState,
 } from "../../config/layoutEditingWorkflow";
+import {
+  beginNewRoomSetup,
+  prepareSelectedRoomForManagement,
+} from "../../config/roomSetupSession";
 
 interface NavigationStep {
   path: string;
@@ -15,11 +19,11 @@ interface NavigationStep {
 }
 
 const navigationSteps: NavigationStep[] = [
-  { path: "/", label: "홈" },
+  { path: "/", label: "홈", beforeNext: beginNewRoomSetup },
   {
     path: "/rooms",
     label: "샘플 선택",
-    beforeNext: ensureSelectedRoom,
+    beforeNext: prepareSelectedRoomForManagement,
   },
   { path: "/manage-furniture", label: "가구 관리", beforeNext: prepareManagedFurnitureDraft },
   { path: "/preference", label: "취향 선택", beforeNext: refreshActiveDraftNavigationState },
@@ -40,6 +44,7 @@ export default function Navbar() {
   const nextStep = navigationSteps[safeStepIndex + 1];
   const [isNavigating, setIsNavigating] = useState(false);
   const [navigationError, setNavigationError] = useState("");
+  const navigationInFlightRef = useRef(false);
 
   useEffect(() => {
     if (!["/preference", "/reference-image", "/add-furniture"].includes(location.pathname)) {
@@ -71,7 +76,8 @@ export default function Navbar() {
   };
 
   const goNext = async () => {
-    if (isNavigating) return;
+    if (navigationInFlightRef.current) return;
+    navigationInFlightRef.current = true;
     const currentStep = navigationSteps[safeStepIndex];
     setIsNavigating(true);
     setNavigationError("");
@@ -83,9 +89,14 @@ export default function Navbar() {
         navigate(nextStep.path, { state: nextState ?? location.state });
       }
     } catch {
-      setNavigationError("배치를 저장하지 못했습니다. 현재 화면에서 다시 시도해 주세요.");
+      setNavigationError(
+        location.pathname === "/rooms"
+          ? "새 방을 만들지 못했습니다. 현재 선택을 유지한 채 다시 시도해 주세요."
+          : "배치를 저장하지 못했습니다. 현재 화면에서 다시 시도해 주세요.",
+      );
     } finally {
       setIsNavigating(false);
+      navigationInFlightRef.current = false;
     }
   };
 
@@ -128,10 +139,4 @@ export default function Navbar() {
       )}
     </nav>
   );
-}
-
-function ensureSelectedRoom() {
-  if (localStorage.getItem("roomfit:selectedRoomId")) {
-    return;
-  }
 }

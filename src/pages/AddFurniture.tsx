@@ -3,6 +3,7 @@ import { FiCheck, FiPlus } from "react-icons/fi";
 
 import FurnitureVisual from "../components/ui/FurnitureVisual";
 import type { FurnitureVisualType } from "../components/ui/furnitureVisualRegistry";
+import { hasRoomPreferences } from "../config/roomPreferences";
 
 const categories = [
   "전체",
@@ -67,11 +68,12 @@ const furnitureItems: FurnitureItem[] = [
 export default function AddFurniture() {
   const [activeCategory, setActiveCategory] = useState("전체");
   const [selectedIds, setSelectedIds] = useState<string[]>(() => {
-    if (!sessionStorage.getItem(addFurnitureVisitedKey)) {
+    const selectedRoomId = localStorage.getItem("roomfit:selectedRoomId");
+    const hasRestoredPreferences = selectedRoomId ? hasRoomPreferences(selectedRoomId) : false;
+    if (!sessionStorage.getItem(addFurnitureVisitedKey) && !hasRestoredPreferences) {
       localStorage.removeItem("roomfit:selectedAdditionalFurnitureIds");
-      sessionStorage.setItem(addFurnitureVisitedKey, "true");
-      return [];
     }
+    sessionStorage.setItem(addFurnitureVisitedKey, "true");
 
     const raw = localStorage.getItem("roomfit:selectedAdditionalFurnitureIds");
 

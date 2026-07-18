@@ -169,6 +169,49 @@ describe("toRoomUploadRequest", () => {
     });
   });
 
+  it("preserves sample door and window openings when cloning a room", () => {
+    const room: RoomLayout = {
+      ...baseLayout,
+      doors: [{
+        id: "door-1",
+        label: "현관",
+        position: { x: -1, z: 1.5 },
+        dimensions: { width: 0.8, depth: 0.18, height: 2.1 },
+        rotationY: 0,
+        wallId: "south",
+      }],
+      windows: [{
+        id: "window-1",
+        label: "창문",
+        position: { x: 2, z: 0.4 },
+        dimensions: { width: 1.2, depth: 0.18, height: 1.2 },
+        rotationY: 0,
+        wallId: "east",
+      }],
+    };
+
+    expect(toRoomUploadRequest(room).openings).toEqual([
+      {
+        id: "door-1",
+        type: "door",
+        wall: "south",
+        offset: 1,
+        width: 0.8,
+        height: 2.1,
+        sillHeight: null,
+      },
+      {
+        id: "window-1",
+        type: "window",
+        wall: "east",
+        offset: 1.9,
+        width: 1.2,
+        height: 1.2,
+        sillHeight: 0.9,
+      },
+    ]);
+  });
+
   it("posts the upload contract and returns the Backend roomId", async () => {
     const post = vi.spyOn(apiClient, "post").mockResolvedValue({
       data: { success: true, data: { roomId: 57 }, error: null },

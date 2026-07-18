@@ -1,14 +1,29 @@
 import { useEffect, useRef, useState } from "react";
+import { isAxiosError } from "axios";
 import { FiRotateCcw, FiTrash2 } from "react-icons/fi";
 import { useLocation } from "react-router-dom";
 
-import { applyLayoutFeedback, createDefaultAgentContext, getLayout, recommendLayout, type InterpretedIntent, type LayoutValidationResult, type ScoreSummary } from "../api/layouts";
+import {
+  applyLayoutFeedback,
+  createDefaultAgentContext,
+  getLayout,
+  recommendLayout,
+  type InterpretedIntent,
+  type LayoutValidationResult,
+  type ScoreSummary,
+} from "../api/layouts";
 import {
   AgentContextRequestValidationError,
   normalizeBackendRoomId,
 } from "../api/agentContextRequest";
 import { applyBackendFurnitureToLayout } from "../api/rooms";
 import { ensureCustomRoomBackendRoom } from "../api/customRoomBackend";
+import FeedbackAgentResultPanel from "../components/editor/FeedbackAgentResultPanel";
+import {
+  resolveFeedbackRoomLayout,
+  resolveNextFeedbackLayoutId,
+  type FeedbackPresentation,
+} from "../components/editor/feedbackPresentation";
 import RoomViewer from "../components/room/RoomViewer";
 import { moveFurnitureInsideRoom, rotateFurnitureInsideRoom } from "../components/room/furnitureBoundary";
 import { getLiveMirrorForSelectedRoom } from "../config/confirmedLayouts";
@@ -286,7 +301,9 @@ export default function EditorPlaceholder() {
   const [scoreSummary, setScoreSummary] = useState<ScoreSummary | null>(navigationState?.layoutResponse?.scoreSummary ?? null);
   const [validationResult, setValidationResult] = useState<LayoutValidationResult | null>(navigationState?.layoutResponse?.validationResult ?? null);
   const [interpretedIntent, setInterpretedIntent] = useState<InterpretedIntent | null>(null);
+  const [feedbackPresentation, setFeedbackPresentation] = useState<FeedbackPresentation | null>(null);
   const recommendationInFlightRef = useRef(false);
+  const feedbackInFlightRef = useRef(false);
   const customRoomCreationRef = useRef<Promise<number> | null>(null);
 
   useEffect(() => {
@@ -537,45 +554,65 @@ export default function EditorPlaceholder() {
       return;
     }
 
+    if (feedbackInFlightRef.current) {
+      return;
+    }
+    feedbackInFlightRef.current = true;
+
     setIsApplyingFeedback(true);
     setErrorMessage("");
+    setFeedbackPresentation(null);
+    setInterpretedIntent(null);
 
     if (layoutId === LOCAL_SCENARIO_LAYOUT_ID) {
-      // Same fixed 5s pause as the recommend flow above, so "피드백 반영 중..."
-      // reads the same way instead of an instant swap.
-      await new Promise((resolve) => setTimeout(resolve, 5000));
-      const result = applyLocalFeedback(roomLayout, feedback, currentScenario()?.id);
+      try {
+        // Same fixed 5s pause as the recommend flow above, so "피드백 반영 중..."
+        // reads the same way instead of an instant swap.
+        await new Promise((resolve) => setTimeout(resolve, 5000));
+        const result = applyLocalFeedback(roomLayout, feedback, currentScenario()?.id);
 
-      if ("error" in result) {
-        setErrorMessage(result.error);
-      } else {
-        const { scoreSummary, validationResult } = buildScenarioValidation();
+        if ("error" in result) {
+          setErrorMessage(result.error);
+        } else {
+          const { scoreSummary, validationResult } = buildScenarioValidation();
 
-        setRoomLayout(result.room);
-        setInterpretedIntent(result.intent);
-        setScoreSummary(scoreSummary);
-        setValidationResult(validationResult);
+          setRoomLayout(result.room);
+          setInterpretedIntent(result.intent);
+          setScoreSummary(scoreSummary);
+          setValidationResult(validationResult);
+        }
+      } catch (error) {
+        console.error(error);
+        setErrorMessage("피드백 요청을 처리하지 못했습니다. 잠시 후 다시 시도해 주세요.");
+      } finally {
+        setIsApplyingFeedback(false);
+        feedbackInFlightRef.current = false;
       }
-
-      setIsApplyingFeedback(false);
       return;
     }
 
     try {
       const result = await applyLayoutFeedback(layoutId, feedback.trim());
+      const nextFeedback = resolveFeedbackRoomLayout(roomLayout, result);
 
-      const recommendedLayout = applyBackendFurnitureToLayout(roomLayout, result.recommendedFurniture);
-      setRoomLayout(recommendedLayout);
-      setLayoutId(result.layoutId);
-      saveLayoutResponseSession(roomLayout.id, result);
+      if (nextFeedback.roomLayout !== roomLayout) {
+        setRoomLayout(nextFeedback.roomLayout);
+      }
+      const nextLayoutId = resolveNextFeedbackLayoutId(layoutId, result.layoutId);
+      if (nextLayoutId !== null) {
+        setLayoutId(nextLayoutId);
+        saveLayoutResponseSession(roomLayout.id, { ...result, layoutId: nextLayoutId });
+      }
       setScoreSummary(result.scoreSummary);
       setValidationResult(result.validationResult);
       setInterpretedIntent(result.interpretedIntent ?? null);
+      setFeedbackPresentation(nextFeedback.presentation);
     } catch (error) {
       console.error(error);
-      setErrorMessage("피드백 반영에 실패했습니다. 지원하지 않는 피드백이거나 서버 요청이 실패했을 수 있습니다.");
+      setErrorMessage(readFeedbackErrorMessage(error));
     } finally {
       setIsApplyingFeedback(false);
+      feedbackInFlightRef.current = false;
     }
   };
 
@@ -675,6 +712,8 @@ export default function EditorPlaceholder() {
                 <textarea
                   value={feedback}
                   onChange={(event) => setFeedback(event.target.value)}
+                  disabled={isApplyingFeedback}
+                  aria-busy={isApplyingFeedback}
                   className="mt-4 min-h-28 w-full resize-none rounded-lg border border-[#dddddd] bg-[#fbfbfb] p-4 text-sm font-semibold outline-none focus:border-[#111111]"
                   placeholder="(예) 책상을 조금 더 넓게 쓰고 싶어"
                 />
@@ -690,6 +729,10 @@ export default function EditorPlaceholder() {
               </>
             )}
           </section>
+
+          {feedbackPresentation?.showPanel && (
+            <FeedbackAgentResultPanel presentation={feedbackPresentation} />
+          )}
 
           {interpretedIntent && (
             <section className="rounded-xl border border-[#dfe8ff] bg-[#f7f9ff] p-5">
@@ -740,7 +783,7 @@ export default function EditorPlaceholder() {
           )}
 
           {errorMessage && (
-            <section className="rounded-xl border border-[#ffd8d8] bg-[#fff5f5] p-5 text-sm font-bold text-[#c0392b]">
+            <section role="alert" className="rounded-xl border border-[#ffd8d8] bg-[#fff5f5] p-5 text-sm font-bold text-[#c0392b]">
               {errorMessage}
             </section>
           )}
@@ -752,6 +795,21 @@ export default function EditorPlaceholder() {
 
 function markUserModified(item: Furniture): Furniture {
   return item.status === "deleted" ? item : { ...item, status: "user_modified" };
+}
+
+function readFeedbackErrorMessage(error: unknown): string {
+  if (isAxiosError(error)) {
+    const payload: unknown = error.response?.data;
+    if (payload && typeof payload === "object" && !Array.isArray(payload)) {
+      const apiError = (payload as Record<string, unknown>).error;
+      if (apiError && typeof apiError === "object" && !Array.isArray(apiError)) {
+        const message = (apiError as Record<string, unknown>).message;
+        if (typeof message === "string" && message.trim()) return message;
+      }
+    }
+  }
+
+  return "피드백 요청을 처리하지 못했습니다. 잠시 후 다시 시도해 주세요.";
 }
 
 function InfoItem({ label, value }: { label: string; value: string }) {

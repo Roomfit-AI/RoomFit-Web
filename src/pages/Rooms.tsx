@@ -19,7 +19,14 @@ import {
   type CustomRoomFormErrors,
   type CustomRoomFormValues,
 } from "../config/customRoom";
-import { applyPreferencesToStorage, getRoomPreferences } from "../config/roomPreferences";
+import { getRoomPreferences } from "../config/roomPreferences";
+import {
+  beginNewRoomSetup,
+  bindRoomToSetupSession,
+  getSelectedRoomIdForSetup,
+  initializeRoomSetupSession,
+  restoreRoomPreferencesForSetup,
+} from "../config/roomSetupSession";
 import { captureCanvasThumbnail, getRoomThumbnail, saveRoomThumbnail } from "../config/roomThumbnails";
 import type { RoomLayout } from "../types";
 import type { PreferredColorToneId } from "../config/preferredColorTone";
@@ -33,7 +40,6 @@ const selectedRoomStorageKeys = [
   "roomfit:selectedRoomSize",
   "roomfit:selectedRoomLayout",
 ];
-const roomsVisitedKey = "roomfit:visited:rooms";
 const initialCustomRoomForm: CustomRoomFormValues = {
   name: "직접 만든 방",
   width: "",
@@ -72,14 +78,6 @@ export default function Rooms() {
       .then((samples) => {
         if (!ignore) {
           setRoomSamples(samples);
-          const firstRoom = samples[0];
-          if (!selectedRoomIdRef.current && firstRoom) {
-            persistRoomSelection(firstRoom);
-            localStorage.removeItem("roomfit:confirmedRoomLayout");
-            applyPreferencesToStorage(getRoomPreferences(firstRoom.layoutId));
-            selectedRoomIdRef.current = firstRoom.layoutId;
-            setSelectedRoomId(firstRoom.layoutId);
-          }
         }
       })
       .catch(() => {
@@ -170,8 +168,25 @@ export default function Rooms() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [roomSamples, uploadedRooms, thumbnailCaptureTick]);
 
-  const selectRoom = (room: SampleRoomCard | CustomRoomCard) => {
-    persistRoomSelection(room);
+  const selectRoom = (
+    room: SampleRoomCard | CustomRoomCard,
+    { newSetup = false }: { newSetup?: boolean } = {},
+  ) => {
+    if (newSetup) {
+      beginNewRoomSetup();
+    }
+
+    const backendRoomId = room.layout.source === "SAMPLE" || room.layout.source === "CUSTOM"
+      ? null
+      : "roomId" in room
+        ? room.roomId
+        : null;
+    persistRoomSelection(backendRoomId === null ? { ...room, roomId: undefined } : room);
+    bindRoomToSetupSession(
+      room.layoutId,
+      backendRoomId,
+      backendRoomId === null ? "NEW" : "REEDIT",
+    );
 
     // Deliberately always the raw as-uploaded room, never a previously
     // confirmed result — this room can be run through /preference's
@@ -202,22 +217,17 @@ export default function Rooms() {
     // picks (or blanking them out if it's never been through this before)
     // means every fresh room actually starts fresh, while an already-
     // confirmed room reopens showing what it was actually confirmed with.
-    applyPreferencesToStorage(getRoomPreferences(room.layoutId));
+    restoreRoomPreferencesForSetup(
+      room.layoutId,
+      backendRoomId === null ? "NEW" : "REEDIT",
+    );
 
     selectedRoomIdRef.current = room.layoutId;
     setSelectedRoomId(room.layoutId);
   };
 
   const openCustomRoomDialog = () => {
-    setCustomRoomForm(
-      customRoom
-        ? {
-            name: customRoom.title,
-            width: String(customRoom.layout.width),
-            depth: String(customRoom.layout.depth),
-          }
-        : initialCustomRoomForm,
-    );
+    setCustomRoomForm(initialCustomRoomForm);
     setCustomRoomErrors({});
     setIsCustomRoomDialogOpen(true);
   };
@@ -232,7 +242,7 @@ export default function Rooms() {
     }
 
     setCustomRoom(result.room);
-    selectRoom(result.room);
+    selectRoom(result.room, { newSetup: true });
     setCustomRoomErrors({});
     setIsCustomRoomDialogOpen(false);
   };
@@ -451,7 +461,7 @@ export default function Rooms() {
                   <button
                     key={`${room.layoutId}-${room.title}`}
                     type="button"
-                    onClick={() => selectRoom(room)}
+                    onClick={() => selectRoom(room, { newSetup: true })}
                     aria-pressed={selectedRoomId === room.layoutId}
                     className={`group relative overflow-hidden rounded-lg border bg-white p-5 text-left transition-all hover:-translate-y-1 hover:shadow-[0_18px_35px_rgba(0,0,0,0.08)] ${
                       selectedRoomId === room.layoutId
@@ -623,13 +633,8 @@ function formatUploadedAt(createdAt: string) {
 }
 
 function getInitialSelectedRoomId() {
-  if (!sessionStorage.getItem(roomsVisitedKey)) {
-    selectedRoomStorageKeys.forEach((key) => localStorage.removeItem(key));
-    sessionStorage.setItem(roomsVisitedKey, "true");
-    return "";
-  }
-
-  return localStorage.getItem("roomfit:selectedRoomId") ?? "";
+  initializeRoomSetupSession();
+  return getSelectedRoomIdForSetup();
 }
 
 function InfoRow({

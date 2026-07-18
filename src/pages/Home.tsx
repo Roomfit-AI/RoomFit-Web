@@ -3,6 +3,7 @@ import { FiArrowRight, FiCpu, FiEdit3, FiHome } from "react-icons/fi";
 import Button from "../components/ui/Button";
 import { sampleRoom } from "../mock/sampleRoom";
 import RoomViewer from "../components/room/RoomViewer";
+import { beginNewRoomSetup } from "../config/roomSetupSession";
 
 
 const features = [
@@ -59,7 +60,13 @@ export function Home() {
             AI가 최적의 인테리어를 제안해드려요.
           </p>
 
-          <Button onClick={() => (window.location.href = "/rooms")} className="mt-9 px-8 py-3.5 text-lg">
+          <Button
+            onClick={() => {
+              beginNewRoomSetup();
+              window.location.href = "/rooms";
+            }}
+            className="mt-9 px-8 py-3.5 text-lg"
+          >
             시작하기
             <FiArrowRight className="h-5 w-5" />
           </Button>

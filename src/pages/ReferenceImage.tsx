@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { FiCheck } from "react-icons/fi";
 import PageStepHeader from "../components/ui/PageStepHeader";
+import { hasRoomPreferences } from "../config/roomPreferences";
 
 import minimal from "../assets/styles/minimal.png";
 import natural from "../assets/styles/natural.png";
@@ -42,11 +43,12 @@ const referenceImageVisitedKey = "roomfit:visited:reference-image";
 
 export default function ReferenceImage() {
   const [selectedStyle, setSelectedStyle] = useState(() => {
-    if (!sessionStorage.getItem(referenceImageVisitedKey)) {
+    const selectedRoomId = localStorage.getItem("roomfit:selectedRoomId");
+    const hasRestoredPreferences = selectedRoomId ? hasRoomPreferences(selectedRoomId) : false;
+    if (!sessionStorage.getItem(referenceImageVisitedKey) && !hasRestoredPreferences) {
       localStorage.removeItem("roomfit:selectedStyle");
-      sessionStorage.setItem(referenceImageVisitedKey, "true");
-      return "";
     }
+    sessionStorage.setItem(referenceImageVisitedKey, "true");
 
     return localStorage.getItem("roomfit:selectedStyle") ?? "";
   });
