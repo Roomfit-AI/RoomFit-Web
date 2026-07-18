@@ -28,6 +28,7 @@ import {
 } from "./layoutEditingSession";
 import {
   clearRecommendationResult,
+  readRecommendationResult,
   RecommendationFeasibilityError,
   resolveRecommendationDecision,
   saveRecommendationResult,
@@ -243,10 +244,12 @@ async function prepareInitialRecommendation(
 export async function persistActiveEditorLayout(
   storage: WorkflowStorage = localStorage,
   api: LayoutWorkflowApi = defaultApi,
+  browserSession: WorkflowStorage | null = defaultBrowserSession(),
 ): Promise<LayoutNavigationState | null> {
   const room = readSelectedRoomLayout(storage);
   const backendRoomId = parseBackendRoomId(storage.getItem("roomfit:backendRoomId"));
   if (!room || backendRoomId === null) return null;
+  assertRecommendationCanBeConfirmed(room, storage, browserSession);
 
   const session = readActiveLayoutEditingSession(storage);
   if (!isSessionForRoom(session, room.id, backendRoomId) || session.confirmed) return null;
@@ -263,8 +266,9 @@ export async function confirmActiveLayout(
   room: RoomLayout,
   storage: WorkflowStorage = localStorage,
   api: LayoutWorkflowApi = defaultApi,
+  browserSession: WorkflowStorage | null = defaultBrowserSession(),
 ): Promise<RoomLayout> {
-  const persisted = await persistActiveEditorLayout(storage, api);
+  const persisted = await persistActiveEditorLayout(storage, api, browserSession);
   const layoutToConfirm = persisted?.roomLayout ?? room;
   const backendRoomId = parseBackendRoomId(storage.getItem("roomfit:backendRoomId"));
   const session = readActiveLayoutEditingSession(storage);
@@ -278,6 +282,31 @@ export async function confirmActiveLayout(
   }
 
   return layoutToConfirm;
+}
+
+function assertRecommendationCanBeConfirmed(
+  room: RoomLayout,
+  storage: WorkflowStorage,
+  browserSession: WorkflowStorage | null,
+): void {
+  if (!browserSession) return;
+  const backendRoomId = parseBackendRoomId(storage.getItem("roomfit:backendRoomId"));
+  const setup = readRoomSetupSession(browserSession);
+  if (backendRoomId === null
+    || !setup
+    || setup.roomLayoutId !== room.id
+    || setup.backendRoomId !== backendRoomId) {
+    return;
+  }
+
+  const notice = readRecommendationResult({
+    sessionId: setup.sessionId,
+    roomLayoutId: room.id,
+    backendRoomId,
+  }, browserSession);
+  if (notice?.status === "FAILED") {
+    throw new RecommendationFeasibilityError(notice);
+  }
 }
 
 function readSelectedRoomLayout(storage: WorkflowStorage): RoomLayout | null {

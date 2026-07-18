@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { FiCheck, FiPlus } from "react-icons/fi";
 
 import FurnitureVisual from "../components/ui/FurnitureVisual";
-import type { FurnitureVisualType } from "../components/ui/furnitureVisualRegistry";
 import RecommendationResultPanel from "../components/editor/RecommendationResultPanel";
 import {
   readRecommendationResult,
@@ -11,66 +10,11 @@ import {
 } from "../config/recommendationResult";
 import { hasRoomPreferences } from "../config/roomPreferences";
 import { readRoomSetupSession } from "../config/roomSetupSession";
-
-const categories = [
-  "전체",
-  "침대",
-  "소파",
-  "책상/테이블",
-  "의자",
-  "선반",
-  "수납",
-  "전자기기",
-  "조명/소품",
-] as const;
-type FurnitureCategory = (typeof categories)[number];
-
-type FurnitureItem = {
-  id: string;
-  category: Exclude<FurnitureCategory, "전체">;
-  name: string;
-  visual: FurnitureVisualType;
-};
+import {
+  FURNITURE_SELECTION_CATEGORIES,
+  FURNITURE_SELECTION_ITEMS,
+} from "../config/furnitureSelectionCatalog";
 const addFurnitureVisitedKey = "roomfit:visited:add-furniture";
-
-const furnitureItems: FurnitureItem[] = [
-  // 침대
-  { id: "bed", category: "침대", name: "침대", visual: "bed" },
-  { id: "sofa-bed", category: "침대", name: "소파베드", visual: "sofaBed" },
-
-  // 소파
-  { id: "sofa", category: "소파", name: "소파", visual: "sofa" },
-
-  // 책상/테이블
-  { id: "desk", category: "책상/테이블", name: "책상", visual: "desk" },
-  { id: "nightstand", category: "책상/테이블", name: "협탁", visual: "nightstand" },
-  { id: "side-table", category: "책상/테이블", name: "사이드 테이블", visual: "sideTable" },
-  { id: "multi-table", category: "책상/테이블", name: "다용도 테이블", visual: "table" },
-
-  // 의자
-  { id: "desk-chair", category: "의자", name: "책상 의자", visual: "chair" },
-
-  // 선반
-  { id: "bookshelf", category: "선반", name: "책장 / 오픈 선반", visual: "bookshelf" },
-  { id: "hanger", category: "선반", name: "행거", visual: "hanger" },
-  { id: "partition", category: "선반", name: "파티션 · 양면 선반", visual: "partition" },
-
-  // 수납
-  { id: "wardrobe", category: "수납", name: "옷장", visual: "wardrobe" },
-  { id: "drawer", category: "수납", name: "서랍장", visual: "drawer" },
-  { id: "tv-console", category: "수납", name: "TV장 / 미디어 콘솔", visual: "tvStand" },
-
-  // 전자기기
-  { id: "monitor", category: "전자기기", name: "모니터", visual: "monitor" },
-  { id: "tv", category: "전자기기", name: "TV", visual: "tv" },
-
-  // 조명
-  { id: "mood-light", category: "조명/소품", name: "무드등", visual: "lamp" },
-  { id: "rug", category: "조명/소품", name: "러그", visual: "rug" },
-  { id: "plant", category: "조명/소품", name: "화분", visual: "plant" },
-  { id: "mirror", category: "조명/소품", name: "전신거울", visual: "mirror" },
-  { id: "curtain", category: "조명/소품", name: "커튼 · 블라인드", visual: "curtain" },
-];
 
 export default function AddFurniture() {
   const [activeCategory, setActiveCategory] = useState("전체");
@@ -101,8 +45,8 @@ export default function AddFurniture() {
   });
   const visibleItems =
     activeCategory === "전체"
-      ? furnitureItems
-      : furnitureItems.filter((item) => item.category === activeCategory);
+      ? FURNITURE_SELECTION_ITEMS
+      : FURNITURE_SELECTION_ITEMS.filter((item) => item.category === activeCategory);
 
   useEffect(() => {
     localStorage.setItem("roomfit:selectedAdditionalFurnitureIds", JSON.stringify(selectedIds));
@@ -140,7 +84,7 @@ export default function AddFurniture() {
         <div className="grid gap-8 lg:grid-cols-[128px_1fr]">
           <aside>
             <nav className="flex gap-2 overflow-x-auto rounded-xl bg-[#f2f2f2] p-2 lg:flex-col lg:overflow-visible">
-              {categories.map((category) => (
+              {FURNITURE_SELECTION_CATEGORIES.map((category) => (
                 <button
                   key={category}
                   type="button"

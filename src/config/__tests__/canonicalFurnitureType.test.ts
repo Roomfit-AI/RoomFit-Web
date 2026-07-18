@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import catalogDocument from "../../data/furniture/catalog.json";
 import {
   CANONICAL_FURNITURE_TYPES,
   normalizeCanonicalFurnitureType,
@@ -29,6 +30,9 @@ describe("canonical furniture types", () => {
       "tv",
       "wardrobe",
     ]);
+    expect(new Set(CANONICAL_FURNITURE_TYPES)).toEqual(
+      new Set(catalogDocument.products.map((product) => product.furnitureType)),
+    );
   });
 
   it("normalizes generated codes and safe legacy aliases", () => {

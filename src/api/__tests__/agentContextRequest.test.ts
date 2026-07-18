@@ -11,6 +11,7 @@ import {
 } from "../agentContextRequest";
 import { PREFERRED_COLOR_TONE_OPTIONS } from "../../config/preferredColorTone";
 import { isHobbyCoralRecommendationSelected } from "../../mock/hobbyCoralRecommendation";
+import { FURNITURE_TYPE_BY_UI_ID } from "../../config/furnitureSelectionCatalog";
 
 const baseInput = {
   roomId: 1,
@@ -54,7 +55,7 @@ describe("Agent Context request mappings", () => {
       "mood-light",
       "rug",
       "wardrobe",
-    ])).toEqual(["desk", "chair", "lamp", "rug", "storage"]);
+    ])).toEqual(["desk", "desk_chair", "mood_lamp", "rug", "wardrobe"]);
   });
 
   it("deduplicates types and ignores unsupported IDs without making Product IDs", () => {
@@ -65,7 +66,35 @@ describe("Agent Context request mappings", () => {
       "drawer",
       "desk-compact-01",
       "unknown",
-    ])).toEqual(["desk", "storage"]);
+    ])).toEqual(["desk", "bookshelf", "drawer_chest"]);
+  });
+
+  it("maps every UI furniture ID one-to-one to all 21 canonical types", () => {
+    expect(FURNITURE_TYPE_BY_UI_ID).toEqual({
+      bed: "bed",
+      "sofa-bed": "sofa_bed",
+      sofa: "sofa",
+      desk: "desk",
+      nightstand: "nightstand",
+      "side-table": "side_table",
+      "multi-table": "multi_table",
+      "desk-chair": "desk_chair",
+      bookshelf: "bookshelf",
+      hanger: "hanger",
+      partition: "partition_shelf",
+      wardrobe: "wardrobe",
+      drawer: "drawer_chest",
+      "tv-console": "media_console",
+      monitor: "monitor",
+      tv: "tv",
+      "mood-light": "mood_lamp",
+      rug: "rug",
+      plant: "plant",
+      mirror: "full_length_mirror",
+      curtain: "curtain_blind",
+    });
+    expect(resolveRequiredFurnitureTypes(Object.keys(FURNITURE_TYPE_BY_UI_ID)))
+      .toEqual(Object.values(FURNITURE_TYPE_BY_UI_ID));
   });
 
   it("validates and deduplicates numeric style-image IDs", () => {
@@ -92,7 +121,7 @@ describe("Agent Context request mappings", () => {
       roomId: 7,
       lifestyleGoal: "STUDY_FOCUSED",
       designStyle: ["MIDCENTURY"],
-      requiredItems: ["desk", "chair"],
+      requiredItems: ["desk", "desk_chair"],
       optionalItems: [],
       selectedImageIds: [5],
       selectedProductIds: [],
@@ -119,7 +148,7 @@ describe("Agent Context request mappings", () => {
       additionalFurnitureIds: ["desk", "mood-light", "desk-compact-01"],
     });
 
-    expect(request.requiredItems).toEqual(["desk", "lamp"]);
+    expect(request.requiredItems).toEqual(["desk", "mood_lamp"]);
     expect(request.selectedProductIds).toEqual([]);
   });
 
@@ -128,7 +157,7 @@ describe("Agent Context request mappings", () => {
       .toThrowError("가구를 하나 이상 선택");
     expect(() => buildAgentContextRequest({
       ...baseInput,
-      additionalFurnitureIds: ["plant", "desk-compact-01"],
+      additionalFurnitureIds: ["desk-compact-01", "unknown"],
     })).toThrowError("가구를 하나 이상 선택");
   });
 

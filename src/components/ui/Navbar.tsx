@@ -5,6 +5,7 @@ import {
   canAdvanceFromPath,
   ONBOARDING_SELECTION_EVENT,
 } from "../../config/onboardingSelection";
+import { getFurnitureAdditionErrorMessage } from "../../config/furnitureAdditionError";
 
 interface NavigationStep {
   path: string;
@@ -128,7 +129,10 @@ export default function Navbar() {
         navigate(nextStep.path, { state: nextState ?? location.state });
       }
     } catch (error) {
-      if (error instanceof Error && error.name === "AgentContextRequestValidationError") {
+      const furnitureAdditionMessage = getFurnitureAdditionErrorMessage(error);
+      if (furnitureAdditionMessage) {
+        setNavigationError(furnitureAdditionMessage);
+      } else if (error instanceof Error && error.name === "AgentContextRequestValidationError") {
         setNavigationError(error.message);
       } else if (!(error instanceof Error && error.name === "RecommendationFeasibilityError")) {
         setNavigationError(
