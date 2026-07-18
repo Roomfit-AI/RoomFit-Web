@@ -4,8 +4,88 @@ import { apiClient } from "../client";
 import {
   applyLayoutFeedback,
   normalizeFeedbackResponse,
+  normalizeRecommendationResponse,
   type FeedbackResponse,
 } from "../layouts";
+
+describe("layout recommendation response adapter", () => {
+  it("keeps a legacy response as SUCCESS-compatible when additive fields are absent", () => {
+    const result = normalizeRecommendationResponse(createFeedbackResponse());
+
+    expect(result.layoutId).toBe(12);
+    expect(result.recommendationStatus).toBeUndefined();
+    expect(result.unplacedFurniture).toBeUndefined();
+  });
+
+  it("accepts PARTIAL_SUCCESS and preserves valid unplaced items in request order", () => {
+    const result = normalizeRecommendationResponse({
+      ...createFeedbackResponse(),
+      recommendationStatus: "PARTIAL_SUCCESS",
+      requestedFurnitureCount: 3,
+      placedFurnitureCount: 1,
+      unplacedFurniture: [
+        {
+          requestIndex: 1,
+          furnitureType: "sofa",
+          productId: "sofa-01",
+          variantId: null,
+          reasonCode: "COLLISION_DETECTED",
+          message: "소파가 다른 가구와 충돌합니다.",
+        },
+        {
+          requestIndex: 2,
+          furnitureType: "desk",
+          productId: null,
+          variantId: null,
+          reasonCode: "NO_VALID_PLACEMENT",
+          message: "책상을 배치할 위치가 없습니다.",
+        },
+      ],
+      warningCode: "INSUFFICIENT_ROOM_SPACE",
+      message: "일부 가구만 배치했습니다.",
+    });
+
+    expect(result.recommendationStatus).toBe("PARTIAL_SUCCESS");
+    expect(result.unplacedFurniture?.map((item) => item.requestIndex)).toEqual([1, 2]);
+    expect(result.layoutId).toBe(12);
+  });
+
+  it("accepts a normal FAILED result with a null layoutId", () => {
+    const result = normalizeRecommendationResponse({
+      ...createFeedbackResponse(),
+      layoutId: null,
+      recommendationStatus: "FAILED",
+      requestedFurnitureCount: 2,
+      placedFurnitureCount: 0,
+      unplacedFurniture: [],
+    });
+
+    expect(result.layoutId).toBeNull();
+    expect(result.recommendationStatus).toBe("FAILED");
+  });
+
+  it("drops malformed additive fields without rejecting the legacy payload", () => {
+    const result = normalizeRecommendationResponse({
+      ...createFeedbackResponse(),
+      recommendationStatus: "FUTURE_STATUS",
+      requestedFurnitureCount: -1,
+      placedFurnitureCount: 1.5,
+      unplacedFurniture: [
+        { requestIndex: "0", furnitureType: "bed", reasonCode: "NO_VALID_PLACEMENT" },
+      ],
+      warningCode: 42,
+      message: {},
+    });
+
+    expect(result.recommendationStatus).toBeUndefined();
+    expect(result.requestedFurnitureCount).toBeUndefined();
+    expect(result.placedFurnitureCount).toBeUndefined();
+    expect(result.unplacedFurniture).toEqual([]);
+    expect(result.warningCode).toBeUndefined();
+    expect(result.message).toBeUndefined();
+    expect(result.layoutId).toBe(12);
+  });
+});
 
 describe("layout feedback response adapter", () => {
   it("keeps a legacy response valid when Agent result fields are absent", async () => {

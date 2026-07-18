@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { isAxiosError } from "axios";
 import { FiRotateCcw, FiTrash2 } from "react-icons/fi";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 
 import {
   applyLayoutFeedback,
@@ -19,6 +19,7 @@ import {
 import { applyBackendFurnitureToLayout } from "../api/rooms";
 import { ensureCustomRoomBackendRoom } from "../api/customRoomBackend";
 import FeedbackAgentResultPanel from "../components/editor/FeedbackAgentResultPanel";
+import RecommendationResultPanel from "../components/editor/RecommendationResultPanel";
 import {
   resolveFeedbackRoomLayout,
   resolveNextFeedbackLayoutId,
@@ -33,7 +34,7 @@ import {
   resolveRoomLayoutPreferredColorTone,
   withAppliedPreferredColorTone,
 } from "../config/appliedColorTone";
-import { applyScenario, currentScenario } from "../config/scenarios";
+import { applyScenario, currentScenario, isCollectorRoom } from "../config/scenarios";
 import { createHobbyCoralRecommendation, isHobbyCoralRecommendationSelected } from "../mock/hobbyCoralRecommendation";
 import { readPreferredColorTone } from "../config/preferredColorTone";
 import {
@@ -43,6 +44,15 @@ import {
   resolveEditorInitialRoomLayout,
   saveLayoutResponseSession,
 } from "../config/layoutEditingSession";
+import {
+  clearRecommendationResult,
+  readRecommendationResult,
+  resolveRecommendationDecision,
+  saveRecommendationResult,
+  type RecommendationResultNotice,
+  type RecommendationResultOwner,
+} from "../config/recommendationResult";
+import { readRoomSetupSession } from "../config/roomSetupSession";
 import type { Furniture, RoomLayout, Vector2D } from "../types";
 
 const naturalWoodRestRoomExistingFurnitureIds = new Set(["bed-1", "desk-1", "chair-1"]);
@@ -218,10 +228,6 @@ function applyNaturalWoodRestRoom(layout: RoomLayout, sourceFurniture: Furniture
   };
 }
 
-function isCollectorRoom(room: RoomLayout): boolean {
-  return room.name === "미드센추리 컬렉터 룸" || room.name === "샘플룸2";
-}
-
 // Sentinel layoutId for rooms whose "AI 추천 생성" took the scripted-mood
 // shortcut (see handleRecommend below) instead of a real backend call —
 // there's no backend layoutId to hand to applyLayoutFeedback in that case,
@@ -254,8 +260,33 @@ function loadBackendRoomId(): number | null {
   return normalizeBackendRoomId(localStorage.getItem("roomfit:backendRoomId"));
 }
 
+function readCurrentRecommendationOwner(): RecommendationResultOwner | null {
+  const setup = readRoomSetupSession();
+  if (!setup?.roomLayoutId || setup.backendRoomId === null) return null;
+  return {
+    sessionId: setup.sessionId,
+    roomLayoutId: setup.roomLayoutId,
+    backendRoomId: setup.backendRoomId,
+  };
+}
+
+function readCurrentRecommendationNotice(): RecommendationResultNotice | null {
+  return readRecommendationResult(readCurrentRecommendationOwner());
+}
+
+function saveCurrentRecommendationNotice(notice: RecommendationResultNotice): void {
+  const owner = readCurrentRecommendationOwner();
+  if (owner) saveRecommendationResult(owner, notice);
+}
+
+function clearCurrentRecommendationNotice(): void {
+  const owner = readCurrentRecommendationOwner();
+  if (owner) clearRecommendationResult(sessionStorage, owner);
+}
+
 export default function EditorPlaceholder() {
   const location = useLocation();
+  const navigate = useNavigate();
   const routeNavigationState = readLayoutNavigationState(location.state);
   const selectedBaseline = loadSelectedRoomLayout();
   const backendRoomId = loadBackendRoomId();
@@ -302,6 +333,9 @@ export default function EditorPlaceholder() {
   const [validationResult, setValidationResult] = useState<LayoutValidationResult | null>(navigationState?.layoutResponse?.validationResult ?? null);
   const [interpretedIntent, setInterpretedIntent] = useState<InterpretedIntent | null>(null);
   const [feedbackPresentation, setFeedbackPresentation] = useState<FeedbackPresentation | null>(null);
+  const [recommendationNotice, setRecommendationNotice] = useState<RecommendationResultNotice | null>(
+    readCurrentRecommendationNotice,
+  );
   const recommendationInFlightRef = useRef(false);
   const feedbackInFlightRef = useRef(false);
   const customRoomCreationRef = useRef<Promise<number> | null>(null);
@@ -432,6 +466,8 @@ export default function EditorPlaceholder() {
       setLayoutId(LOCAL_SCENARIO_LAYOUT_ID);
       setScoreSummary(scoreSummary);
       setValidationResult(validationResult);
+      clearCurrentRecommendationNotice();
+      setRecommendationNotice(null);
       setIsRecommending(false);
       recommendationInFlightRef.current = false;
       return;
@@ -471,6 +507,8 @@ export default function EditorPlaceholder() {
       setLayoutId(LOCAL_SCENARIO_LAYOUT_ID);
       setScoreSummary(scoreSummary);
       setValidationResult(validationResult);
+      clearCurrentRecommendationNotice();
+      setRecommendationNotice(null);
       setIsRecommending(false);
       recommendationInFlightRef.current = false;
       return;
@@ -519,12 +557,31 @@ export default function EditorPlaceholder() {
         new Promise((resolve) => setTimeout(resolve, 5000)),
       ]);
 
+      const decision = resolveRecommendationDecision(result);
+      if (decision.status === "FAILED") {
+        if (decision.notice) {
+          saveCurrentRecommendationNotice(decision.notice);
+          setRecommendationNotice(decision.notice);
+        }
+        return;
+      }
+      if (result.layoutId === null) {
+        throw new Error("Backend recommendation response has no persisted layoutId.");
+      }
+
       const recommendedLayout = applyBackendFurnitureToLayout(roomLayout, result.recommendedFurniture);
       setRoomLayout(withAppliedPreferredColorTone(recommendedLayout, recommendationColorTone));
       setLayoutId(result.layoutId);
-      saveLayoutResponseSession(roomLayout.id, result);
+      saveLayoutResponseSession(roomLayout.id, { ...result, layoutId: result.layoutId });
       setScoreSummary(result.scoreSummary);
       setValidationResult(result.validationResult);
+      if (decision.notice) {
+        saveCurrentRecommendationNotice(decision.notice);
+        setRecommendationNotice(decision.notice);
+      } else {
+        clearCurrentRecommendationNotice();
+        setRecommendationNotice(null);
+      }
     } catch (error) {
       console.error(error);
       setErrorMessage(
@@ -732,6 +789,13 @@ export default function EditorPlaceholder() {
 
           {feedbackPresentation?.showPanel && (
             <FeedbackAgentResultPanel presentation={feedbackPresentation} />
+          )}
+
+          {recommendationNotice && (
+            <RecommendationResultPanel
+              notice={recommendationNotice}
+              onReturnToFurniture={() => navigate("/add-furniture", { state: location.state })}
+            />
           )}
 
           {interpretedIntent && (

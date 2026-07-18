@@ -1,6 +1,10 @@
 import { describe, expect, it, vi } from "vitest";
 
-import { toFurniturePositionRequest, type LayoutResponse } from "../../api/layouts";
+import {
+  toFurniturePositionRequest,
+  type LayoutRecommendationResponse,
+  type LayoutResponse,
+} from "../../api/layouts";
 import type { BackendFurnitureApiItem } from "../../api/rooms";
 import type { Furniture, RoomLayout } from "../../types";
 import {
@@ -15,6 +19,10 @@ import {
   resolveEditorInitialRoomLayout,
   saveActiveLayoutEditingSession,
 } from "../layoutEditingSession";
+import {
+  readRecommendationResult,
+  RecommendationFeasibilityError,
+} from "../recommendationResult";
 
 class MemoryStorage {
   private readonly values = new Map<string, string>();
@@ -226,6 +234,189 @@ describe("Draft layout editing workflow", () => {
     expect(api.updateLayout).not.toHaveBeenCalled();
   });
 
+  it("creates and persists an initial Layout before navigating to Editor", async () => {
+    const room = createRoom();
+    const storage = selectedRoomStorage(room);
+    const browser = setupBrowserStorage(room.id, 1, "setup-success");
+    const recommendation = recommendationResponse(51, "SUCCESS");
+    const api = fakeApi({ latest: null, recommendation });
+
+    const result = await prepareAdditionalFurnitureForEditor(storage, api, browser);
+
+    expect(api.createDefaultAgentContext).toHaveBeenCalledWith(1);
+    expect(api.recommendLayout).toHaveBeenCalledWith(1, 51);
+    expect(result?.activeLayoutId).toBe(51);
+    expect(result?.roomLayout?.furniture.map((item) => item.id)).toEqual(["bed-1", "desk-1"]);
+    expect(readActiveLayoutEditingSession(storage)).toMatchObject({
+      activeLayoutId: 51,
+      editingMode: "INITIAL_SETUP",
+    });
+  });
+
+  it("keeps the legacy recommendation success flow when additive fields are absent", async () => {
+    const room = createRoom();
+    const storage = selectedRoomStorage(room);
+    const legacy = response(54, false, null) as LayoutRecommendationResponse;
+    const api = fakeApi({ latest: null, recommendation: legacy });
+
+    const result = await prepareAdditionalFurnitureForEditor(storage, api, new MemoryStorage());
+
+    expect(result?.activeLayoutId).toBe(54);
+    expect(readActiveLayoutEditingSession(storage)?.activeLayoutId).toBe(54);
+  });
+
+  it("leaves explicit scripted scenarios on the existing local Editor path", async () => {
+    const room = createRoom();
+    const storage = selectedRoomStorage(room);
+    storage.setItem("roomfit:selectedPurpose", "rest");
+    storage.setItem("roomfit:selectedStyle", "natural");
+    storage.setItem("roomfit:selectedPalette", "brown");
+    const api = fakeApi({ latest: null });
+
+    const result = await prepareAdditionalFurnitureForEditor(storage, api, new MemoryStorage());
+
+    expect(result?.activeLayoutId).toBeNull();
+    expect(api.createDefaultAgentContext).not.toHaveBeenCalled();
+    expect(api.recommendLayout).not.toHaveBeenCalled();
+  });
+
+  it("persists PARTIAL_SUCCESS details for the same setup and applies placed furniture", async () => {
+    const room = createRoom();
+    const storage = selectedRoomStorage(room);
+    const browser = setupBrowserStorage(room.id, 1, "setup-partial");
+    const recommendation = recommendationResponse(52, "PARTIAL_SUCCESS", {
+      requestedFurnitureCount: 3,
+      placedFurnitureCount: 2,
+      unplacedFurniture: [{
+        requestIndex: 2,
+        furnitureType: "sofa",
+        productId: "sofa-01",
+        variantId: null,
+        reasonCode: "COLLISION_DETECTED",
+        message: "소파가 다른 가구와 충돌합니다.",
+      }],
+      warningCode: "INSUFFICIENT_ROOM_SPACE",
+      message: "일부 가구만 배치했습니다.",
+    });
+    const api = fakeApi({ latest: null, recommendation });
+
+    const result = await prepareAdditionalFurnitureForEditor(storage, api, browser);
+
+    expect(result?.activeLayoutId).toBe(52);
+    expect(readRecommendationResult({
+      sessionId: "setup-partial",
+      roomLayoutId: room.id,
+      backendRoomId: 1,
+    }, browser)).toMatchObject({
+      status: "PARTIAL_SUCCESS",
+      requestedFurnitureCount: 3,
+      placedFurnitureCount: 2,
+      warningCode: "INSUFFICIENT_ROOM_SPACE",
+    });
+  });
+
+  it("keeps selections and Layout state intact on FAILED, then allows retry", async () => {
+    const room = createRoom();
+    const storage = selectedRoomStorage(room);
+    storage.setItem("roomfit:selectedAdditionalFurnitureIds", JSON.stringify(["bed", "sofa"]));
+    const browser = setupBrowserStorage(room.id, 1, "setup-retry");
+    const failed = recommendationResponse(null, "FAILED", {
+      requestedFurnitureCount: 2,
+      placedFurnitureCount: 0,
+      unplacedFurniture: [{
+        requestIndex: 0,
+        furnitureType: "bed",
+        reasonCode: "NO_VALID_BOUNDARY_PLACEMENT",
+        message: "침대를 방 경계 안에 배치할 수 없습니다.",
+      }],
+      warningCode: "INSUFFICIENT_ROOM_SPACE",
+      message: "공간이 부족합니다.",
+    });
+    const api = fakeApi({ latest: null, recommendation: failed });
+    const before = storage.getItem("roomfit:selectedRoomLayout");
+
+    await expect(prepareAdditionalFurnitureForEditor(storage, api, browser))
+      .rejects.toBeInstanceOf(RecommendationFeasibilityError);
+
+    expect(storage.getItem("roomfit:selectedRoomLayout")).toBe(before);
+    expect(storage.getItem("roomfit:selectedAdditionalFurnitureIds")).toBe('["bed","sofa"]');
+    expect(readActiveLayoutEditingSession(storage)).toBeNull();
+
+    vi.mocked(api.recommendLayout).mockResolvedValueOnce(recommendationResponse(53, "SUCCESS"));
+    storage.setItem("roomfit:selectedAdditionalFurnitureIds", JSON.stringify(["bed"]));
+    const retried = await prepareAdditionalFurnitureForEditor(storage, api, browser);
+
+    expect(retried?.activeLayoutId).toBe(53);
+    expect(api.recommendLayout).toHaveBeenCalledTimes(2);
+    expect(readRecommendationResult({
+      sessionId: "setup-retry",
+      roomLayoutId: room.id,
+      backendRoomId: 1,
+    }, browser)).toBeNull();
+  });
+
+  it("does not overwrite an unrelated active Layout ID with a FAILED response", async () => {
+    const room = createRoom("api-room-2");
+    const storage = selectedRoomStorage(room, 2);
+    saveDraftSession(storage, 88, 80, "api-room-1", 1);
+    const browser = setupBrowserStorage(room.id, 2, "setup-room-2");
+    const api = fakeApi({
+      latest: null,
+      recommendation: recommendationResponse(null, "FAILED", { roomId: 2 }),
+    });
+
+    await expect(prepareAdditionalFurnitureForEditor(storage, api, browser))
+      .rejects.toBeInstanceOf(RecommendationFeasibilityError);
+
+    expect(readActiveLayoutEditingSession(storage)?.activeLayoutId).toBe(88);
+  });
+
+  it("keeps the last partial Layout when a revised selection returns FAILED", async () => {
+    const room = createRoom();
+    const storage = selectedRoomStorage(room);
+    const browser = setupBrowserStorage(room.id, 1, "setup-partial-retry");
+    const api = fakeApi({
+      latest: null,
+      recommendation: recommendationResponse(61, "PARTIAL_SUCCESS", {
+        requestedFurnitureCount: 2,
+        placedFurnitureCount: 1,
+      }),
+    });
+    const partial = await prepareAdditionalFurnitureForEditor(storage, api, browser);
+    const partialMirror = storage.getItem("roomfit:selectedRoomLayout");
+    expect(partial?.activeLayoutId).toBe(61);
+
+    vi.mocked(api.getLayout).mockResolvedValueOnce({
+      ...response(61, false, null),
+      recommendationStatus: "PARTIAL_SUCCESS",
+    });
+    vi.mocked(api.recommendLayout).mockResolvedValueOnce(recommendationResponse(null, "FAILED"));
+
+    await expect(prepareAdditionalFurnitureForEditor(storage, api, browser))
+      .rejects.toBeInstanceOf(RecommendationFeasibilityError);
+
+    expect(readActiveLayoutEditingSession(storage)?.activeLayoutId).toBe(61);
+    expect(storage.getItem("roomfit:selectedRoomLayout")).toBe(partialMirror);
+  });
+
+  it("keeps a transport failure distinct from a normal feasibility result", async () => {
+    const room = createRoom();
+    const storage = selectedRoomStorage(room);
+    const browser = setupBrowserStorage(room.id, 1, "setup-network");
+    const api = fakeApi({ latest: null });
+    vi.mocked(api.recommendLayout).mockRejectedValueOnce(new Error("network unavailable"));
+
+    await expect(prepareAdditionalFurnitureForEditor(storage, api, browser))
+      .rejects.toThrow("network unavailable");
+
+    expect(readRecommendationResult({
+      sessionId: "setup-network",
+      roomLayoutId: room.id,
+      backendRoomId: 1,
+    }, browser)).toBeNull();
+    expect(readActiveLayoutEditingSession(storage)).toBeNull();
+  });
+
   it("serializes every ID, center-origin pose, and DELETED status", () => {
     const room = createRoom("api-room-1", -0.8, Math.PI / 2);
     room.furniture[0].status = "user_modified";
@@ -267,6 +458,19 @@ describe("Draft layout editing workflow", () => {
 function selectedRoomStorage(room: RoomLayout, backendRoomId = 1): MemoryStorage {
   const storage = new MemoryStorage();
   selectRoom(storage, room, backendRoomId);
+  return storage;
+}
+
+function setupBrowserStorage(roomLayoutId: string, backendRoomId: number, sessionId: string): MemoryStorage {
+  const storage = new MemoryStorage();
+  storage.setItem("roomfit:roomSetupSession", JSON.stringify({
+    version: 1,
+    sessionId,
+    roomLayoutId,
+    backendRoomId,
+    mode: "NEW",
+    createdAt: "2026-07-18T10:00:00.000Z",
+  }));
   return storage;
 }
 
@@ -419,12 +623,14 @@ function fakeApi({
   draft = response(11, false, 10),
   saved = response(11, false, 10),
   added = response(11, false, 10),
+  recommendation = recommendationResponse(51, "SUCCESS"),
 }: {
   latest?: LayoutResponse | null;
   active?: LayoutResponse;
   draft?: LayoutResponse;
   saved?: LayoutResponse;
   added?: LayoutResponse;
+  recommendation?: LayoutRecommendationResponse;
 } = {}): LayoutWorkflowApi {
   return {
     getLayout: vi.fn().mockResolvedValue(active),
@@ -444,10 +650,27 @@ function fakeApi({
       styleTags: [],
       preferredColorTone: null,
     }),
+    recommendLayout: vi.fn().mockResolvedValue(recommendation),
     confirmLayout: vi.fn().mockResolvedValue({
       layoutId: saved.layoutId,
       confirmed: true,
       confirmedAt: "2026-07-18T11:00:00",
     }),
+  };
+}
+
+function recommendationResponse(
+  layoutId: number | null,
+  recommendationStatus: "SUCCESS" | "PARTIAL_SUCCESS" | "FAILED",
+  overrides: Partial<LayoutRecommendationResponse> = {},
+): LayoutRecommendationResponse {
+  return {
+    ...response(layoutId ?? 1, false, null),
+    layoutId,
+    recommendationStatus,
+    requestedFurnitureCount: 2,
+    placedFurnitureCount: recommendationStatus === "FAILED" ? 0 : 2,
+    unplacedFurniture: [],
+    ...overrides,
   };
 }

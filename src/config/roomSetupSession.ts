@@ -14,6 +14,7 @@ import {
 } from "./roomPreferences";
 
 const ROOM_SETUP_SESSION_KEY = "roomfit:roomSetupSession";
+const RECOMMENDATION_RESULT_KEY = "roomfit:recommendationResult";
 const SESSION_VERSION = 1;
 
 const TEMPORARY_LOCAL_KEYS = [
@@ -36,6 +37,7 @@ const SETUP_VISITED_KEYS = [
   "roomfit:visited:preference",
   "roomfit:visited:reference-image",
   "roomfit:visited:add-furniture",
+  RECOMMENDATION_RESULT_KEY,
 ] as const;
 
 type SetupStorage = Pick<Storage, "getItem" | "setItem" | "removeItem">;
@@ -123,6 +125,10 @@ export function bindRoomToSetupSession(
   }
 
   const current = readRoomSetupSession(browserSession) ?? beginNewRoomSetup(storage, browserSession);
+  if (current.roomLayoutId !== null
+    && (current.roomLayoutId !== roomLayoutId || current.backendRoomId !== backendRoomId)) {
+    browserSession.removeItem(RECOMMENDATION_RESULT_KEY);
+  }
   const next: RoomSetupSession = {
     ...current,
     roomLayoutId,
@@ -137,6 +143,7 @@ export function completeRoomSetupSession(
   browserSession: Pick<SetupStorage, "removeItem"> = sessionStorage,
 ): void {
   browserSession.removeItem(ROOM_SETUP_SESSION_KEY);
+  browserSession.removeItem(RECOMMENDATION_RESULT_KEY);
 }
 
 export function getSelectedRoomIdForSetup(

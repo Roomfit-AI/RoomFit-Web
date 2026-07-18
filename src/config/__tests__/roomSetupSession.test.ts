@@ -34,6 +34,7 @@ describe("room setup session", () => {
       "roomfit:visited:preference": "true",
       "roomfit:visited:reference-image": "true",
       "roomfit:visited:add-furniture": "true",
+      "roomfit:recommendationResult": "past-warning",
     });
 
     const session = beginNewRoomSetup(local, browser, "setup-B");
@@ -42,6 +43,7 @@ describe("room setup session", () => {
     expect(local.getItem("roomfit:selectedPurpose")).toBeNull();
     expect(local.getItem("roomfit:selectedRoomId")).toBeNull();
     expect(browser.getItem("roomfit:visited:reference-image")).toBeNull();
+    expect(browser.getItem("roomfit:recommendationResult")).toBeNull();
     expect(local.getItem("roomfit:preferencesByRoomId")).toBe("permanent-preferences");
     expect(local.getItem("roomfit:confirmedLayoutsByRoomId")).toBe("permanent-layouts");
     expect(local.getItem("roomfit:roomThumbnails")).toBe("permanent-thumbnails");
@@ -122,6 +124,18 @@ describe("room setup session", () => {
       backendRoomId: 2,
       mode: "REEDIT",
     });
+  });
+
+  it("clears Room A's recommendation warning when Room B becomes the setup owner", () => {
+    const local = createMemoryStorage();
+    const browser = createMemoryStorage();
+    beginNewRoomSetup(local, browser, "setup");
+    bindRoomToSetupSession("api-room-1", 1, "NEW", local, browser);
+    browser.setItem("roomfit:recommendationResult", "room-a-warning");
+
+    bindRoomToSetupSession("api-room-2", 2, "NEW", local, browser);
+
+    expect(browser.getItem("roomfit:recommendationResult")).toBeNull();
   });
 
   it("creates a sample template with POST semantics and never mutates the template", async () => {
@@ -214,10 +228,12 @@ describe("room setup session", () => {
     const browser = createMemoryStorage();
     beginNewRoomSetup(local, browser, "confirming");
     local.setItem("roomfit:selectedRoomId", "api-room-9");
+    browser.setItem("roomfit:recommendationResult", "warning");
 
     completeRoomSetupSession(browser);
 
     expect(readRoomSetupSession(browser)).toBeNull();
+    expect(browser.getItem("roomfit:recommendationResult")).toBeNull();
     expect(local.getItem("roomfit:selectedRoomId")).toBe("api-room-9");
   });
 });

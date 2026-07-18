@@ -11,6 +11,8 @@ import {
   beginNewRoomSetup,
   prepareSelectedRoomForManagement,
 } from "../../config/roomSetupSession";
+import { RecommendationFeasibilityError } from "../../config/recommendationResult";
+import { AgentContextRequestValidationError } from "../../api/agentContextRequest";
 
 interface NavigationStep {
   path: string;
@@ -88,12 +90,18 @@ export default function Navbar() {
       if (nextStep) {
         navigate(nextStep.path, { state: nextState ?? location.state });
       }
-    } catch {
-      setNavigationError(
-        location.pathname === "/rooms"
-          ? "새 방을 만들지 못했습니다. 현재 선택을 유지한 채 다시 시도해 주세요."
-          : "배치를 저장하지 못했습니다. 현재 화면에서 다시 시도해 주세요.",
-      );
+    } catch (error) {
+      if (error instanceof AgentContextRequestValidationError) {
+        setNavigationError(error.message);
+      } else if (!(error instanceof RecommendationFeasibilityError)) {
+        setNavigationError(
+          location.pathname === "/rooms"
+            ? "새 방을 만들지 못했습니다. 현재 선택을 유지한 채 다시 시도해 주세요."
+            : location.pathname === "/add-furniture"
+              ? "추천 서버에 연결하지 못했습니다. 선택한 가구를 유지한 채 다시 시도해 주세요."
+              : "배치를 저장하지 못했습니다. 현재 화면에서 다시 시도해 주세요.",
+        );
+      }
     } finally {
       setIsNavigating(false);
       navigationInFlightRef.current = false;
@@ -127,7 +135,9 @@ export default function Navbar() {
               confirm — keeping this navbar one too just doubled the button. */}
           {nextStep && !isLastStep && (
             <Button onClick={goNext} disabled={isNavigating} className="hidden px-7 py-2.5 sm:inline-flex">
-              {isNavigating ? "저장 중..." : isHome ? "시작하기" : "다음 단계"}
+              {isNavigating
+                ? location.pathname === "/add-furniture" ? "추천 생성 중..." : "저장 중..."
+                : isHome ? "시작하기" : "다음 단계"}
             </Button>
           )}
         </div>

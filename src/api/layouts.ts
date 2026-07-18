@@ -121,6 +121,27 @@ export interface LayoutResponse {
   scoreSummary: ScoreSummary;
   validationResult: LayoutValidationResult;
   interpretedIntent?: InterpretedIntent;
+  recommendationStatus?: RecommendationStatus;
+  requestedFurnitureCount?: number;
+  placedFurnitureCount?: number;
+  unplacedFurniture?: UnplacedFurniture[];
+  warningCode?: string;
+  message?: string;
+}
+
+export type RecommendationStatus = "SUCCESS" | "PARTIAL_SUCCESS" | "FAILED";
+
+export interface UnplacedFurniture {
+  requestIndex: number;
+  furnitureType: string;
+  productId?: string | null;
+  variantId?: string | null;
+  reasonCode: string;
+  message: string;
+}
+
+export interface LayoutRecommendationResponse extends Omit<LayoutResponse, "layoutId"> {
+  layoutId: number | null;
 }
 
 export interface FeedbackResponse extends Omit<LayoutResponse, "layoutId"> {
@@ -175,13 +196,33 @@ export async function createDefaultAgentContext(roomId: number): Promise<AgentCo
   return response.data.data;
 }
 
-export async function recommendLayout(roomId: number, contextId: number): Promise<LayoutResponse> {
-  const response = await apiClient.post<ApiResponse<LayoutResponse>>("/api/layouts/recommend", {
+export async function recommendLayout(roomId: number, contextId: number): Promise<LayoutRecommendationResponse> {
+  const response = await apiClient.post<ApiResponse<unknown>>("/api/layouts/recommend", {
     roomId,
     contextId,
   });
 
-  return response.data.data;
+  return normalizeRecommendationResponse(response.data.data);
+}
+
+export function normalizeRecommendationResponse(value: unknown): LayoutRecommendationResponse {
+  if (!isRecord(value)
+    || !isPositiveInteger(value.roomId)
+    || !Array.isArray(value.recommendedFurniture)) {
+    throw new Error("Invalid layout recommendation response");
+  }
+
+  const response = value as unknown as LayoutRecommendationResponse;
+  return {
+    ...response,
+    layoutId: isPositiveInteger(value.layoutId) ? value.layoutId : null,
+    recommendationStatus: parseRecommendationStatus(value.recommendationStatus),
+    requestedFurnitureCount: readNonNegativeInteger(value.requestedFurnitureCount),
+    placedFurnitureCount: readNonNegativeInteger(value.placedFurnitureCount),
+    unplacedFurniture: parseUnplacedFurniture(value.unplacedFurniture),
+    warningCode: readRequiredString(value.warningCode),
+    message: readRequiredString(value.message),
+  };
 }
 
 export async function getLayout(layoutId: number): Promise<LayoutResponse> {
@@ -303,6 +344,34 @@ function parseFeedbackStatus(value: unknown): FeedbackStatus | undefined {
     : undefined;
 }
 
+function parseRecommendationStatus(value: unknown): RecommendationStatus | undefined {
+  return value === "SUCCESS" || value === "PARTIAL_SUCCESS" || value === "FAILED"
+    ? value
+    : undefined;
+}
+
+function parseUnplacedFurniture(value: unknown): UnplacedFurniture[] | undefined {
+  if (!Array.isArray(value)) return undefined;
+
+  return value.flatMap((item) => {
+    if (!isRecord(item)) return [];
+    const requestIndex = readNonNegativeInteger(item.requestIndex);
+    const furnitureType = readRequiredString(item.furnitureType);
+    const reasonCode = readRequiredString(item.reasonCode);
+    const message = readOptionalString(item.message);
+    if (requestIndex === undefined || !furnitureType || !reasonCode || message === undefined) return [];
+
+    return [{
+      requestIndex,
+      furnitureType,
+      reasonCode,
+      message,
+      ...readNullableStringProperty(item, "productId"),
+      ...readNullableStringProperty(item, "variantId"),
+    }];
+  });
+}
+
 function parseFeedbackOperationStatus(value: unknown): FeedbackOperationStatus | undefined {
   return value === "APPLIED"
     || value === "FAILED"
@@ -406,6 +475,10 @@ function readOptionalString(value: unknown): string | undefined {
 
 function readOptionalNullableString(value: unknown): string | null | undefined {
   return value === null || typeof value === "string" ? value : undefined;
+}
+
+function readNonNegativeInteger(value: unknown): number | undefined {
+  return typeof value === "number" && Number.isInteger(value) && value >= 0 ? value : undefined;
 }
 
 function isPositiveInteger(value: unknown): value is number {

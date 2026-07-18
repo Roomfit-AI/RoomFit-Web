@@ -3,7 +3,14 @@ import { FiCheck, FiPlus } from "react-icons/fi";
 
 import FurnitureVisual from "../components/ui/FurnitureVisual";
 import type { FurnitureVisualType } from "../components/ui/furnitureVisualRegistry";
+import RecommendationResultPanel from "../components/editor/RecommendationResultPanel";
+import {
+  readRecommendationResult,
+  subscribeRecommendationResult,
+  type RecommendationResultNotice,
+} from "../config/recommendationResult";
 import { hasRoomPreferences } from "../config/roomPreferences";
+import { readRoomSetupSession } from "../config/roomSetupSession";
 
 const categories = [
   "전체",
@@ -67,6 +74,9 @@ const furnitureItems: FurnitureItem[] = [
 
 export default function AddFurniture() {
   const [activeCategory, setActiveCategory] = useState("전체");
+  const [recommendationNotice, setRecommendationNotice] = useState<RecommendationResultNotice | null>(
+    readCurrentRecommendationNotice,
+  );
   const [selectedIds, setSelectedIds] = useState<string[]>(() => {
     const selectedRoomId = localStorage.getItem("roomfit:selectedRoomId");
     const hasRestoredPreferences = selectedRoomId ? hasRoomPreferences(selectedRoomId) : false;
@@ -98,6 +108,10 @@ export default function AddFurniture() {
     localStorage.setItem("roomfit:selectedAdditionalFurnitureIds", JSON.stringify(selectedIds));
   }, [selectedIds]);
 
+  useEffect(() => subscribeRecommendationResult(() => {
+    setRecommendationNotice(readCurrentRecommendationNotice());
+  }), []);
+
   const toggleFurniture = (id: string) => {
     setSelectedIds((current) =>
       current.includes(id) ? current.filter((itemId) => itemId !== id) : [...current, id],
@@ -116,6 +130,12 @@ export default function AddFurniture() {
           <h1 className="text-3xl font-extrabold tracking-normal sm:text-4xl">배치하고 싶은 가구와 소품을 선택하세요</h1>
           <p className="mt-3 text-sm font-semibold text-[#777777]">원하는 아이템을 선택하면 추천에 반영됩니다.</p>
         </header>
+
+        {recommendationNotice && (
+          <div className="mb-8">
+            <RecommendationResultPanel notice={recommendationNotice} />
+          </div>
+        )}
 
         <div className="grid gap-8 lg:grid-cols-[128px_1fr]">
           <aside>
@@ -180,4 +200,14 @@ export default function AddFurniture() {
       </section>
     </main>
   );
+}
+
+function readCurrentRecommendationNotice(): RecommendationResultNotice | null {
+  const setup = readRoomSetupSession();
+  if (!setup?.roomLayoutId || setup.backendRoomId === null) return null;
+  return readRecommendationResult({
+    sessionId: setup.sessionId,
+    roomLayoutId: setup.roomLayoutId,
+    backendRoomId: setup.backendRoomId,
+  });
 }

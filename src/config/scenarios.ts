@@ -1209,3 +1209,7 @@ export function currentScenario(storage: ScenarioStorageReader = localStorage): 
     storage.getItem("roomfit:selectedPalette"),
   );
 }
+
+export function isCollectorRoom(room: Pick<RoomLayout, "name">): boolean {
+  return room.name === "미드센추리 컬렉터 룸" || room.name === "샘플룸2";
+}

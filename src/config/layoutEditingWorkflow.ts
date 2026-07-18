@@ -5,12 +5,18 @@ import {
   createLayoutDraft,
   getLatestConfirmedLayout,
   getLayout,
+  recommendLayout,
   updateLayout,
+  type LayoutRecommendationResponse,
   type LayoutResponse,
 } from "../api/layouts";
 import { resolveRequiredFurnitureTypes } from "../api/agentContextRequest";
 import { applyBackendFurnitureToLayout } from "../api/rooms";
 import type { RoomLayout } from "../types";
+import {
+  resolveRoomLayoutPreferredColorTone,
+  withAppliedPreferredColorTone,
+} from "./appliedColorTone";
 import {
   clearActiveLayoutEditingSession,
   createInitialSetupNavigationState,
@@ -20,6 +26,17 @@ import {
   saveLayoutResponseSession,
   type LayoutNavigationState,
 } from "./layoutEditingSession";
+import {
+  clearRecommendationResult,
+  RecommendationFeasibilityError,
+  resolveRecommendationDecision,
+  saveRecommendationResult,
+  type RecommendationResultOwner,
+} from "./recommendationResult";
+import { readRoomSetupSession } from "./roomSetupSession";
+import { currentScenario, isCollectorRoom } from "./scenarios";
+import { isHobbyCoralRecommendationSelected } from "../mock/hobbyCoralRecommendation";
+import { readPreferredColorTone } from "./preferredColorTone";
 
 type WorkflowStorage = Pick<Storage, "getItem" | "setItem" | "removeItem">;
 
@@ -30,6 +47,7 @@ export interface LayoutWorkflowApi {
   updateLayout: typeof updateLayout;
   addFurnitureToDraft: typeof addFurnitureToDraft;
   createDefaultAgentContext: typeof createDefaultAgentContext;
+  recommendLayout: typeof recommendLayout;
   confirmLayout: typeof confirmLayout;
 }
 
@@ -40,6 +58,7 @@ const defaultApi: LayoutWorkflowApi = {
   updateLayout,
   addFurnitureToDraft,
   createDefaultAgentContext,
+  recommendLayout,
   confirmLayout,
 };
 
@@ -122,11 +141,18 @@ export async function refreshActiveDraftNavigationState(
 export async function prepareAdditionalFurnitureForEditor(
   storage: WorkflowStorage = localStorage,
   api: LayoutWorkflowApi = defaultApi,
+  browserSession: WorkflowStorage = sessionStorage,
 ): Promise<LayoutNavigationState | null> {
   const current = await refreshActiveDraftNavigationState(storage, api);
-  if (!current || current.editingMode !== "REEDIT_DRAFT" || current.activeLayoutId === null) {
+  if (!current) {
     return current;
   }
+
+  if (current.editingMode === "INITIAL_SETUP") {
+    return prepareInitialRecommendation(current, storage, browserSession, api);
+  }
+
+  if (current.editingMode !== "REEDIT_DRAFT" || current.activeLayoutId === null) return current;
 
   const selectedIds = readStringArray(storage.getItem("roomfit:selectedAdditionalFurnitureIds"));
   if (resolveRequiredFurnitureTypes(selectedIds).length === 0) {
@@ -145,6 +171,51 @@ export async function prepareAdditionalFurnitureForEditor(
   persistActiveDraftMirror(restored, storage);
   const session = saveLayoutResponseSession(current.roomLayoutId, response, storage, "REEDIT_DRAFT");
   return createLayoutNavigationState(session, response, restored);
+}
+
+async function prepareInitialRecommendation(
+  current: LayoutNavigationState,
+  storage: WorkflowStorage,
+  browserSession: WorkflowStorage,
+  api: LayoutWorkflowApi,
+): Promise<LayoutNavigationState> {
+  const baseline = current.roomLayout ?? readSelectedRoomLayout(storage);
+  if (!baseline || shouldUseLocalScenario(baseline, storage)) return current;
+
+  const context = await api.createDefaultAgentContext(current.roomId);
+  const response = await api.recommendLayout(current.roomId, context.contextId);
+  const decision = resolveRecommendationDecision(response);
+  const owner = resolveRecommendationOwner(current, browserSession);
+
+  if (decision.status === "FAILED") {
+    if (decision.notice && owner) {
+      saveRecommendationResult(owner, decision.notice, browserSession);
+    }
+    throw new RecommendationFeasibilityError(decision.notice!);
+  }
+
+  const persistedResponse = requirePersistedRecommendation(response);
+  assertLayoutOwner(persistedResponse, current.roomId);
+  const recommended = applyBackendFurnitureToLayout(baseline, persistedResponse.recommendedFurniture);
+  const restored = withAppliedPreferredColorTone(
+    recommended,
+    readPreferredColorTone(storage) ?? resolveRoomLayoutPreferredColorTone(baseline, storage),
+  );
+  persistActiveDraftMirror(restored, storage);
+  const session = saveLayoutResponseSession(
+    current.roomLayoutId,
+    persistedResponse,
+    storage,
+    "INITIAL_SETUP",
+  );
+
+  if (decision.notice && owner) {
+    saveRecommendationResult(owner, decision.notice, browserSession);
+  } else if (owner) {
+    clearRecommendationResult(browserSession, owner);
+  }
+
+  return createLayoutNavigationState(session, persistedResponse, restored);
 }
 
 export async function persistActiveEditorLayout(
@@ -231,4 +302,37 @@ function parseBackendRoomId(raw: string | null): number | null {
   if (!raw) return null;
   const parsed = Number(raw);
   return Number.isInteger(parsed) && parsed > 0 ? parsed : null;
+}
+
+function shouldUseLocalScenario(room: RoomLayout, storage: WorkflowStorage): boolean {
+  if (isHobbyCoralRecommendationSelected(storage)) return true;
+  return room.source !== "CUSTOM" && !isCollectorRoom(room) && Boolean(currentScenario(storage));
+}
+
+function resolveRecommendationOwner(
+  current: LayoutNavigationState,
+  browserSession: WorkflowStorage,
+): RecommendationResultOwner | null {
+  const setup = readRoomSetupSession(browserSession);
+  if (!setup
+    || setup.roomLayoutId !== current.roomLayoutId
+    || setup.backendRoomId !== current.roomId) {
+    return null;
+  }
+  return {
+    sessionId: setup.sessionId,
+    roomLayoutId: current.roomLayoutId,
+    backendRoomId: current.roomId,
+  };
+}
+
+function requirePersistedRecommendation(response: LayoutRecommendationResponse): LayoutResponse {
+  if (!isPositiveInteger(response.layoutId)) {
+    throw new Error("Backend recommendation response has no persisted layoutId.");
+  }
+  return { ...response, layoutId: response.layoutId };
+}
+
+function isPositiveInteger(value: unknown): value is number {
+  return typeof value === "number" && Number.isInteger(value) && value > 0;
 }
