@@ -8,7 +8,13 @@ import {
   type LifestyleGoalApiValue,
 } from "./agentContextRequest";
 import type { PreferredColorToneApiValue } from "../config/preferredColorTone";
-import type { BackendFurnitureApiItem } from "./rooms";
+import {
+  normalizeBackendFurnitureApiItems,
+  type BackendFurnitureApiItem,
+} from "./rooms";
+import { normalizeCanonicalFurnitureType } from "../config/canonicalFurnitureType";
+import { FurnitureAdditionRequestError } from "../config/furnitureAdditionError";
+export { RAW_TOTAL_SCORE_MAX } from "../config/recommendationScore";
 import type { Furniture, RoomLayout } from "../types";
 
 export type {
@@ -215,6 +221,7 @@ export function normalizeRecommendationResponse(value: unknown): LayoutRecommend
   const response = value as unknown as LayoutRecommendationResponse;
   return {
     ...response,
+    recommendedFurniture: normalizeBackendFurnitureApiItems(response.recommendedFurniture),
     layoutId: isPositiveInteger(value.layoutId) ? value.layoutId : null,
     recommendationStatus: parseRecommendationStatus(value.recommendationStatus),
     requestedFurnitureCount: readNonNegativeInteger(value.requestedFurnitureCount),
@@ -227,7 +234,7 @@ export function normalizeRecommendationResponse(value: unknown): LayoutRecommend
 
 export async function getLayout(layoutId: number): Promise<LayoutResponse> {
   const response = await apiClient.get<ApiResponse<LayoutResponse>>(`/api/layouts/${layoutId}`);
-  return response.data.data;
+  return normalizeLayoutResponse(response.data.data);
 }
 
 export async function getLatestConfirmedLayout(roomId: number): Promise<LayoutResponse | null> {
@@ -235,7 +242,7 @@ export async function getLatestConfirmedLayout(roomId: number): Promise<LayoutRe
     const response = await apiClient.get<ApiResponse<LayoutResponse>>(
       `/api/layouts/rooms/${roomId}/confirmed/latest`,
     );
-    return response.data.data;
+    return normalizeLayoutResponse(response.data.data);
   } catch (error) {
     if (isAxiosError(error) && error.response?.status === 404) {
       return null;
@@ -246,25 +253,42 @@ export async function getLatestConfirmedLayout(roomId: number): Promise<LayoutRe
 
 export async function createLayoutDraft(layoutId: number): Promise<LayoutResponse> {
   const response = await apiClient.post<ApiResponse<LayoutResponse>>(`/api/layouts/${layoutId}/draft`);
-  return response.data.data;
+  return normalizeLayoutResponse(response.data.data);
 }
 
 export async function updateLayout(layoutId: number, room: RoomLayout): Promise<LayoutResponse> {
   const response = await apiClient.put<ApiResponse<LayoutResponse>>(`/api/layouts/${layoutId}`, {
     furniture: room.furniture.map((item) => toFurniturePositionRequest(room, item)),
   });
-  return response.data.data;
+  return normalizeLayoutResponse(response.data.data);
 }
 
 export async function addFurnitureToDraft(
   layoutId: number,
   request: DraftFurnitureAdditionRequest,
 ): Promise<LayoutResponse> {
-  const response = await apiClient.post<ApiResponse<LayoutResponse>>(
-    `/api/layouts/${layoutId}/furniture-additions`,
-    request,
-  );
-  return response.data.data;
+  try {
+    const response = await apiClient.post<ApiResponse<LayoutResponse>>(
+      `/api/layouts/${layoutId}/furniture-additions`,
+      request,
+    );
+    return normalizeLayoutResponse(response.data.data);
+  } catch (error) {
+    if (isAxiosError<{ error?: { code?: string } }>(error)) {
+      const status = error.response?.status;
+      const code = error.response?.data.error?.code;
+      if (status === 422 && code === "FURNITURE_ADDITION_FAILED") {
+        throw new FurnitureAdditionRequestError("PLACEMENT_REJECTED", { cause: error });
+      }
+      if (!error.response) {
+        throw new FurnitureAdditionRequestError("NETWORK", { cause: error });
+      }
+      if (status !== undefined && status >= 500) {
+        throw new FurnitureAdditionRequestError("SERVER", { cause: error });
+      }
+    }
+    throw error;
+  }
 }
 
 export async function confirmLayout(layoutId: number): Promise<ConfirmResponse> {
@@ -299,6 +323,7 @@ export function normalizeFeedbackResponse(value: unknown): FeedbackResponse {
 
   return {
     ...response,
+    recommendedFurniture: normalizeBackendFurnitureApiItems(response.recommendedFurniture),
     layoutId,
     message,
     feedbackStatus,
@@ -356,7 +381,8 @@ function parseUnplacedFurniture(value: unknown): UnplacedFurniture[] | undefined
   return value.flatMap((item) => {
     if (!isRecord(item)) return [];
     const requestIndex = readNonNegativeInteger(item.requestIndex);
-    const furnitureType = readRequiredString(item.furnitureType);
+    const rawFurnitureType = readRequiredString(item.furnitureType);
+    const furnitureType = normalizeCanonicalFurnitureType(rawFurnitureType) ?? rawFurnitureType;
     const reasonCode = readRequiredString(item.reasonCode);
     const message = readOptionalString(item.message);
     if (requestIndex === undefined || !furnitureType || !reasonCode || message === undefined) return [];
@@ -420,9 +446,13 @@ function parseClarification(value: unknown): FeedbackClarification | null | unde
       if (!isRecord(candidate)) return [];
       const furnitureId = readRequiredString(candidate.furnitureId);
       if (!furnitureId) return [];
+      const rawType = readOptionalNullableString(candidate.type);
+      const type = typeof rawType === "string"
+        ? normalizeCanonicalFurnitureType(rawType) ?? rawType
+        : rawType;
       return [{
         furnitureId,
-        ...readNullableStringProperty(candidate, "type"),
+        ...(type !== undefined ? { type } : {}),
         ...readNullableStringProperty(candidate, "label"),
       }];
     })
@@ -434,6 +464,13 @@ function parseClarification(value: unknown): FeedbackClarification | null | unde
     ...readNullableStringProperty(value, "operationId"),
     ...readNullableStringProperty(value, "requiredField"),
     ...(candidates !== undefined ? { candidates } : {}),
+  };
+}
+
+function normalizeLayoutResponse(response: LayoutResponse): LayoutResponse {
+  return {
+    ...response,
+    recommendedFurniture: normalizeBackendFurnitureApiItems(response.recommendedFurniture),
   };
 }
 

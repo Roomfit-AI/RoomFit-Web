@@ -2,6 +2,8 @@ import {
   toPreferredColorToneApiValue,
   type PreferredColorToneApiValue,
 } from "../config/preferredColorTone";
+import type { CanonicalFurnitureType } from "../config/canonicalFurnitureType";
+import { FURNITURE_TYPE_BY_UI_ID } from "../config/furnitureSelectionCatalog";
 
 export type LifestyleGoalApiValue =
   | "STUDY_FOCUSED"
@@ -19,7 +21,7 @@ export type DesignStyleApiValue =
   | "CLASSIC"
   | "MIDCENTURY";
 
-export type FurnitureTypeApiValue = "bed" | "desk" | "chair" | "storage" | "rug" | "lamp";
+export type FurnitureTypeApiValue = CanonicalFurnitureType;
 
 export interface AgentContextRequest {
   roomId: number;
@@ -65,21 +67,6 @@ const styleImageIdByUiId: Readonly<Record<string, number>> = {
   midcentury: 5,
 };
 
-const furnitureTypeByUiId: Readonly<Record<string, FurnitureTypeApiValue>> = {
-  bed: "bed",
-  "sofa-bed": "bed",
-  desk: "desk",
-  "desk-chair": "chair",
-  bookshelf: "storage",
-  hanger: "storage",
-  partition: "storage",
-  wardrobe: "storage",
-  drawer: "storage",
-  "tv-console": "storage",
-  "mood-light": "lamp",
-  rug: "rug",
-};
-
 export class AgentContextRequestValidationError extends Error {
   constructor(message: string) {
     super(message);
@@ -115,7 +102,7 @@ export function resolveRequiredFurnitureTypes(value: unknown): FurnitureTypeApiV
       continue;
     }
 
-    const furnitureType = furnitureTypeByUiId[item];
+    const furnitureType = FURNITURE_TYPE_BY_UI_ID[item];
     if (furnitureType) {
       resolved.add(furnitureType);
     }

@@ -23,6 +23,8 @@ import {
 import {
   readRecommendationResult,
   RecommendationFeasibilityError,
+  resolveRecommendationDecision,
+  saveRecommendationResult,
 } from "../recommendationResult";
 
 class MemoryStorage {
@@ -562,6 +564,28 @@ describe("Draft layout editing workflow", () => {
     vi.mocked(api.confirmLayout).mockRejectedValueOnce(new Error("confirm failed"));
     await expect(confirmActiveLayout(room, storage, api)).rejects.toThrow("confirm failed");
     expect(readActiveLayoutEditingSession(storage)?.activeLayoutId).toBe(32);
+  });
+
+  it("blocks update and confirm while the current setup owns a FAILED recommendation", async () => {
+    const room = createRoom();
+    const storage = selectedRoomStorage(room);
+    const browser = setupBrowserStorage(room.id, 1, "failed-confirm-setup");
+    saveDraftSession(storage, 31, 10);
+    const api = fakeApi({ active: response(31, false, 10) });
+    const notice = resolveRecommendationDecision(recommendationResponse(null, "FAILED", {
+      message: "공간이 부족합니다.",
+    })).notice!;
+    saveRecommendationResult({
+      sessionId: "failed-confirm-setup",
+      roomLayoutId: room.id,
+      backendRoomId: 1,
+    }, notice, browser);
+
+    await expect(confirmActiveLayout(room, storage, api, browser))
+      .rejects.toBeInstanceOf(RecommendationFeasibilityError);
+    expect(api.updateLayout).not.toHaveBeenCalled();
+    expect(api.confirmLayout).not.toHaveBeenCalled();
+    expect(readActiveLayoutEditingSession(storage)?.activeLayoutId).toBe(31);
   });
 });
 

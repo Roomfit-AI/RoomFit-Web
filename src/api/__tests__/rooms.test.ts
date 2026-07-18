@@ -195,6 +195,40 @@ describe("applyBackendFurnitureToLayout", () => {
     expect(feedback.furniture[0].position.x).toBeCloseTo(0.8);
     expect(feedback.furniture[0].position.z).toBeCloseTo(0.3);
   });
+
+  it("keeps canonical type and appearance stable from recommendation through feedback and reload", () => {
+    const recommendationItem = createBackendFurniture({
+      id: "bookshelf-rec-1",
+      type: "BOOKSHELF",
+      label: "높은 책장",
+      productId: "bookshelf-high-01",
+      variantId: "bookshelf-high",
+      styleTags: ["natural", "storage"],
+    });
+    const recommended = applyBackendFurnitureToLayout(baseLayout, [recommendationItem]);
+    const feedback = applyBackendFurnitureToLayout(recommended, [{
+      ...recommendationItem,
+      type: "bookshelf",
+      position: { x: 2.7, z: 1.8 },
+      rotation: 90,
+    }]);
+    const reloaded = applyBackendFurnitureToLayout(baseLayout, [{
+      ...recommendationItem,
+      type: "BOOKSHELF",
+      position: { x: 2.7, z: 1.8 },
+      rotation: 90,
+    }]);
+
+    for (const layout of [recommended, feedback, reloaded]) {
+      expect(layout.furniture[0]).toMatchObject({
+        category: "cabinet",
+        productId: "bookshelf-high-01",
+        variantId: "bookshelf-high",
+        styleTags: ["natural", "storage"],
+      });
+    }
+    expect(feedback.furniture[0]).toEqual(reloaded.furniture[0]);
+  });
 });
 
 describe("toRoomUploadRequest", () => {

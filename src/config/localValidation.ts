@@ -13,9 +13,9 @@ export function buildScenarioValidation(): { scoreSummary: ScoreSummary; validat
       boundaryScore: 100,
       doorWindowScore: 100,
       pathScore: 100,
-      goalScore: 100,
-      styleScore: 100,
-      totalScore: 100,
+      goalScore: 95,
+      styleScore: 95,
+      totalScore: 590,
     },
     validationResult: {
       collisionFree: true,

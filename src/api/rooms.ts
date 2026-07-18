@@ -646,21 +646,22 @@ function toFurniture(
   roomDepth: number,
   walls: WallSegment[],
 ): Furniture {
-  const category = toFurnitureCategory(item.type);
+  const normalizedItem = normalizeBackendFurnitureApiItem(item);
+  const category = toFurnitureCategory(normalizedItem.type);
   const materialType = materialByCategory(category);
-  const collectorAppearance = collectorAppearanceById[item.id.replace(/^studio-/, "collector-")];
+  const collectorAppearance = collectorAppearanceById[normalizedItem.id.replace(/^studio-/, "collector-")];
   const color = collectorAppearance?.color ?? colorByCategory(category);
   const rotationY = normalizeRotation(item.rotation);
   const rawPosition = { x: item.position.x - roomWidth / 2, z: item.position.z - roomDepth / 2 };
 
   const furniture: Furniture = {
-    id: item.id,
-    name: item.label,
+    id: normalizedItem.id,
+    name: normalizedItem.label,
     category,
-    productId: item.productId,
-    variantId: item.variantId,
-    styleTags: [...item.styleTags],
-    geometry: collectorAppearance?.geometry ?? geometryByType(item.type, category),
+    productId: normalizedItem.productId,
+    variantId: normalizedItem.variantId,
+    styleTags: [...normalizedItem.styleTags],
+    geometry: collectorAppearance?.geometry ?? geometryByType(normalizedItem.type, category),
     dimensions: {
       width: item.width,
       depth: item.depth,
@@ -789,12 +790,28 @@ function colorByCategory(category: FurnitureCategory): string {
 
 export type BackendFurnitureApiItem = SampleRoomApiItem["furniture"][number];
 
+export function normalizeBackendFurnitureApiItem(
+  item: BackendFurnitureApiItem,
+): BackendFurnitureApiItem {
+  const canonicalType = normalizeCanonicalFurnitureType(item.type);
+  return canonicalType && canonicalType !== item.type
+    ? { ...item, type: canonicalType }
+    : item;
+}
+
+export function normalizeBackendFurnitureApiItems(
+  furniture: BackendFurnitureApiItem[],
+): BackendFurnitureApiItem[] {
+  return furniture.map(normalizeBackendFurnitureApiItem);
+}
+
 export function applyBackendFurnitureToLayout(
   layout: RoomLayout,
   furniture: BackendFurnitureApiItem[],
 ): RoomLayout {
   return {
     ...layout,
-    furniture: furniture.map((item) => toFurniture(item, layout.width, layout.depth, layout.walls)),
+    furniture: normalizeBackendFurnitureApiItems(furniture)
+      .map((item) => toFurniture(item, layout.width, layout.depth, layout.walls)),
   };
 }

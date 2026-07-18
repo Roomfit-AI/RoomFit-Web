@@ -20,6 +20,7 @@ import { applyBackendFurnitureToLayout } from "../api/rooms";
 import { ensureCustomRoomBackendRoom } from "../api/customRoomBackend";
 import FeedbackAgentResultPanel from "../components/editor/FeedbackAgentResultPanel";
 import RecommendationResultPanel from "../components/editor/RecommendationResultPanel";
+import ScoreSummaryPanel from "../components/editor/ScoreSummaryPanel";
 import {
   resolveFeedbackRoomLayout,
   resolveNextFeedbackLayoutId,
@@ -559,6 +560,9 @@ export default function EditorPlaceholder() {
 
       const decision = resolveRecommendationDecision(result);
       if (decision.status === "FAILED") {
+        setScoreSummary(result.scoreSummary);
+        setValidationResult(result.validationResult);
+        setInterpretedIntent(result.interpretedIntent ?? null);
         if (decision.notice) {
           saveCurrentRecommendationNotice(decision.notice);
           setRecommendationNotice(decision.notice);
@@ -810,16 +814,11 @@ export default function EditorPlaceholder() {
             </section>
           )}
 
-          {scoreSummary && (
-            <section className="rounded-xl border border-[#e6e6e6] bg-white p-5">
-              <h2 className="text-lg font-extrabold">배치 점수</h2>
-              <div className="mt-4 grid grid-cols-2 gap-3 text-sm">
-                <Score label="충돌" value={scoreSummary.collisionScore} />
-                <Score label="경계" value={scoreSummary.boundaryScore} />
-                <Score label="동선" value={scoreSummary.pathScore} />
-                <Score label="총점" value={scoreSummary.totalScore} />
-              </div>
-            </section>
+          {scoreSummary && recommendationNotice?.status !== "FAILED" && (
+            <ScoreSummaryPanel
+              scoreSummary={scoreSummary}
+              recommendationStatus={recommendationNotice?.status}
+            />
           )}
 
           {validationResult && (
@@ -881,15 +880,6 @@ function InfoItem({ label, value }: { label: string; value: string }) {
     <div className="flex items-center justify-between gap-4">
       <dt className="font-bold text-[#777777]">{label}</dt>
       <dd className="font-extrabold text-[#111111]">{value}</dd>
-    </div>
-  );
-}
-
-function Score({ label, value }: { label: string; value: number }) {
-  return (
-    <div className="rounded-xl bg-[#f7f7f7] p-3">
-      <span className="block text-xs font-bold text-[#777777]">{label}</span>
-      <strong className="mt-1 block text-lg text-center font-extrabold">{value}</strong>
     </div>
   );
 }

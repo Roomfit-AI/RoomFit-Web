@@ -2,11 +2,15 @@ import { describe, expect, it, vi } from "vitest";
 
 import { apiClient } from "../client";
 import {
+  addFurnitureToDraft,
   applyLayoutFeedback,
+  getLayout,
   normalizeFeedbackResponse,
   normalizeRecommendationResponse,
+  RAW_TOTAL_SCORE_MAX,
   type FeedbackResponse,
 } from "../layouts";
+import { FurnitureAdditionRequestError } from "../../config/furnitureAdditionError";
 
 describe("layout recommendation response adapter", () => {
   it("keeps a legacy response as SUCCESS-compatible when additive fields are absent", () => {
@@ -64,6 +68,51 @@ describe("layout recommendation response adapter", () => {
     expect(result.recommendationStatus).toBe("FAILED");
   });
 
+  it("preserves the Backend raw totalScore on its 590-point scale", () => {
+    const result = normalizeRecommendationResponse({
+      ...createFeedbackResponse(),
+      scoreSummary: {
+        collisionScore: 100,
+        boundaryScore: 100,
+        doorWindowScore: 100,
+        pathScore: 100,
+        goalScore: 95,
+        styleScore: 95,
+        totalScore: 590,
+      },
+    });
+
+    expect(RAW_TOTAL_SCORE_MAX).toBe(590);
+    expect(result.scoreSummary.totalScore).toBe(590);
+  });
+
+  it("normalizes inbound aliases without losing product appearance metadata", () => {
+    const result = normalizeRecommendationResponse({
+      ...createFeedbackResponse(),
+      recommendedFurniture: [{
+        ...createFeedbackResponse().recommendedFurniture[0],
+        type: "SOFA_BED",
+        productId: "sofa-bed-classic-storage-01",
+        variantId: "sofa-bed-classic-storage",
+        styleTags: ["classic", "storage"],
+      }],
+      unplacedFurniture: [{
+        requestIndex: 0,
+        furnitureType: "tvStand",
+        reasonCode: "NO_VALID_PLACEMENT",
+        message: "",
+      }],
+    });
+
+    expect(result.recommendedFurniture[0]).toMatchObject({
+      type: "sofa_bed",
+      productId: "sofa-bed-classic-storage-01",
+      variantId: "sofa-bed-classic-storage",
+      styleTags: ["classic", "storage"],
+    });
+    expect(result.unplacedFurniture?.[0].furnitureType).toBe("media_console");
+  });
+
   it("drops malformed additive fields without rejecting the legacy payload", () => {
     const result = normalizeRecommendationResponse({
       ...createFeedbackResponse(),
@@ -110,6 +159,21 @@ describe("layout feedback response adapter", () => {
     }
   });
 
+  it("normalizes aliases on a later Layout reload as well", async () => {
+    const response = createFeedbackResponse();
+    response.recommendedFurniture[0].type = "BED";
+    const get = vi.spyOn(apiClient, "get").mockResolvedValue({
+      data: { success: true, data: response, error: null },
+    });
+    try {
+      const result = await getLayout(12);
+      expect(result.recommendedFurniture[0].type).toBe("bed");
+      expect(result.recommendedFurniture[0].variantId).toBe("desk-compact");
+    } finally {
+      get.mockRestore();
+    }
+  });
+
   it("normalizes additive operation and clarification fields in Backend order", () => {
     const result = normalizeFeedbackResponse({
       ...createFeedbackResponse(),
@@ -123,7 +187,7 @@ describe("layout feedback response adapter", () => {
         reasonCode: "AMBIGUOUS_TARGET",
         question: "어떤 의자를 옮길까요?",
         candidates: [
-          { furnitureId: "chair-1", type: "desk_chair", label: "책상 의자" },
+          { furnitureId: "chair-1", type: "chair", label: "책상 의자" },
           { furnitureId: "chair-2", type: "desk_chair", label: "보조 의자" },
         ],
       },
@@ -141,6 +205,7 @@ describe("layout feedback response adapter", () => {
     expect(result.feedbackStatus).toBe("PARTIAL_SUCCESS");
     expect(result.operationResults?.map((operation) => operation.operationId)).toEqual(["op-1", "op-2"]);
     expect(result.clarification?.candidates?.map((candidate) => candidate.furnitureId)).toEqual(["chair-1", "chair-2"]);
+    expect(result.clarification?.candidates?.[0].type).toBe("desk_chair");
     expect(result.clarifications?.map((item) => item.operationId)).toEqual(["op-2"]);
   });
 
@@ -158,6 +223,23 @@ describe("layout feedback response adapter", () => {
     expect(result.clarification).toBeUndefined();
     expect(result.clarifications).toEqual([]);
     expect(result.recommendedFurniture).toHaveLength(1);
+  });
+});
+
+describe("furniture addition errors", () => {
+  it.each([
+    [422, "FURNITURE_ADDITION_FAILED", "PLACEMENT_REJECTED"],
+    [500, "INTERNAL_SERVER_ERROR", "SERVER"],
+    [undefined, undefined, "NETWORK"],
+  ] as const)("classifies status %s separately", async (status, code, kind) => {
+    const post = vi.spyOn(apiClient, "post").mockRejectedValue(axiosErrorLike(status, code));
+    try {
+      const request = addFurnitureToDraft(12, { contextId: 7 });
+      await expect(request).rejects.toBeInstanceOf(FurnitureAdditionRequestError);
+      await expect(request).rejects.toMatchObject({ kind });
+    } finally {
+      post.mockRestore();
+    }
   });
 });
 
@@ -221,4 +303,14 @@ function createOperation(
     productId: "desk-compact-01",
     variantId: "desk-compact",
   };
+}
+
+function axiosErrorLike(status?: number, code?: string) {
+  return Object.assign(new Error("request failed"), {
+    isAxiosError: true,
+    response: status === undefined ? undefined : {
+      status,
+      data: { error: code ? { code } : null },
+    },
+  });
 }
