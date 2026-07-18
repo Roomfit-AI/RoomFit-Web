@@ -1,11 +1,13 @@
 import { applyScenario, currentScenario } from "./scenarios";
 import { sampleRoom } from "../mock/sampleRoom";
 import type { RoomLayout } from "../types";
+import { getActiveRequestClientId } from "./clientScope";
 
 // Local confirmed snapshots are display/recovery caches keyed by the stable
 // UI room id. Backend Layout confirm remains the source of truth; reopening a
 // room resolves the latest confirmed Layout before editing begins.
 const CONFIRMED_LAYOUTS_KEY = "roomfit:confirmedLayoutsByRoomId";
+const CONFIRMED_LAYOUT_OWNERS_KEY = "roomfit:confirmedLayoutOwnersByRoomId:v1";
 
 type ConfirmedLayoutStorage = Pick<Storage, "getItem" | "setItem">;
 
@@ -32,6 +34,9 @@ export function saveConfirmedLayout(
   const all = readAll(storage);
   all[roomLayoutId] = layout;
   storage.setItem(CONFIRMED_LAYOUTS_KEY, JSON.stringify(all));
+  const owners = readOwners(storage);
+  owners[roomLayoutId] = readActiveOwner();
+  storage.setItem(CONFIRMED_LAYOUT_OWNERS_KEY, JSON.stringify(owners));
 }
 
 export function getConfirmedLayout(
@@ -44,8 +49,12 @@ export function getConfirmedLayout(
 export function hasConfirmedLayout(
   roomLayoutId: string,
   storage: Pick<ConfirmedLayoutStorage, "getItem"> = localStorage,
+  clientId?: string | null,
 ): boolean {
-  return Boolean(readAll(storage)[roomLayoutId]);
+  if (!readAll(storage)[roomLayoutId]) return false;
+  if (clientId === undefined) return true;
+  const storedOwner = readOwners(storage)[roomLayoutId];
+  return storedOwner === undefined || storedOwner === ownerKey(clientId);
 }
 
 export function clearConfirmedLayout(
@@ -56,6 +65,36 @@ export function clearConfirmedLayout(
   if (!(roomLayoutId in all)) return;
   delete all[roomLayoutId];
   storage.setItem(CONFIRMED_LAYOUTS_KEY, JSON.stringify(all));
+  const owners = readOwners(storage);
+  delete owners[roomLayoutId];
+  storage.setItem(CONFIRMED_LAYOUT_OWNERS_KEY, JSON.stringify(owners));
+}
+
+function readOwners(
+  storage: Pick<ConfirmedLayoutStorage, "getItem"> = localStorage,
+): Record<string, string> {
+  const raw = storage.getItem(CONFIRMED_LAYOUT_OWNERS_KEY);
+  if (!raw) return {};
+  try {
+    const parsed: unknown = JSON.parse(raw);
+    return parsed && typeof parsed === "object" && !Array.isArray(parsed)
+      ? parsed as Record<string, string>
+      : {};
+  } catch {
+    return {};
+  }
+}
+
+function readActiveOwner(): string {
+  try {
+    return ownerKey(getActiveRequestClientId());
+  } catch {
+    return ownerKey(null);
+  }
+}
+
+function ownerKey(clientId: string | null): string {
+  return clientId ?? "LEGACY";
 }
 
 // Legacy confirmed mirror, written only after Backend confirm. Editing pages

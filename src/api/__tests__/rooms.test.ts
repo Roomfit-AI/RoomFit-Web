@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 import {
   applyBackendFurnitureToLayout,
   getRoomById,
+  getRecentUploadedRooms,
   getSampleRooms,
   toRoomUploadRequest,
   uploadRoomLayout,
@@ -32,6 +33,42 @@ describe("public sample API", () => {
       await expect(getSampleRooms()).resolves.toEqual([]);
       expect(get).toHaveBeenCalledWith("/api/rooms/samples", {
         roomfitClientScope: "PUBLIC",
+      });
+    } finally {
+      get.mockRestore();
+    }
+  });
+});
+
+describe("scoped recent Room API", () => {
+  it("uses the UUID supplied for that list instead of global active scope", async () => {
+    const get = vi.spyOn(apiClient, "get").mockResolvedValue({
+      data: { success: true, data: [], error: null },
+    });
+    try {
+      await expect(getRecentUploadedRooms(10, "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa")).resolves.toEqual([]);
+      expect(get).toHaveBeenCalledWith("/api/rooms/uploads/recent", {
+        params: { limit: 10 },
+        roomfitClientScope: "EXPLICIT",
+        roomfitClientIdOverride: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+      });
+    } finally {
+      get.mockRestore();
+    }
+  });
+
+  it("forwards the polling AbortSignal without changing the explicit App scope", async () => {
+    const get = vi.spyOn(apiClient, "get").mockResolvedValue({
+      data: { success: true, data: [], error: null },
+    });
+    const controller = new AbortController();
+    try {
+      await expect(getRecentUploadedRooms(10, "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa", controller.signal)).resolves.toEqual([]);
+      expect(get).toHaveBeenCalledWith("/api/rooms/uploads/recent", {
+        params: { limit: 10 },
+        signal: controller.signal,
+        roomfitClientScope: "EXPLICIT",
+        roomfitClientIdOverride: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
       });
     } finally {
       get.mockRestore();

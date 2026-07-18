@@ -16,9 +16,11 @@ import {
   activateBrowserClientScope,
   activateLegacyClientScope,
   bindActiveClientScopeToRoom,
+  getActiveRequestClientId,
   readActiveClientScope,
 } from "./clientScope";
 import { hasConfirmedLayout } from "./confirmedLayouts";
+import { saveBrowserRoomOrigin } from "./browserRoomOrigins";
 
 const ROOM_SETUP_SESSION_KEY = "roomfit:roomSetupSession";
 const RECOMMENDATION_RESULT_KEY = "roomfit:recommendationResult";
@@ -226,7 +228,11 @@ export async function prepareSelectedRoomForManagement(
     bindRoomToSetupSession(
       room.id,
       existingRoomId,
-      !isCurrentNewSetup && hasConfirmedLayout(room.id, storage) ? "REEDIT" : "NEW",
+      !isCurrentNewSetup && hasConfirmedLayout(
+        room.id,
+        storage,
+        getActiveRequestClientId(storage, browserSession),
+      ) ? "REEDIT" : "NEW",
       storage,
       browserSession,
     );
@@ -252,6 +258,7 @@ export async function prepareSelectedRoomForManagement(
   storage.setItem("roomfit:backendRoomId", String(backendRoomId));
   storage.setItem("roomfit:selectedRoomId", roomLayoutId);
   storage.setItem("roomfit:selectedRoomLayout", JSON.stringify(createdRoom));
+  saveBrowserRoomOrigin(backendRoomId, room.source === "SAMPLE" ? "SAMPLE_COPY" : "DIRECT", storage);
   storage.removeItem(CUSTOM_ROOM_BACKEND_FINGERPRINT_KEY);
   bindRoomToSetupSession(roomLayoutId, backendRoomId, "NEW", storage, browserSession);
 

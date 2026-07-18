@@ -4,6 +4,7 @@ import {
   ACTIVE_CLIENT_SCOPE_KEY,
   BROWSER_CLIENT_ID_KEY,
   activateBrowserClientScope,
+  activateAppClientScope,
   activatePendingHandoffScope,
   bindActiveClientScopeToRoom,
   clearPendingClientHandoff,
@@ -114,6 +115,20 @@ describe("client scope identity", () => {
       setupSessionId: "setup-browser",
       backendRoomId: null,
     });
+  });
+
+  it("activates a paired App UUID without replacing the browser identity", () => {
+    const local = createMemoryStorage({ [BROWSER_CLIENT_ID_KEY]: BROWSER_ID });
+    const session = createMemoryStorage();
+
+    activateAppClientScope(APP_ID, "setup-paired", session);
+
+    expect(readActiveClientScope(session)).toMatchObject({
+      mode: "APP_UUID",
+      clientId: APP_ID,
+      setupSessionId: "setup-paired",
+    });
+    expect(local.getItem(BROWSER_CLIENT_ID_KEY)).toBe(BROWSER_ID);
   });
 });
 

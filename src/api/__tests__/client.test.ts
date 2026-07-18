@@ -48,6 +48,20 @@ describe("apiClient client scope header", () => {
     expect(await requestHeader("PUBLIC", APP_ID)).toBeUndefined();
   });
 
+  it("uses an explicit UUID instead of an active App or Browser scope", async () => {
+    const { session } = installStorage();
+    savePendingClientHandoff(resolveClientScopeForHandoff({ roomId: 42, clientId: APP_ID })!, session);
+
+    expect(await requestHeader("EXPLICIT", BROWSER_ID)).toBe(BROWSER_ID);
+  });
+
+  it("keeps PUBLIC headerless even when an override and active scope exist", async () => {
+    const { session } = installStorage();
+    savePendingClientHandoff(resolveClientScopeForHandoff({ roomId: 42, clientId: APP_ID })!, session);
+
+    expect(await requestHeader("PUBLIC", BROWSER_ID)).toBeUndefined();
+  });
+
   it("reads the current scope at request time instead of capturing an earlier ID", async () => {
     const { local, session } = installStorage();
     savePendingClientHandoff(resolveClientScopeForHandoff({ roomId: 42, clientId: APP_ID })!, session);
@@ -69,13 +83,14 @@ function installStorage() {
 }
 
 async function requestHeader(
-  roomfitClientScope?: "SCOPED" | "PUBLIC",
-  presetHeader?: string,
+  roomfitClientScope?: "SCOPED" | "PUBLIC" | "EXPLICIT",
+  clientId?: string,
 ): Promise<string | undefined> {
   let requestConfig: InternalAxiosRequestConfig | undefined;
   await apiClient.get("/__client-scope-test__", {
     roomfitClientScope,
-    headers: presetHeader ? { [CLIENT_ID_HEADER]: presetHeader } : undefined,
+    roomfitClientIdOverride: roomfitClientScope === "EXPLICIT" ? clientId : undefined,
+    headers: clientId ? { [CLIENT_ID_HEADER]: clientId } : undefined,
     adapter: async (config) => {
       requestConfig = config;
       return {

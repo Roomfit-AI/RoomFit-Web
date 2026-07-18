@@ -35,6 +35,7 @@ import {
 } from "./recommendationResult";
 import { clearConfirmedLayout, hasConfirmedLayout } from "./confirmedLayouts";
 import { bindRoomToSetupSession, readRoomSetupSession } from "./roomSetupSession";
+import { getActiveRequestClientId } from "./clientScope";
 import { currentScenario, isCollectorRoom } from "./scenarios";
 import { isHobbyCoralRecommendationSelected } from "../mock/hobbyCoralRecommendation";
 import { readPreferredColorTone } from "./preferredColorTone";
@@ -336,7 +337,7 @@ function isConfirmedReedit(
   return setup?.mode === "REEDIT"
     && setup.roomLayoutId === roomLayoutId
     && setup.backendRoomId === backendRoomId
-    && hasConfirmedLayout(roomLayoutId, storage);
+    && hasConfirmedLayout(roomLayoutId, storage, getActiveRequestClientId(storage, browserSession));
 }
 
 async function loadRoomDetailForInitialSetup(

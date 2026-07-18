@@ -12,8 +12,8 @@ describe("Rooms page request loader", () => {
 
     const sampleA = loader.loadSamples();
     const sampleB = loader.loadSamples();
-    const recentA = loader.loadRecent();
-    const recentB = loader.loadRecent();
+    const recentA = loader.loadRecent("browser-id");
+    const recentB = loader.loadRecent("browser-id");
 
     expect(getSamples).toHaveBeenCalledTimes(1);
     expect(getRecent).toHaveBeenCalledTimes(1);
@@ -39,6 +39,28 @@ describe("Rooms page request loader", () => {
 
     await expect(loader.loadSamples()).resolves.toEqual([]);
     expect(getSamples).toHaveBeenCalledTimes(2);
+  });
+
+  it("keeps Browser and paired App requests independent by clientId", async () => {
+    const getRecent = vi.fn().mockResolvedValue([]);
+    const loader = createRoomsPageLoader({ getSamples: vi.fn().mockResolvedValue([]), getRecent });
+
+    await Promise.all([
+      loader.loadRecent("browser-id"),
+      loader.loadRecent("app-id"),
+    ]);
+
+    expect(getRecent).toHaveBeenCalledTimes(2);
+    expect(getRecent).toHaveBeenCalledWith("browser-id");
+    expect(getRecent).toHaveBeenCalledWith("app-id");
+  });
+
+  it("skips App recent entirely when no paired clientId exists", async () => {
+    const getRecent = vi.fn().mockResolvedValue([]);
+    const loader = createRoomsPageLoader({ getSamples: vi.fn().mockResolvedValue([]), getRecent });
+
+    await expect(loader.loadRecent(null)).resolves.toEqual([]);
+    expect(getRecent).not.toHaveBeenCalled();
   });
 });
 

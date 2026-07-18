@@ -6,6 +6,8 @@
 // ManageFurniture.tsx) since that actually shows the room's real furniture
 // with color/materials, unlike the iOS snapshot which is a flat, textureless
 // RoomPlan mesh capture.
+import { getActiveRequestClientId } from "./clientScope";
+
 const ROOM_THUMBNAILS_KEY = "roomfit:roomThumbnailsByLayoutId";
 
 function readAll(): Record<string, string> {
@@ -25,12 +27,29 @@ function readAll(): Record<string, string> {
 
 export function saveRoomThumbnail(roomLayoutId: string, dataUrl: string): void {
   const all = readAll();
-  all[roomLayoutId] = dataUrl;
+  all[toScopedThumbnailKey(roomLayoutId, readActiveOwner())] = dataUrl;
   localStorage.setItem(ROOM_THUMBNAILS_KEY, JSON.stringify(all));
 }
 
-export function getRoomThumbnail(roomLayoutId: string): string | undefined {
-  return readAll()[roomLayoutId];
+export function getRoomThumbnail(
+  roomLayoutId: string,
+  ownerKey?: string | null,
+): string | undefined {
+  const all = readAll();
+  if (ownerKey !== undefined) return all[toScopedThumbnailKey(roomLayoutId, ownerKey)];
+  return all[toScopedThumbnailKey(roomLayoutId, readActiveOwner())] ?? all[roomLayoutId];
+}
+
+function toScopedThumbnailKey(roomLayoutId: string, ownerKey: string | null): string {
+  return `${ownerKey ?? "LEGACY"}:${roomLayoutId}`;
+}
+
+function readActiveOwner(): string | null {
+  try {
+    return getActiveRequestClientId();
+  } catch {
+    return null;
+  }
 }
 
 // Downscales whatever <canvas> is inside `container` to a list-thumbnail-
