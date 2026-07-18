@@ -5,6 +5,7 @@ import { FiBox, FiCheck, FiLoader, FiPlus, FiSmartphone, FiStar, FiTrash2 } from
 import {
   deleteUploadedRoom,
   getRecentUploadedRooms,
+  getRoomById,
   getSampleRooms,
   type SampleRoomCard,
   type UploadedRoomCard,
@@ -30,6 +31,11 @@ import {
 import { captureCanvasThumbnail, getRoomThumbnail, saveRoomThumbnail } from "../config/roomThumbnails";
 import type { RoomLayout } from "../types";
 import type { PreferredColorToneId } from "../config/preferredColorTone";
+import {
+  clearPendingClientHandoff,
+  readPendingClientHandoff,
+} from "../config/clientScope";
+import { commitRoomHandoff, toHandoffErrorMessage } from "../config/roomHandoff";
 
 const filters = ["전체", "원룸", "사무실"];
 const selectedRoomStorageKeys = [
@@ -55,14 +61,18 @@ export default function Rooms() {
   const [uploadNotice, setUploadNotice] = useState(false);
   const [deletingRoomId, setDeletingRoomId] = useState<number | null>(null);
   const [deleteError, setDeleteError] = useState("");
+  const [handoffError, setHandoffError] = useState("");
   const [selectedRoomId, setSelectedRoomId] = useState(() => getInitialSelectedRoomId());
   const [customRoom, setCustomRoom] = useState<CustomRoomCard | null>(() => readSelectedCustomRoom());
   const [isCustomRoomDialogOpen, setIsCustomRoomDialogOpen] = useState(false);
   const [customRoomForm, setCustomRoomForm] = useState<CustomRoomFormValues>(initialCustomRoomForm);
   const [customRoomErrors, setCustomRoomErrors] = useState<CustomRoomFormErrors>({});
+  const [initialHandoff] = useState(() => readPendingClientHandoff());
+  const [isHandoffResolving, setIsHandoffResolving] = useState(Boolean(initialHandoff));
   const selectedRoomIdRef = useRef(selectedRoomId);
   const knownUploadIds = useRef<Set<number> | null>(null);
   const deletedUploadIds = useRef(new Set<number>());
+  const handoffRoomRef = useRef<UploadedRoomCard | null>(null);
 
   // Ticks up after every background capture completes, purely to force
   // roomNeedingCapture below to re-check which room (if any) still needs
@@ -72,6 +82,38 @@ export default function Rooms() {
   const [thumbnailCaptureTick, setThumbnailCaptureTick] = useState(0);
 
   useEffect(() => {
+    const pendingHandoff = initialHandoff;
+    if (!pendingHandoff) return;
+    let ignore = false;
+
+    getRoomById(pendingHandoff.backendRoomId)
+      .then((room) => {
+        if (ignore) return;
+
+        commitRoomHandoff(room, pendingHandoff);
+
+        handoffRoomRef.current = room;
+        knownUploadIds.current?.add(room.roomId);
+        setUploadedRooms((current) => [room, ...current.filter((item) => item.roomId !== room.roomId)]);
+        selectedRoomIdRef.current = room.layoutId;
+        setSelectedRoomId(room.layoutId);
+        setHandoffError("");
+        setIsHandoffResolving(false);
+      })
+      .catch((error) => {
+        if (ignore) return;
+        clearPendingClientHandoff();
+        setHandoffError(toHandoffErrorMessage(error));
+        setIsHandoffResolving(false);
+      });
+
+    return () => {
+      ignore = true;
+    };
+  }, [initialHandoff]);
+
+  useEffect(() => {
+    if (isHandoffResolving) return;
     let ignore = false;
 
     getSampleRooms()
@@ -94,9 +136,10 @@ export default function Rooms() {
     return () => {
       ignore = true;
     };
-  }, []);
+  }, [isHandoffResolving]);
 
   useEffect(() => {
+    if (isHandoffResolving) return;
     let ignore = false;
     let requestInFlight = false;
 
@@ -108,18 +151,22 @@ export default function Rooms() {
         const rooms = (await getRecentUploadedRooms()).filter(
           (room) => !deletedUploadIds.current.has(room.roomId),
         );
+        const handoffRoom = handoffRoomRef.current;
+        const visibleRooms = handoffRoom && !rooms.some((room) => room.roomId === handoffRoom.roomId)
+          ? [handoffRoom, ...rooms]
+          : rooms;
         if (ignore) return;
 
-        const nextIds = new Set(rooms.map((room) => room.roomId));
+        const nextIds = new Set(visibleRooms.map((room) => room.roomId));
         if (
           knownUploadIds.current !== null &&
-          rooms.some((room) => !knownUploadIds.current?.has(room.roomId))
+          visibleRooms.some((room) => !knownUploadIds.current?.has(room.roomId))
         ) {
           setUploadNotice(true);
         }
 
         knownUploadIds.current = nextIds;
-        setUploadedRooms(rooms);
+        setUploadedRooms(visibleRooms);
       } catch {
         // Keep the last successful list while the next poll retries.
       } finally {
@@ -135,7 +182,7 @@ export default function Rooms() {
       ignore = true;
       window.clearInterval(pollingId);
     };
-  }, []);
+  }, [isHandoffResolving]);
 
   useEffect(() => {
     if (!uploadNotice) return;
@@ -262,6 +309,7 @@ export default function Rooms() {
       deletedUploadIds.current.add(room.roomId);
       knownUploadIds.current?.delete(room.roomId);
       setUploadedRooms((current) => current.filter((item) => item.roomId !== room.roomId));
+      if (handoffRoomRef.current?.roomId === room.roomId) handoffRoomRef.current = null;
 
       const selectedBackendRoomId = localStorage.getItem("roomfit:backendRoomId");
       if (selectedRoomId === room.layoutId || selectedBackendRoomId === String(room.roomId)) {
@@ -347,6 +395,15 @@ export default function Rooms() {
                 className="mb-5 border-l-4 border-[#b42318] bg-[#fff4f2] px-4 py-3 text-sm font-semibold text-[#8a1c14]"
               >
                 {deleteError}
+              </div>
+            )}
+
+            {handoffError && (
+              <div
+                role="alert"
+                className="mb-5 border-l-4 border-[#b42318] bg-[#fff4f2] px-4 py-3 text-sm font-semibold text-[#8a1c14]"
+              >
+                {handoffError}
               </div>
             )}
 

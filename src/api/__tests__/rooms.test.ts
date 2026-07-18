@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import {
   applyBackendFurnitureToLayout,
+  getRoomById,
   toRoomUploadRequest,
   uploadRoomLayout,
   type BackendFurnitureApiItem,
@@ -222,6 +223,53 @@ describe("toRoomUploadRequest", () => {
       expect(post).toHaveBeenCalledWith("/api/rooms/upload", toRoomUploadRequest(baseLayout));
     } finally {
       post.mockRestore();
+    }
+  });
+
+  it("copies a public sample through the scoped Backend copy endpoint", async () => {
+    const post = vi.spyOn(apiClient, "post").mockResolvedValue({
+      data: { success: true, data: { roomId: 58 }, error: null },
+    });
+
+    try {
+      await expect(uploadRoomLayout({ ...baseLayout, id: "api-room-1", source: "SAMPLE" })).resolves.toBe(58);
+      expect(post).toHaveBeenCalledWith("/api/rooms/1/copy");
+    } finally {
+      post.mockRestore();
+    }
+  });
+
+  it("does not guess a Backend ID for a malformed sample layout ID", async () => {
+    await expect(uploadRoomLayout({ ...baseLayout, id: "sample-room", source: "SAMPLE" }))
+      .rejects.toThrow("샘플 Room ID가 올바르지 않습니다.");
+  });
+
+  it("loads an App handoff Room directly by roomId", async () => {
+    const get = vi.spyOn(apiClient, "get").mockResolvedValue({
+      data: {
+        success: true,
+        data: {
+          roomId: 57,
+          name: "App 업로드 방",
+          room: { width: 4, depth: 3, height: 2.4, unit: "meter" },
+          openings: [],
+          furniture: [],
+          source: "ROOMPLAN",
+          createdAt: "2026-07-19T00:00:00Z",
+        },
+        error: null,
+      },
+    });
+
+    try {
+      await expect(getRoomById(57)).resolves.toMatchObject({
+        roomId: 57,
+        layoutId: "api-room-57",
+        source: "ROOMPLAN",
+      });
+      expect(get).toHaveBeenCalledWith("/api/rooms/57");
+    } finally {
+      get.mockRestore();
     }
   });
 });

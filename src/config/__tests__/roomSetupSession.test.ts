@@ -15,6 +15,11 @@ import {
   readRoomSetupSession,
   restoreRoomPreferencesForSetup,
 } from "../roomSetupSession";
+import {
+  BROWSER_CLIENT_ID_KEY,
+  getActiveRequestClientId,
+  readActiveClientScope,
+} from "../clientScope";
 
 describe("room setup session", () => {
   it("clears only temporary setup state when a completely new flow begins", () => {
@@ -61,6 +66,30 @@ describe("room setup session", () => {
     expect(restored.sessionId).toBe("same-session");
     expect(local.getItem("roomfit:selectedPurpose")).toBe("rest");
     expect(browser.getItem("roomfit:visited:preference")).toBe("true");
+  });
+
+  it("migrates a pre-client-scope Backend Room session to legacy without attaching a Browser UUID", () => {
+    const local = createMemoryStorage({ [BROWSER_CLIENT_ID_KEY]: "11111111-1111-4111-8111-111111111111" });
+    const browser = createMemoryStorage({
+      "roomfit:roomSetupSession": JSON.stringify({
+        version: 1,
+        sessionId: "legacy-existing",
+        roomLayoutId: "api-room-9",
+        backendRoomId: 9,
+        mode: "REEDIT",
+        createdAt: "2026-07-19T00:00:00Z",
+      }),
+    });
+
+    initializeRoomSetupSession(local, browser);
+
+    expect(readActiveClientScope(browser)).toMatchObject({
+      mode: "LEGACY_HANDOFF",
+      clientId: null,
+      backendRoomId: 9,
+      roomLayoutId: "api-room-9",
+    });
+    expect(getActiveRequestClientId(local, browser)).toBeNull();
   });
 
   it("does not restore preferences saved under a reusable sample template ID", () => {
@@ -235,6 +264,26 @@ describe("room setup session", () => {
     expect(readRoomSetupSession(browser)).toBeNull();
     expect(browser.getItem("roomfit:recommendationResult")).toBeNull();
     expect(local.getItem("roomfit:selectedRoomId")).toBe("api-room-9");
+    expect(getActiveRequestClientId(local, browser)).toBe(local.getItem(BROWSER_CLIENT_ID_KEY));
+  });
+
+  it("keeps the same browser identity while a new setup replaces Room ownership", () => {
+    const local = createMemoryStorage();
+    const browser = createMemoryStorage();
+    beginNewRoomSetup(local, browser, "setup-a");
+    bindRoomToSetupSession("api-room-1", 1, "NEW", local, browser);
+    const clientId = getActiveRequestClientId(local, browser);
+
+    beginNewRoomSetup(local, browser, "setup-b");
+    bindRoomToSetupSession("api-room-2", 2, "NEW", local, browser);
+
+    expect(getActiveRequestClientId(local, browser)).toBe(clientId);
+    expect(readActiveClientScope(browser)).toMatchObject({
+      mode: "BROWSER_UUID",
+      setupSessionId: "setup-b",
+      roomLayoutId: "api-room-2",
+      backendRoomId: 2,
+    });
   });
 });
 

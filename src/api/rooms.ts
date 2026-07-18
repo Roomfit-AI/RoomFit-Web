@@ -182,13 +182,34 @@ export async function getRecentUploadedRooms(limit = 10): Promise<UploadedRoomCa
   });
 }
 
+export async function getRoomById(roomId: number): Promise<UploadedRoomCard> {
+  const response = await apiClient.get<ApiResponse<SampleRoomApiItem>>(`/api/rooms/${roomId}`);
+  return toUploadedRoomCard(response.data.data, 0);
+}
+
 export async function uploadRoomLayout(room: RoomLayout): Promise<number> {
+  const sampleRoomId = room.source === "SAMPLE" ? readApiRoomId(room.id) : null;
+  if (room.source === "SAMPLE") {
+    if (sampleRoomId === null) throw new Error("샘플 Room ID가 올바르지 않습니다.");
+    const response = await apiClient.post<ApiResponse<SampleRoomApiItem>>(
+      `/api/rooms/${sampleRoomId}/copy`,
+    );
+    return response.data.data.roomId;
+  }
+
   const response = await apiClient.post<ApiResponse<SampleRoomApiItem>>(
     "/api/rooms/upload",
     toRoomUploadRequest(room),
   );
 
   return response.data.data.roomId;
+}
+
+function readApiRoomId(roomLayoutId: string): number | null {
+  const match = /^api-room-(\d+)$/.exec(roomLayoutId);
+  if (!match) return null;
+  const roomId = Number(match[1]);
+  return Number.isInteger(roomId) && roomId > 0 ? roomId : null;
 }
 
 export function toRoomUploadRequest(room: RoomLayout): RoomUploadApiRequest {

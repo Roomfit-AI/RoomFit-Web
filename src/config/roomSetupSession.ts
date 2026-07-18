@@ -12,6 +12,12 @@ import {
   getRoomPreferences,
   normalizeRoomPreferences,
 } from "./roomPreferences";
+import {
+  activateBrowserClientScope,
+  activateLegacyClientScope,
+  bindActiveClientScopeToRoom,
+  readActiveClientScope,
+} from "./clientScope";
 
 const ROOM_SETUP_SESSION_KEY = "roomfit:roomSetupSession";
 const RECOMMENDATION_RESULT_KEY = "roomfit:recommendationResult";
@@ -76,6 +82,7 @@ export function beginNewRoomSetup(
     mode: null,
     createdAt: new Date().toISOString(),
   };
+  activateBrowserClientScope(session.sessionId, storage, browserSession);
   browserSession.setItem(ROOM_SETUP_SESSION_KEY, JSON.stringify(session));
   return session;
 }
@@ -109,7 +116,10 @@ export function initializeRoomSetupSession(
   storage: SetupStorage = localStorage,
   browserSession: SetupStorage = sessionStorage,
 ): RoomSetupSession {
-  return readRoomSetupSession(browserSession) ?? beginNewRoomSetup(storage, browserSession);
+  const existing = readRoomSetupSession(browserSession);
+  if (!existing) return beginNewRoomSetup(storage, browserSession);
+  ensureClientScopeForSetup(existing, storage, browserSession);
+  return existing;
 }
 
 export function bindRoomToSetupSession(
@@ -125,6 +135,7 @@ export function bindRoomToSetupSession(
   }
 
   const current = readRoomSetupSession(browserSession) ?? beginNewRoomSetup(storage, browserSession);
+  ensureClientScopeForSetup(current, storage, browserSession);
   if (current.roomLayoutId !== null
     && (current.roomLayoutId !== roomLayoutId || current.backendRoomId !== backendRoomId)) {
     browserSession.removeItem(RECOMMENDATION_RESULT_KEY);
@@ -136,7 +147,35 @@ export function bindRoomToSetupSession(
     mode,
   };
   browserSession.setItem(ROOM_SETUP_SESSION_KEY, JSON.stringify(next));
+  bindActiveClientScopeToRoom(
+    next.sessionId,
+    roomLayoutId,
+    backendRoomId,
+    storage,
+    browserSession,
+  );
   return next;
+}
+
+function ensureClientScopeForSetup(
+  session: RoomSetupSession,
+  storage: SetupStorage,
+  browserSession: SetupStorage,
+): void {
+  const active = readActiveClientScope(browserSession);
+  if (active?.setupSessionId === session.sessionId) return;
+
+  if (session.backendRoomId !== null && session.roomLayoutId) {
+    activateLegacyClientScope(
+      session.sessionId,
+      session.backendRoomId,
+      session.roomLayoutId,
+      browserSession,
+    );
+    return;
+  }
+
+  activateBrowserClientScope(session.sessionId, storage, browserSession);
 }
 
 export function completeRoomSetupSession(
