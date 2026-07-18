@@ -15,11 +15,13 @@ import {
 
 import {
   deleteUploadedRoom,
+  getRecentUploadedRooms,
   getRoomById,
   type SampleRoomCard,
   type UploadedRoomCard,
 } from "../api/rooms";
 import PairingDialog from "../components/rooms/PairingDialog";
+import { startAppRoomsPolling, type AppRoomsPollingController } from "../config/appRoomsPolling";
 import { clearBrowserRoomOrigin, getBrowserRoomOrigin } from "../config/browserRoomOrigins";
 import {
   clearPendingClientHandoff,
@@ -70,7 +72,6 @@ export default function Rooms() {
   const [activeFilter, setActiveFilter] = useState("전체");
   const [browserClientId] = useState(() => getOrCreateBrowserClientId());
   const [pairedAppClientId, setPairedAppClientId] = useState(() => getPairedAppClientId());
-  const [appReloadToken, setAppReloadToken] = useState(0);
   const [roomSamples, setRoomSamples] = useState<SampleRoomCard[]>([]);
   const [browserRooms, setBrowserRooms] = useState<UploadedRoomCard[]>([]);
   const [appRooms, setAppRooms] = useState<UploadedRoomCard[]>([]);
@@ -95,6 +96,7 @@ export default function Rooms() {
   const [isHandoffResolving, setIsHandoffResolving] = useState(Boolean(initialHandoff));
   const handoffRoomRef = useRef<UploadedRoomCard | null>(null);
   const pairingTriggerRef = useRef<HTMLButtonElement>(null);
+  const appRoomsPollingRef = useRef<AppRoomsPollingController | null>(null);
 
   useEffect(() => {
     const pendingHandoff = initialHandoff;
@@ -108,6 +110,8 @@ export default function Rooms() {
         handoffRoomRef.current = room;
         setSelectedCardKey(`${pendingHandoff.mode === "APP_UUID" ? "paired_app" : "legacy"}:${room.roomId}`);
         if (pendingHandoff.mode === "APP_UUID" && pendingHandoff.clientId) {
+          appRoomsPollingRef.current?.stop();
+          appRoomsPollingRef.current = null;
           setIsAppRoomsLoading(true);
           setIsServerStarting(false);
           setPairedAppClientId(pendingHandoff.clientId);
@@ -160,20 +164,31 @@ export default function Rooms() {
       return;
     }
 
-    let ignore = false;
-    roomsPageLoader.loadRecent(pairedAppClientId)
-      .then((rooms) => {
-        if (ignore) return;
+    const polling = startAppRoomsPolling({
+      clientId: pairedAppClientId,
+      loadRooms: (clientId, signal) => getRecentUploadedRooms(10, clientId, signal),
+      onSuccess: (rooms) => {
         const handoffRoom = handoffRoomRef.current;
+        if (handoffRoom && rooms.some((room) => room.roomId === handoffRoom.roomId)) {
+          handoffRoomRef.current = null;
+        }
         setAppRooms(handoffRoom && !rooms.some((room) => room.roomId === handoffRoom.roomId)
           ? [handoffRoom, ...rooms]
           : rooms);
         setAppRoomsError(false);
-      })
-      .catch(() => { if (!ignore) setAppRoomsError(true); })
-      .finally(() => { if (!ignore) setIsAppRoomsLoading(false); });
-    return () => { ignore = true; };
-  }, [appReloadToken, pairedAppClientId]);
+        setIsAppRoomsLoading(false);
+      },
+      onError: () => {
+        setAppRoomsError(true);
+        setIsAppRoomsLoading(false);
+      },
+    });
+    appRoomsPollingRef.current = polling;
+    return () => {
+      polling.stop();
+      if (appRoomsPollingRef.current === polling) appRoomsPollingRef.current = null;
+    };
+  }, [pairedAppClientId]);
 
   useEffect(() => {
     const loading = isSamplesLoading || isBrowserRoomsLoading || isAppRoomsLoading || isHandoffResolving;
@@ -210,18 +225,11 @@ export default function Rooms() {
     }
   };
 
-  const retryAppRooms = async () => {
+  const retryAppRooms = () => {
     if (!pairedAppClientId) return;
     setIsServerStarting(false);
-    setIsAppRoomsLoading(true);
     setAppRoomsError(false);
-    try {
-      setAppRooms(await roomsPageLoader.loadRecent(pairedAppClientId));
-    } catch {
-      setAppRoomsError(true);
-    } finally {
-      setIsAppRoomsLoading(false);
-    }
+    appRoomsPollingRef.current?.refresh();
   };
 
   const selectRoom = (
@@ -265,6 +273,7 @@ export default function Rooms() {
         setBrowserRooms((current) => current.filter((room) => room.roomId !== card.room.roomId));
         clearBrowserRoomOrigin(card.room.roomId);
       } else {
+        handoffRoomRef.current = null;
         setAppRooms((current) => current.filter((room) => room.roomId !== card.room.roomId));
       }
       if (selectedCardKey === key) {
@@ -284,12 +293,34 @@ export default function Rooms() {
   };
 
   const disconnectApp = () => {
+    appRoomsPollingRef.current?.stop();
+    appRoomsPollingRef.current = null;
+    handoffRoomRef.current = null;
     clearPairedAppClientId();
     setPairedAppClientId(null);
     setAppRooms([]);
     setAppRoomsError(false);
     setIsAppRoomsLoading(false);
     setPairingNotice("");
+  };
+
+  const handlePairedApp = (clientId: string) => {
+    setIsServerStarting(false);
+    setPairingNotice("RoomFit Scan과 연결되었습니다.");
+    if (clientId === pairedAppClientId) {
+      appRoomsPollingRef.current?.refresh();
+      closePairingDialog();
+      return;
+    }
+
+    appRoomsPollingRef.current?.stop();
+    appRoomsPollingRef.current = null;
+    handoffRoomRef.current = null;
+    setAppRooms([]);
+    setAppRoomsError(false);
+    setIsAppRoomsLoading(true);
+    setPairedAppClientId(clientId);
+    closePairingDialog();
   };
 
   const anyLoading = isSamplesLoading || isBrowserRoomsLoading || isAppRoomsLoading || isHandoffResolving;
@@ -404,7 +435,7 @@ export default function Rooms() {
         </section>
       </section>
 
-      {isPairingDialogOpen && <PairingDialog onClose={closePairingDialog} onPaired={(clientId) => { setIsAppRoomsLoading(true); setIsServerStarting(false); setPairedAppClientId(clientId); setAppReloadToken((current) => current + 1); setPairingNotice("RoomFit Scan과 연결되었습니다."); closePairingDialog(); }} />}
+      {isPairingDialogOpen && <PairingDialog onClose={closePairingDialog} onPaired={handlePairedApp} />}
       {isCustomRoomDialogOpen && <CustomRoomDialog form={customRoomForm} errors={customRoomErrors} onChange={setCustomRoomForm} onClose={() => setIsCustomRoomDialogOpen(false)} onSubmit={submitCustomRoom} />}
     </main>
   );

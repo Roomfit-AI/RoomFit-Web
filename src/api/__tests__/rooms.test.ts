@@ -56,6 +56,24 @@ describe("scoped recent Room API", () => {
       get.mockRestore();
     }
   });
+
+  it("forwards the polling AbortSignal without changing the explicit App scope", async () => {
+    const get = vi.spyOn(apiClient, "get").mockResolvedValue({
+      data: { success: true, data: [], error: null },
+    });
+    const controller = new AbortController();
+    try {
+      await expect(getRecentUploadedRooms(10, "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa", controller.signal)).resolves.toEqual([]);
+      expect(get).toHaveBeenCalledWith("/api/rooms/uploads/recent", {
+        params: { limit: 10 },
+        signal: controller.signal,
+        roomfitClientScope: "EXPLICIT",
+        roomfitClientIdOverride: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+      });
+    } finally {
+      get.mockRestore();
+    }
+  });
 });
 
 function createBackendFurniture(

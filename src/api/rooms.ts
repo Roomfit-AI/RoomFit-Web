@@ -161,9 +161,11 @@ export async function getSampleRoomLayouts(): Promise<RoomLayout[]> {
 export async function getRecentUploadedRooms(
   limit = 10,
   clientId?: string,
+  signal?: AbortSignal,
 ): Promise<UploadedRoomCard[]> {
   const response = await apiClient.get<ApiResponse<SampleRoomApiItem[]>>("/api/rooms/uploads/recent", {
     params: { limit },
+    ...(signal ? { signal } : {}),
     ...(clientId ? {
       roomfitClientScope: "EXPLICIT" as const,
       roomfitClientIdOverride: clientId,
