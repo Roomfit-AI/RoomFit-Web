@@ -9,6 +9,7 @@ import type { BackendFurnitureApiItem } from "../../api/rooms";
 import type { Furniture, RoomLayout } from "../../types";
 import {
   confirmActiveLayout,
+  loadManagedFurnitureLayout,
   prepareAdditionalFurnitureForEditor,
   prepareManagedFurnitureDraft,
   refreshActiveDraftNavigationState,
@@ -41,6 +42,52 @@ class MemoryStorage {
 }
 
 describe("Draft layout editing workflow", () => {
+  it("loads a newly created Room without making any Layout request", async () => {
+    const room = createRoom("api-room-42");
+    room.furniture = [];
+    const storage = selectedRoomStorage(room, 42);
+    const browser = setupBrowserStorage(room.id, 42, "custom-setup");
+    const backendRoom = { ...room, name: "Backend custom room", furniture: [] };
+    const api = fakeApi({ room: backendRoom });
+
+    const restored = await loadManagedFurnitureLayout(room, 42, storage, api, browser);
+
+    expect(restored).toEqual(backendRoom);
+    expect(restored?.furniture).toEqual([]);
+    expect(api.getRoomLayout).toHaveBeenCalledWith(42);
+    expect(api.getLayout).not.toHaveBeenCalled();
+    expect(api.getLatestConfirmedLayout).not.toHaveBeenCalled();
+  });
+
+  it("loads existing Room furniture before the first Layout exists", async () => {
+    const room = createRoom("api-room-43");
+    room.furniture = [];
+    const storage = selectedRoomStorage(room, 43);
+    const browser = setupBrowserStorage(room.id, 43, "custom-furniture-setup");
+    const backendRoom = createRoom(room.id, -0.25, Math.PI / 2);
+    const api = fakeApi({ room: backendRoom });
+
+    const restored = await loadManagedFurnitureLayout(room, 43, storage, api, browser);
+
+    expect(restored?.furniture.map((item) => item.id)).toEqual(["bed-1", "desk-1"]);
+    expect(api.getRoomLayout).toHaveBeenCalledWith(43);
+    expect(api.getLatestConfirmedLayout).not.toHaveBeenCalled();
+  });
+
+  it("keeps the existing Layout lookup path for a re-edit setup", async () => {
+    const room = createRoom("api-room-7");
+    const storage = selectedRoomStorage(room, 7);
+    const browser = setupBrowserStorage(room.id, 7, "reedit-setup", "REEDIT");
+    const latest = response(70, true, null, backendFurnitureFromRoom(room), 7);
+    const api = fakeApi({ latest });
+
+    const restored = await loadManagedFurnitureLayout(room, 7, storage, api, browser);
+
+    expect(restored).not.toBeNull();
+    expect(api.getLatestConfirmedLayout).toHaveBeenCalledWith(7);
+    expect(api.getRoomLayout).not.toHaveBeenCalled();
+  });
+
   it("preserves move, rotation, and deletion through every intermediate route", async () => {
     const editedRoom = createRoom("api-room-1", -0.8, Math.PI / 2);
     editedRoom.furniture[1].status = "deleted";
@@ -232,6 +279,26 @@ describe("Draft layout editing workflow", () => {
     });
     expect(api.createLayoutDraft).not.toHaveBeenCalled();
     expect(api.updateLayout).not.toHaveBeenCalled();
+  });
+
+  it("enters initial setup without probing a Layout endpoint for a new Room", async () => {
+    const room = createRoom("api-room-44");
+    const storage = selectedRoomStorage(room, 44);
+    const browser = setupBrowserStorage(room.id, 44, "no-layout-setup");
+    const api = fakeApi();
+
+    const result = await prepareManagedFurnitureDraft(storage, api, browser);
+
+    expect(result).toMatchObject({
+      roomId: 44,
+      roomLayoutId: room.id,
+      activeLayoutId: null,
+      sourceLayoutId: null,
+      editingMode: "INITIAL_SETUP",
+    });
+    expect(api.getLayout).not.toHaveBeenCalled();
+    expect(api.getLatestConfirmedLayout).not.toHaveBeenCalled();
+    expect(api.getRoomLayout).not.toHaveBeenCalled();
   });
 
   it("creates and persists an initial Layout before navigating to Editor", async () => {
@@ -461,14 +528,19 @@ function selectedRoomStorage(room: RoomLayout, backendRoomId = 1): MemoryStorage
   return storage;
 }
 
-function setupBrowserStorage(roomLayoutId: string, backendRoomId: number, sessionId: string): MemoryStorage {
+function setupBrowserStorage(
+  roomLayoutId: string,
+  backendRoomId: number,
+  sessionId: string,
+  mode: "NEW" | "REEDIT" = "NEW",
+): MemoryStorage {
   const storage = new MemoryStorage();
   storage.setItem("roomfit:roomSetupSession", JSON.stringify({
     version: 1,
     sessionId,
     roomLayoutId,
     backendRoomId,
-    mode: "NEW",
+    mode,
     createdAt: "2026-07-18T10:00:00.000Z",
   }));
   return storage;
@@ -618,6 +690,7 @@ function response(
 }
 
 function fakeApi({
+  room = createRoom(),
   latest = null,
   active = response(11, false, 10),
   draft = response(11, false, 10),
@@ -625,6 +698,7 @@ function fakeApi({
   added = response(11, false, 10),
   recommendation = recommendationResponse(51, "SUCCESS"),
 }: {
+  room?: RoomLayout;
   latest?: LayoutResponse | null;
   active?: LayoutResponse;
   draft?: LayoutResponse;
@@ -633,6 +707,7 @@ function fakeApi({
   recommendation?: LayoutRecommendationResponse;
 } = {}): LayoutWorkflowApi {
   return {
+    getRoomLayout: vi.fn().mockResolvedValue(room),
     getLayout: vi.fn().mockResolvedValue(active),
     getLatestConfirmedLayout: vi.fn().mockResolvedValue(latest),
     createLayoutDraft: vi.fn().mockResolvedValue(draft),

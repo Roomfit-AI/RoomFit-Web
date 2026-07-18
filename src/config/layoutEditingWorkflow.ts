@@ -11,7 +11,7 @@ import {
   type LayoutResponse,
 } from "../api/layouts";
 import { resolveRequiredFurnitureTypes } from "../api/agentContextRequest";
-import { applyBackendFurnitureToLayout } from "../api/rooms";
+import { applyBackendFurnitureToLayout, getRoomById } from "../api/rooms";
 import type { RoomLayout } from "../types";
 import {
   resolveRoomLayoutPreferredColorTone,
@@ -41,6 +41,7 @@ import { readPreferredColorTone } from "./preferredColorTone";
 type WorkflowStorage = Pick<Storage, "getItem" | "setItem" | "removeItem">;
 
 export interface LayoutWorkflowApi {
+  getRoomLayout: (roomId: number) => Promise<RoomLayout>;
   getLayout: typeof getLayout;
   getLatestConfirmedLayout: typeof getLatestConfirmedLayout;
   createLayoutDraft: typeof createLayoutDraft;
@@ -52,6 +53,7 @@ export interface LayoutWorkflowApi {
 }
 
 const defaultApi: LayoutWorkflowApi = {
+  getRoomLayout: async (roomId) => (await getRoomById(roomId)).layout,
   getLayout,
   getLatestConfirmedLayout,
   createLayoutDraft,
@@ -67,11 +69,27 @@ export async function loadManagedFurnitureLayout(
   backendRoomId: number,
   storage: WorkflowStorage = localStorage,
   api: LayoutWorkflowApi = defaultApi,
+  browserSession: WorkflowStorage | null = defaultBrowserSession(),
 ): Promise<RoomLayout | null> {
   const session = readActiveLayoutEditingSession(storage);
-  const response = isSessionForRoom(session, room.id, backendRoomId) && !session.confirmed
-    ? await api.getLayout(session.activeLayoutId)
-    : await api.getLatestConfirmedLayout(backendRoomId);
+  if (isSessionForRoom(session, room.id, backendRoomId) && !session.confirmed) {
+    const response = await api.getLayout(session.activeLayoutId);
+    assertLayoutOwner(response, backendRoomId);
+    saveLayoutResponseSession(room.id, response, storage, session.editingMode);
+    const restored = applyBackendFurnitureToLayout(room, response.recommendedFurniture);
+    persistActiveDraftMirror(restored, storage);
+    return restored;
+  }
+
+  if (isNewSetupWithoutLayout(room.id, backendRoomId, browserSession)) {
+    const backendRoom = await api.getRoomLayout(backendRoomId);
+    if (backendRoom.id !== room.id) {
+      throw new Error("Backend Room response does not match the selected Room.");
+    }
+    return backendRoom;
+  }
+
+  const response = await api.getLatestConfirmedLayout(backendRoomId);
 
   if (!response) return null;
   assertLayoutOwner(response, backendRoomId);
@@ -88,6 +106,7 @@ export async function loadManagedFurnitureLayout(
 export async function prepareManagedFurnitureDraft(
   storage: WorkflowStorage = localStorage,
   api: LayoutWorkflowApi = defaultApi,
+  browserSession: WorkflowStorage | null = defaultBrowserSession(),
 ): Promise<LayoutNavigationState | null> {
   const room = readSelectedRoomLayout(storage);
   const backendRoomId = parseBackendRoomId(storage.getItem("roomfit:backendRoomId"));
@@ -96,7 +115,9 @@ export async function prepareManagedFurnitureDraft(
   const session = readActiveLayoutEditingSession(storage);
   const active = isSessionForRoom(session, room.id, backendRoomId)
     ? await api.getLayout(session.activeLayoutId)
-    : await api.getLatestConfirmedLayout(backendRoomId);
+    : isNewSetupWithoutLayout(room.id, backendRoomId, browserSession)
+      ? null
+      : await api.getLatestConfirmedLayout(backendRoomId);
 
   if (!active) {
     return createInitialSetupNavigationState(room.id, backendRoomId, room);
@@ -302,6 +323,22 @@ function parseBackendRoomId(raw: string | null): number | null {
   if (!raw) return null;
   const parsed = Number(raw);
   return Number.isInteger(parsed) && parsed > 0 ? parsed : null;
+}
+
+function isNewSetupWithoutLayout(
+  roomLayoutId: string,
+  backendRoomId: number,
+  browserSession: WorkflowStorage | null,
+): boolean {
+  if (!browserSession) return false;
+  const setup = readRoomSetupSession(browserSession);
+  return setup?.mode === "NEW"
+    && setup.roomLayoutId === roomLayoutId
+    && setup.backendRoomId === backendRoomId;
+}
+
+function defaultBrowserSession(): WorkflowStorage | null {
+  return typeof sessionStorage === "undefined" ? null : sessionStorage;
 }
 
 function shouldUseLocalScenario(room: RoomLayout, storage: WorkflowStorage): boolean {
