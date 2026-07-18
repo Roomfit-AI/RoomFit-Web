@@ -2,6 +2,11 @@ import { useEffect, useState } from "react";
 import { FiCheck } from "react-icons/fi";
 import PageStepHeader from "../components/ui/PageStepHeader";
 import { hasRoomPreferences } from "../config/roomPreferences";
+import {
+  getReferenceStyleGuidanceMessage,
+  normalizeInteriorStyleId,
+  notifyOnboardingSelectionChanged,
+} from "../config/onboardingSelection";
 
 import minimal from "../assets/styles/minimal.png";
 import natural from "../assets/styles/natural.png";
@@ -50,7 +55,9 @@ export default function ReferenceImage() {
     }
     sessionStorage.setItem(referenceImageVisitedKey, "true");
 
-    return localStorage.getItem("roomfit:selectedStyle") ?? "";
+    // 복원 값도 지원하는 유효 스타일일 때만 선택으로 인정한다 — 빈 문자열/지원하지
+    // 않는 값은 미선택("")으로 두고, 첫 번째 스타일로 임의 치환하지 않는다.
+    return normalizeInteriorStyleId(localStorage.getItem("roomfit:selectedStyle")) ?? "";
   });
 
   useEffect(() => {
@@ -59,17 +66,32 @@ export default function ReferenceImage() {
     } else {
       localStorage.removeItem("roomfit:selectedStyle");
     }
+
+    // 선택이 바뀌었으니 Navbar가 "다음 단계" 활성화 여부를 다시 계산하도록 알린다.
+    notifyOnboardingSelectionChanged();
   }, [selectedStyle]);
+
+  const guidanceMessage = getReferenceStyleGuidanceMessage(
+    normalizeInteriorStyleId(selectedStyle),
+  );
 
   return (
     <main className="min-h-[calc(100vh-76px)] bg-[#fbfbfb] px-5 py-8 text-[#141414] sm:px-8 lg:px-10">
       <section className="mx-auto max-w-7xl">
         <PageStepHeader step={3} title="라이프 스타일 및 선호하는 디자인 선택" className="mb-12" />
 
-        <header className="mb-20 text-center">
+        <header className="mb-8 text-center">
           <h1 className="text-3xl font-extrabold tracking-normal sm:text-4xl">마음에 드는 인테리어 이미지를 선택해주세요</h1>
           <p className="mt-3 text-sm font-semibold text-[#777777]">선택한 이미지는 AI 추천 스타일에 반영됩니다.</p>
         </header>
+
+        <div role="status" aria-live="polite" className="mb-12 flex justify-center">
+          {guidanceMessage && (
+            <p className="rounded-lg bg-[#fff8e6] px-4 py-3 text-sm font-bold text-[#8a5a00]">
+              {guidanceMessage}
+            </p>
+          )}
+        </div>
 
         <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-5">
           {styles.map((style) => {
