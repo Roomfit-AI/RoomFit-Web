@@ -2,10 +2,11 @@ import { createHash } from "node:crypto";
 import { copyFile, mkdir, readdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { computeVariantVisualFootprint } from "./furnitureVisualFootprint.mjs";
 
 const WEB_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const CATALOG_SCHEMA_VERSION = "1.0";
-const CATALOG_VERSION = "2026-07-18.1";
+const CATALOG_VERSION = "2026-07-18.2";
 const LEGACY_DESK_ORDER = [
   "desk-compact",
   "desk-storage",
@@ -154,6 +155,7 @@ const catalog = {
       furnitureTypeCode: document.furnitureTypeCode,
       label: document.name,
       dimensions: document.dimensions,
+      visualFootprint: computeVariantVisualFootprint(document),
       styleTags: document.styleTags,
       lifestyleTags: document.lifestyleTags,
       materials: document.materials,

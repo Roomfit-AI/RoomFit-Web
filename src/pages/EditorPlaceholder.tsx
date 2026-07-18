@@ -9,6 +9,7 @@ import {
 import { applyBackendFurnitureToLayout } from "../api/rooms";
 import { ensureCustomRoomBackendRoom } from "../api/customRoomBackend";
 import RoomViewer from "../components/room/RoomViewer";
+import { moveFurnitureInsideRoom, rotateFurnitureInsideRoom } from "../components/room/furnitureBoundary";
 import { getLiveMirrorForSelectedRoom } from "../config/confirmedLayouts";
 import { applyLocalFeedback } from "../config/localFeedback";
 import { buildScenarioValidation } from "../config/localValidation";
@@ -277,10 +278,7 @@ export default function EditorPlaceholder() {
         ...current,
         furniture: current.furniture.map((item) =>
           item.id === id
-            ? {
-                ...item,
-                position,
-              }
+            ? moveFurnitureInsideRoom(current, item, position)
             : item,
         ),
       };
@@ -297,10 +295,7 @@ export default function EditorPlaceholder() {
         ...current,
         furniture: current.furniture.map((item) =>
           item.id === id
-            ? {
-                ...item,
-                rotationY: item.rotationY + Math.PI / 2,
-              }
+            ? rotateFurnitureInsideRoom(current, item, item.rotationY + Math.PI / 2)
             : item,
         ),
       };

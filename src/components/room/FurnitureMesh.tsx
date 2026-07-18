@@ -3,11 +3,16 @@ import type { ThreeEvent } from "@react-three/fiber";
 import { useEffect, useRef } from "react";
 import * as THREE from "three";
 import FurnitureRenderer from "../furniture/FurnitureRenderer";
-import type { Furniture, Vector2D } from "../../types";
+import type { Furniture, RoomLayout, Vector2D } from "../../types";
 import type { PreferredColorToneId } from "../../config/preferredColorTone";
+import {
+  clampFurniturePositionToRoom,
+  resolveFurnitureLocalFootprint,
+} from "./furnitureBoundary";
 
 interface FurnitureMeshProps {
   item: Furniture;
+  room: Pick<RoomLayout, "width" | "depth" | "walls">;
   isSelected: boolean;
   canTransform: boolean;
   showSelectionIndicator: boolean;
@@ -18,6 +23,7 @@ interface FurnitureMeshProps {
 
 export function FurnitureMesh({
   item,
+  room,
   isSelected,
   canTransform,
   showSelectionIndicator,
@@ -47,10 +53,17 @@ export function FurnitureMesh({
       return;
     }
 
-    onMove(item.id, {
+    const position = clampFurniturePositionToRoom(room, item.dimensions, {
       x: groupRef.current.position.x,
       z: groupRef.current.position.z,
-    });
+    }, item.rotationY, resolveFurnitureLocalFootprint(item));
+    if (!position) {
+      groupRef.current.position.set(item.position.x, heightOffset, item.position.z);
+      return;
+    }
+    groupRef.current.position.x = position.x;
+    groupRef.current.position.z = position.z;
+    onMove(item.id, position);
   };
 
   const meshGroup = (

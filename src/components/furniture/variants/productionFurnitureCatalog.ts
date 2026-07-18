@@ -16,7 +16,15 @@ interface CatalogProduct {
   variantId: string;
   furnitureType: string;
   dimensions: { width: number; depth: number; height: number };
+  visualFootprint: FurnitureVariantVisualFootprint;
   variantPath: string;
+}
+
+export interface FurnitureVariantVisualFootprint {
+  minX: number;
+  maxX: number;
+  minZ: number;
+  maxZ: number;
 }
 
 interface GeneratedCatalogDocument {
@@ -71,6 +79,13 @@ export function createProductionFurnitureCatalog(): ProductionFurnitureCatalog {
   return { materialPresets, registry, variants };
 }
 
+export function getProductionFurnitureVisualFootprint(
+  variantId: string,
+): FurnitureVariantVisualFootprint | null {
+  const product = generatedCatalog.products.find((item) => item.variantId === variantId);
+  return product?.visualFootprint ?? null;
+}
+
 function indexVariantDocuments(modules: Record<string, unknown>): Map<string, unknown> {
   const documents = new Map<string, unknown>();
   for (const [modulePath, document] of Object.entries(modules)) {
@@ -96,6 +111,17 @@ function assertProductContract(product: CatalogProduct, variant: ValidatedFurnit
     if (product.dimensions[dimension] !== variant.dimensions[dimension]) {
       throw new Error(`Catalog ${dimension} does not match variant "${variant.variantId}"`);
     }
+  }
+  assertVisualFootprint(product.variantId, product.visualFootprint);
+}
+
+function assertVisualFootprint(
+  variantId: string,
+  footprint: FurnitureVariantVisualFootprint,
+): void {
+  if (!footprint || ![footprint.minX, footprint.maxX, footprint.minZ, footprint.maxZ].every(Number.isFinite)
+      || footprint.minX >= footprint.maxX || footprint.minZ >= footprint.maxZ) {
+    throw new Error(`Catalog visual footprint is invalid for variant "${variantId}"`);
   }
 }
 

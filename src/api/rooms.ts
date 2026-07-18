@@ -3,6 +3,10 @@ import { isAxiosError } from "axios";
 import { apiClient } from "./client";
 import type { Furniture, FurnitureCategory, FurnitureStatus, Opening, RoomLayout, WallSegment } from "../types";
 import { normalizeCanonicalFurnitureType } from "../config/canonicalFurnitureType";
+import {
+  clampFurniturePositionToRoom,
+  resolveFurnitureLocalFootprint,
+} from "../components/room/furnitureBoundary";
 
 export interface SampleRoomApiItem {
   roomId: number;
@@ -318,7 +322,7 @@ function toRoomLayout(item: SampleRoomApiItem): RoomLayout {
     walls,
     doors: toOpenings(item.openings, "door", "현관", width, depth, walls),
     windows: toOpenings(item.openings, "window", "창문", width, depth, walls),
-    furniture: item.furniture.map((furniture) => toFurniture(furniture, width, depth)),
+    furniture: item.furniture.map((furniture) => toFurniture(furniture, width, depth, walls)),
   };
 }
 
@@ -531,34 +535,6 @@ function toOpening(
   };
 }
 
-// Real RoomPlan detections occasionally report an oversized dimension for a
-// piece of furniture (e.g. a "storage" item scanned as 2.55m deep in a 3.5m
-// wide room). Once that gets rotated 90°/270°, the long dimension swaps onto
-// the world axis its raw position sits close to the edge of, and half the
-// object ends up outside the room entirely — a chunk of furniture floating
-// past the wall. Clamp the rotated bounding box to stay inside the room, the
-// same safety net iOS's own clampFootprintCenter() applies before export.
-function clampFootprint(
-  position: { x: number; z: number },
-  rotationY: number,
-  width: number,
-  depth: number,
-  roomWidth: number,
-  roomDepth: number,
-): { x: number; z: number } {
-  const cos = Math.abs(Math.cos(rotationY));
-  const sin = Math.abs(Math.sin(rotationY));
-  const halfExtentX = Math.min((cos * width + sin * depth) / 2, roomWidth / 2);
-  const halfExtentZ = Math.min((sin * width + cos * depth) / 2, roomDepth / 2);
-  const halfRoomWidth = roomWidth / 2;
-  const halfRoomDepth = roomDepth / 2;
-
-  return {
-    x: Math.min(Math.max(position.x, -halfRoomWidth + halfExtentX), halfRoomWidth - halfExtentX),
-    z: Math.min(Math.max(position.z, -halfRoomDepth + halfExtentZ), halfRoomDepth - halfExtentZ),
-  };
-}
-
 function openingPosition(wall: string, offset: number, roomWidth: number, roomDepth: number) {
   const halfWidth = roomWidth / 2;
   const halfDepth = roomDepth / 2;
@@ -582,6 +558,7 @@ function toFurniture(
   item: SampleRoomApiItem["furniture"][number],
   roomWidth: number,
   roomDepth: number,
+  walls: WallSegment[],
 ): Furniture {
   const category = toFurnitureCategory(item.type);
   const materialType = materialByCategory(category);
@@ -590,7 +567,7 @@ function toFurniture(
   const rotationY = normalizeRotation(item.rotation);
   const rawPosition = { x: item.position.x - roomWidth / 2, z: item.position.z - roomDepth / 2 };
 
-  return {
+  const furniture: Furniture = {
     id: item.id,
     name: item.label,
     category,
@@ -603,7 +580,7 @@ function toFurniture(
       depth: item.depth,
       height: item.height,
     },
-    position: clampFootprint(rawPosition, rotationY, item.width, item.depth, roomWidth, roomDepth),
+    position: rawPosition,
     rotationY,
     color,
     material: collectorAppearance?.material ?? {
@@ -615,6 +592,14 @@ function toFurniture(
     status: toFurnitureStatus(item.status),
     removable: true,
   };
+  const position = clampFurniturePositionToRoom(
+    { width: roomWidth, depth: roomDepth, walls },
+    furniture.dimensions,
+    rawPosition,
+    rotationY,
+    resolveFurnitureLocalFootprint(furniture),
+  );
+  return position ? { ...furniture, position } : furniture;
 }
 
 function toFurnitureCategory(type: string): FurnitureCategory {
@@ -714,6 +699,6 @@ export function applyBackendFurnitureToLayout(
 ): RoomLayout {
   return {
     ...layout,
-    furniture: furniture.map((item) => toFurniture(item, layout.width, layout.depth)),
+    furniture: furniture.map((item) => toFurniture(item, layout.width, layout.depth, layout.walls)),
   };
 }

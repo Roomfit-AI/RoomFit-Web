@@ -10,6 +10,7 @@ import {
   PRODUCTION_FURNITURE_CATALOG_METADATA,
   PRODUCTION_FURNITURE_VARIANT_IDS,
   createProductionFurnitureCatalog,
+  getProductionFurnitureVisualFootprint,
 } from "../productionFurnitureCatalog";
 import type { ValidatedFurnitureVariant } from "../types";
 
@@ -72,6 +73,40 @@ describe("production furniture catalog", () => {
     }
 
     expect(mismatches).toEqual([]);
+  });
+
+  it("keeps generated visual footprints identical to rendered part geometry", () => {
+    const { variants } = createProductionFurnitureCatalog();
+
+    for (const variant of variants) {
+      const bounds = computeFurnitureVariantBounds(variant);
+      expect(getProductionFurnitureVisualFootprint(variant.variantId), variant.variantId).toEqual({
+        minX: Number(bounds.min.x.toFixed(9)),
+        maxX: Number(bounds.max.x.toFixed(9)),
+        minZ: Number(bounds.min.z.toFixed(9)),
+        maxZ: Number(bounds.max.z.toFixed(9)),
+      });
+    }
+  });
+
+  it("audits variants whose visual geometry exceeds declared X/Z dimensions", () => {
+    const { variants } = createProductionFurnitureCatalog();
+    const exceeding = variants.flatMap((variant) => {
+      const footprint = getProductionFurnitureVisualFootprint(variant.variantId)!;
+      const widthExcess = footprint.maxX - footprint.minX - variant.dimensions.width;
+      const depthExcess = footprint.maxZ - footprint.minZ - variant.dimensions.depth;
+      return widthExcess > 0.000001 || depthExcess > 0.000001
+        ? [{ variantId: variant.variantId, widthExcess, depthExcess }]
+        : [];
+    });
+
+    expect(exceeding.map((item) => item.variantId)).toEqual([
+      "plant-corner",
+      "plant-floor",
+      "plant-midcentury",
+      "plant-tabletop",
+    ]);
+    expect(Math.max(...exceeding.map((item) => item.widthExcess))).toBeCloseTo(0.075899069, 8);
   });
 
   it("keeps all production purchase URLs on HTTPS", () => {

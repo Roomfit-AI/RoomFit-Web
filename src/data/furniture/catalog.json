@@ -1,6 +1,6 @@
 {
   "schemaVersion": "1.0",
-  "catalogVersion": "2026-07-18.1",
+  "catalogVersion": "2026-07-18.2",
   "sourceHash": "sha256:96d726f4a90f3b91d6195f6c63bde17714c92abc9a1f8c41cab3d5faafa30ee1",
   "variantCount": 93,
   "typeAliases": {
@@ -78,6 +78,12 @@
         "depth": 0.6,
         "height": 0.73
       },
+      "visualFootprint": {
+        "minX": -0.600000024,
+        "maxX": 0.600000024,
+        "minZ": -0.300000012,
+        "maxZ": 0.300000012
+      },
       "styleTags": [
         "minimal",
         "classic"
@@ -108,6 +114,12 @@
         "width": 1.4,
         "depth": 0.62,
         "height": 0.73
+      },
+      "visualFootprint": {
+        "minX": -0.7,
+        "maxX": 0.699999988,
+        "minZ": -0.310000002,
+        "maxZ": 0.310000002
       },
       "styleTags": [
         "natural",
@@ -142,6 +154,12 @@
         "depth": 1,
         "height": 1.42
       },
+      "visualFootprint": {
+        "minX": -0.650000012,
+        "maxX": 0.65,
+        "minZ": -0.5,
+        "maxZ": 0.5
+      },
       "styleTags": [
         "minimal",
         "modern"
@@ -174,6 +192,12 @@
         "depth": 0.74,
         "height": 0.812
       },
+      "visualFootprint": {
+        "minX": -0.875,
+        "maxX": 0.875,
+        "minZ": -0.370000005,
+        "maxZ": 0.370000005
+      },
       "styleTags": [
         "midcentury",
         "modern"
@@ -204,6 +228,12 @@
         "width": 1.57,
         "depth": 2.22,
         "height": 1.21
+      },
+      "visualFootprint": {
+        "minX": -0.785000026,
+        "maxX": 0.785000026,
+        "minZ": -1.11,
+        "maxZ": 1.11
       },
       "styleTags": [
         "classic",
@@ -237,6 +267,12 @@
         "depth": 2.06,
         "height": 0.85
       },
+      "visualFootprint": {
+        "minX": -0.469999999,
+        "maxX": 0.469999999,
+        "minZ": -1.030000001,
+        "maxZ": 1.029999971
+      },
       "styleTags": [
         "natural",
         "minimal"
@@ -267,6 +303,12 @@
         "width": 2.07,
         "depth": 1.04,
         "height": 1.82
+      },
+      "visualFootprint": {
+        "minX": -1.034999999,
+        "maxX": 1.034999999,
+        "minZ": -0.519999999,
+        "maxZ": 0.519999999
       },
       "styleTags": [
         "modern",
@@ -303,6 +345,12 @@
         "depth": 2.05,
         "height": 0.7
       },
+      "visualFootprint": {
+        "minX": -0.414999999,
+        "maxX": 0.414999999,
+        "minZ": -1.024999999,
+        "maxZ": 1.024999999
+      },
       "styleTags": [
         "natural",
         "minimal"
@@ -335,6 +383,12 @@
         "width": 1.8,
         "depth": 2.31,
         "height": 1.19
+      },
+      "visualFootprint": {
+        "minX": -0.900000002,
+        "maxX": 0.900000002,
+        "minZ": -1.154999999,
+        "maxZ": 1.155000001
       },
       "styleTags": [
         "midcentury",
@@ -371,6 +425,12 @@
         "depth": 2.06,
         "height": 0.635
       },
+      "visualFootprint": {
+        "minX": -0.48,
+        "maxX": 0.48,
+        "minZ": -1.03,
+        "maxZ": 1.03
+      },
       "styleTags": [
         "natural",
         "minimal"
@@ -404,6 +464,12 @@
         "depth": 0.1,
         "height": 1.79
       },
+      "visualFootprint": {
+        "minX": -0.64,
+        "maxX": 0.64,
+        "minZ": -0.050000001,
+        "maxZ": 0.050000001
+      },
       "styleTags": [
         "minimal",
         "natural"
@@ -436,6 +502,12 @@
         "depth": 0.1,
         "height": 1.8
       },
+      "visualFootprint": {
+        "minX": -0.625,
+        "maxX": 0.625,
+        "minZ": -0.050000001,
+        "maxZ": 0.050000001
+      },
       "styleTags": [
         "minimal",
         "natural"
@@ -467,6 +539,12 @@
         "width": 1.21,
         "depth": 0.37,
         "height": 1.34
+      },
+      "visualFootprint": {
+        "minX": -0.605000019,
+        "maxX": 0.605000019,
+        "minZ": -0.185000002,
+        "maxZ": 0.185000002
       },
       "styleTags": [
         "classic",
@@ -501,6 +579,12 @@
         "depth": 0.39,
         "height": 1.465
       },
+      "visualFootprint": {
+        "minX": -0.3825,
+        "maxX": 0.3825,
+        "minZ": -0.194999993,
+        "maxZ": 0.194999993
+      },
       "styleTags": [
         "minimal",
         "modern"
@@ -532,6 +616,12 @@
         "width": 0.8,
         "depth": 0.28,
         "height": 2.02
+      },
+      "visualFootprint": {
+        "minX": -0.400000006,
+        "maxX": 0.400000006,
+        "minZ": -0.140000001,
+        "maxZ": 0.140000001
       },
       "styleTags": [
         "minimal",
@@ -565,6 +655,12 @@
         "depth": 0.28,
         "height": 1.06
       },
+      "visualFootprint": {
+        "minX": -0.400000006,
+        "maxX": 0.400000006,
+        "minZ": -0.140000001,
+        "maxZ": 0.140000001
+      },
       "styleTags": [
         "minimal",
         "modern"
@@ -597,6 +693,12 @@
         "depth": 0.381,
         "height": 1.8034
       },
+      "visualFootprint": {
+        "minX": -0.762,
+        "maxX": 0.762,
+        "minZ": -0.1905,
+        "maxZ": 0.1905
+      },
       "styleTags": [
         "midcentury",
         "modern"
@@ -627,6 +729,12 @@
         "width": 0.71,
         "depth": 0.71,
         "height": 1.14
+      },
+      "visualFootprint": {
+        "minX": -0.354999989,
+        "maxX": 0.354999989,
+        "minZ": -0.355,
+        "maxZ": 0.354999989
       },
       "styleTags": [
         "modern",
@@ -660,6 +768,12 @@
         "depth": 0.54,
         "height": 0.8
       },
+      "visualFootprint": {
+        "minX": -0.230000004,
+        "maxX": 0.230000004,
+        "minZ": -0.27,
+        "maxZ": 0.27
+      },
       "styleTags": [
         "modern",
         "minimal"
@@ -689,6 +803,12 @@
         "width": 0.42,
         "depth": 0.56,
         "height": 0.86
+      },
+      "visualFootprint": {
+        "minX": -0.209999993,
+        "maxX": 0.209999993,
+        "minZ": -0.279999999,
+        "maxZ": 0.279999999
       },
       "styleTags": [
         "classic",
@@ -721,6 +841,12 @@
         "depth": 0.67,
         "height": 0.9
       },
+      "visualFootprint": {
+        "minX": -0.335000008,
+        "maxX": 0.335000008,
+        "minZ": -0.335000008,
+        "maxZ": 0.335000008
+      },
       "styleTags": [
         "modern",
         "minimal"
@@ -752,6 +878,12 @@
         "width": 0.66,
         "depth": 0.66,
         "height": 1.32
+      },
+      "visualFootprint": {
+        "minX": -0.330000013,
+        "maxX": 0.330000013,
+        "minZ": -0.330000013,
+        "maxZ": 0.330000013
       },
       "styleTags": [
         "modern",
@@ -787,6 +919,12 @@
         "depth": 0.54,
         "height": 0.88
       },
+      "visualFootprint": {
+        "minX": -0.280000001,
+        "maxX": 0.280000001,
+        "minZ": -0.269999999,
+        "maxZ": 0.27
+      },
       "styleTags": [
         "midcentury",
         "modern"
@@ -820,6 +958,12 @@
         "depth": 0.2,
         "height": 2.4
       },
+      "visualFootprint": {
+        "minX": -0.910000026,
+        "maxX": 0.910000026,
+        "minZ": -0.100000001,
+        "maxZ": 0.100000001
+      },
       "styleTags": [
         "modern",
         "minimal"
@@ -851,6 +995,12 @@
         "depth": 0.18,
         "height": 2.54
       },
+      "visualFootprint": {
+        "minX": -1.480000019,
+        "maxX": 1.480000019,
+        "minZ": -0.090000004,
+        "maxZ": 0.090000004
+      },
       "styleTags": [
         "minimal",
         "natural"
@@ -880,6 +1030,12 @@
         "width": 0.35,
         "depth": 0.4,
         "height": 0.49
+      },
+      "visualFootprint": {
+        "minX": -0.174999997,
+        "maxX": 0.174999997,
+        "minZ": -0.200000003,
+        "maxZ": 0.200000003
       },
       "styleTags": [
         "minimal",
@@ -913,6 +1069,12 @@
         "depth": 0.48,
         "height": 1.22
       },
+      "visualFootprint": {
+        "minX": -0.444999993,
+        "maxX": 0.444999993,
+        "minZ": -0.239999995,
+        "maxZ": 0.24
+      },
       "styleTags": [
         "classic",
         "natural"
@@ -942,6 +1104,12 @@
         "width": 1.4,
         "depth": 0.4,
         "height": 0.72
+      },
+      "visualFootprint": {
+        "minX": -0.699999988,
+        "maxX": 0.699999988,
+        "minZ": -0.200000003,
+        "maxZ": 0.200000003
       },
       "styleTags": [
         "minimal",
@@ -973,6 +1141,12 @@
         "width": 0.7,
         "depth": 0.4,
         "height": 1.12
+      },
+      "visualFootprint": {
+        "minX": -0.349999994,
+        "maxX": 0.349999994,
+        "minZ": -0.200000003,
+        "maxZ": 0.200000003
       },
       "styleTags": [
         "minimal",
@@ -1006,6 +1180,12 @@
         "depth": 0.51,
         "height": 1.75
       },
+      "visualFootprint": {
+        "minX": -0.555,
+        "maxX": 0.555,
+        "minZ": -0.254999995,
+        "maxZ": 0.254999995
+      },
       "styleTags": [
         "minimal",
         "modern"
@@ -1037,6 +1217,12 @@
         "depth": 0.8,
         "height": 1.75
       },
+      "visualFootprint": {
+        "minX": -0.400000006,
+        "maxX": 0.400000006,
+        "minZ": -0.400000006,
+        "maxZ": 0.400000006
+      },
       "styleTags": [
         "minimal",
         "modern"
@@ -1067,6 +1253,12 @@
         "depth": 0.47,
         "height": 1.39
       },
+      "visualFootprint": {
+        "minX": -0.270000011,
+        "maxX": 0.270000011,
+        "minZ": -0.234999999,
+        "maxZ": 0.234999999
+      },
       "styleTags": [
         "natural",
         "minimal"
@@ -1096,6 +1288,12 @@
         "width": 0.9,
         "depth": 0.36,
         "height": 1.75
+      },
+      "visualFootprint": {
+        "minX": -0.45,
+        "maxX": 0.45,
+        "minZ": -0.180000007,
+        "maxZ": 0.180000007
       },
       "styleTags": [
         "minimal",
@@ -1129,6 +1327,12 @@
         "depth": 0.52,
         "height": 1.48
       },
+      "visualFootprint": {
+        "minX": -0.25999999,
+        "maxX": 0.25999999,
+        "minZ": -0.25999999,
+        "maxZ": 0.25999999
+      },
       "styleTags": [
         "modern",
         "minimal"
@@ -1161,6 +1365,12 @@
         "depth": 0.19,
         "height": 0.3745
       },
+      "visualFootprint": {
+        "minX": -0.094999999,
+        "maxX": 0.094999999,
+        "minZ": -0.094999999,
+        "maxZ": 0.094999999
+      },
       "styleTags": [
         "modern",
         "minimal"
@@ -1191,6 +1401,12 @@
         "width": 0.28,
         "depth": 0.28,
         "height": 0.285
+      },
+      "visualFootprint": {
+        "minX": -0.140000001,
+        "maxX": 0.140000001,
+        "minZ": -0.140000001,
+        "maxZ": 0.140000001
       },
       "styleTags": [
         "midcentury",
@@ -1224,6 +1440,12 @@
         "depth": 0.28,
         "height": 0.46
       },
+      "visualFootprint": {
+        "minX": -0.140000001,
+        "maxX": 0.140000001,
+        "minZ": -0.140000001,
+        "maxZ": 0.140000001
+      },
       "styleTags": [
         "modern",
         "minimal"
@@ -1255,6 +1477,12 @@
         "width": 1.2,
         "depth": 0.42,
         "height": 0.48
+      },
+      "visualFootprint": {
+        "minX": -0.600000024,
+        "maxX": 0.600000024,
+        "minZ": -0.21,
+        "maxZ": 0.21
       },
       "styleTags": [
         "minimal",
@@ -1289,6 +1517,12 @@
         "depth": 0.35,
         "height": 0.36
       },
+      "visualFootprint": {
+        "minX": -0.600000024,
+        "maxX": 0.600000024,
+        "minZ": -0.174999997,
+        "maxZ": 0.174999997
+      },
       "styleTags": [
         "minimal",
         "modern"
@@ -1321,6 +1555,12 @@
         "depth": 0.381,
         "height": 0.6604
       },
+      "visualFootprint": {
+        "minX": -0.635,
+        "maxX": 0.635,
+        "minZ": -0.1905,
+        "maxZ": 0.1905
+      },
       "styleTags": [
         "midcentury",
         "modern"
@@ -1351,6 +1591,12 @@
         "width": 1.2,
         "depth": 0.4,
         "height": 0.64
+      },
+      "visualFootprint": {
+        "minX": -0.600000024,
+        "maxX": 0.600000024,
+        "minZ": -0.200000003,
+        "maxZ": 0.200000003
       },
       "styleTags": [
         "minimal",
@@ -1385,6 +1631,12 @@
         "depth": 0.097,
         "height": 1.968
       },
+      "visualFootprint": {
+        "minX": -0.389999986,
+        "maxX": 0.389999986,
+        "minZ": -0.048499999,
+        "maxZ": 0.0485
+      },
       "styleTags": [
         "classic",
         "natural"
@@ -1417,6 +1669,12 @@
         "depth": 0.36,
         "height": 1.6825
       },
+      "visualFootprint": {
+        "minX": -0.225,
+        "maxX": 0.225,
+        "minZ": -0.180000007,
+        "maxZ": 0.180000007
+      },
       "styleTags": [
         "modern",
         "minimal"
@@ -1447,6 +1705,12 @@
         "width": 0.485,
         "depth": 0.36,
         "height": 1.585
+      },
+      "visualFootprint": {
+        "minX": -0.2425,
+        "maxX": 0.2425,
+        "minZ": -0.180000007,
+        "maxZ": 0.180000007
       },
       "styleTags": [
         "modern",
@@ -1479,6 +1743,12 @@
         "depth": 0.072,
         "height": 1.55
       },
+      "visualFootprint": {
+        "minX": -0.209999993,
+        "maxX": 0.209999993,
+        "minZ": -0.036,
+        "maxZ": 0.036
+      },
       "styleTags": [
         "modern",
         "minimal"
@@ -1509,6 +1779,12 @@
         "width": 0.556,
         "depth": 0.181,
         "height": 0.417
+      },
+      "visualFootprint": {
+        "minX": -0.277999997,
+        "maxX": 0.277999997,
+        "minZ": -0.090499997,
+        "maxZ": 0.090499997
       },
       "styleTags": [
         "modern",
@@ -1542,6 +1818,12 @@
         "depth": 0.181,
         "height": 0.417
       },
+      "visualFootprint": {
+        "minX": -0.565999997,
+        "maxX": 0.565999997,
+        "minZ": -0.090499997,
+        "maxZ": 0.090499997
+      },
       "styleTags": [
         "modern",
         "minimal"
@@ -1573,6 +1855,12 @@
         "width": 0.7142,
         "depth": 0.2635,
         "height": 0.5819
+      },
+      "visualFootprint": {
+        "minX": -0.35710001,
+        "maxX": 0.35710001,
+        "minZ": -0.131750003,
+        "maxZ": 0.131750003
       },
       "styleTags": [
         "modern",
@@ -1608,6 +1896,12 @@
         "depth": 0.223,
         "height": 0.483
       },
+      "visualFootprint": {
+        "minX": -0.404500008,
+        "maxX": 0.404500008,
+        "minZ": -0.111500002,
+        "maxZ": 0.111500002
+      },
       "styleTags": [
         "modern",
         "minimal"
@@ -1640,6 +1934,12 @@
         "depth": 0.67,
         "height": 0.73
       },
+      "visualFootprint": {
+        "minX": -0.335000008,
+        "maxX": 0.335000008,
+        "minZ": -0.335000008,
+        "maxZ": 0.335000008
+      },
       "styleTags": [
         "minimal",
         "modern"
@@ -1670,6 +1970,12 @@
         "width": 1.52,
         "depth": 0.8,
         "height": 0.74
+      },
+      "visualFootprint": {
+        "minX": -0.760000006,
+        "maxX": 0.760000006,
+        "minZ": -0.400000006,
+        "maxZ": 0.400000006
       },
       "styleTags": [
         "classic",
@@ -1704,6 +2010,12 @@
         "depth": 0.79,
         "height": 0.9
       },
+      "visualFootprint": {
+        "minX": -0.629999995,
+        "maxX": 0.629999995,
+        "minZ": -0.395000011,
+        "maxZ": 0.395000011
+      },
       "styleTags": [
         "minimal",
         "modern"
@@ -1735,6 +2047,12 @@
         "width": 0.8,
         "depth": 0.6,
         "height": 0.75
+      },
+      "visualFootprint": {
+        "minX": -0.400000006,
+        "maxX": 0.400000006,
+        "minZ": -0.300000012,
+        "maxZ": 0.300000012
       },
       "styleTags": [
         "minimal",
@@ -1768,6 +2086,12 @@
         "depth": 0.43,
         "height": 0.69
       },
+      "visualFootprint": {
+        "minX": -0.264999986,
+        "maxX": 0.264999986,
+        "minZ": -0.215000004,
+        "maxZ": 0.215000004
+      },
       "styleTags": [
         "classic",
         "natural"
@@ -1798,6 +2122,12 @@
         "width": 0.35,
         "depth": 0.426,
         "height": 0.49
+      },
+      "visualFootprint": {
+        "minX": -0.174999997,
+        "maxX": 0.174999997,
+        "minZ": -0.213000003,
+        "maxZ": 0.213
       },
       "styleTags": [
         "minimal",
@@ -1830,6 +2160,12 @@
         "depth": 0.32,
         "height": 0.4
       },
+      "visualFootprint": {
+        "minX": -0.159999996,
+        "maxX": 0.159999996,
+        "minZ": -0.159999996,
+        "maxZ": 0.159999996
+      },
       "styleTags": [
         "midcentury",
         "modern"
@@ -1860,6 +2196,12 @@
         "width": 0.37,
         "depth": 0.28,
         "height": 0.45
+      },
+      "visualFootprint": {
+        "minX": -0.185000002,
+        "maxX": 0.185000002,
+        "minZ": -0.140000001,
+        "maxZ": 0.140000001
       },
       "styleTags": [
         "minimal",
@@ -1892,6 +2234,12 @@
         "depth": 0.45,
         "height": 0.53
       },
+      "visualFootprint": {
+        "minX": -0.224999994,
+        "maxX": 0.224999994,
+        "minZ": -0.224999994,
+        "maxZ": 0.224999994
+      },
       "styleTags": [
         "minimal",
         "natural"
@@ -1923,6 +2271,12 @@
         "depth": 0.39,
         "height": 0.77
       },
+      "visualFootprint": {
+        "minX": -0.735000014,
+        "maxX": 0.735000014,
+        "minZ": -0.194999993,
+        "maxZ": 0.194999993
+      },
       "styleTags": [
         "minimal",
         "natural"
@@ -1952,6 +2306,12 @@
         "width": 1.5,
         "depth": 0.32,
         "height": 1.41
+      },
+      "visualFootprint": {
+        "minX": -0.75,
+        "maxX": 0.75,
+        "minZ": -0.159999996,
+        "maxZ": 0.159999996
       },
       "styleTags": [
         "modern",
@@ -1986,6 +2346,12 @@
         "depth": 0.39,
         "height": 1.49
       },
+      "visualFootprint": {
+        "minX": -0.385,
+        "maxX": 0.385,
+        "minZ": -0.194999993,
+        "maxZ": 0.194999993
+      },
       "styleTags": [
         "modern",
         "minimal"
@@ -2015,6 +2381,12 @@
         "width": 1.52,
         "depth": 0.3,
         "height": 1.52
+      },
+      "visualFootprint": {
+        "minX": -0.76,
+        "maxX": 0.76,
+        "minZ": -0.150000006,
+        "maxZ": 0.150000006
       },
       "styleTags": [
         "modern",
@@ -2046,6 +2418,12 @@
         "width": 0.6005779884792202,
         "depth": 0.6231243531863027,
         "height": 0.8999999922374311
+      },
+      "visualFootprint": {
+        "minX": -0.34691298,
+        "maxX": 0.329564078,
+        "minZ": -0.319191822,
+        "maxZ": 0.315590616
       },
       "styleTags": [
         "natural",
@@ -2080,6 +2458,12 @@
         "depth": 0.33407750271294784,
         "height": 0.3999999965988789
       },
+      "visualFootprint": {
+        "minX": -0.172573821,
+        "maxX": 0.172115708,
+        "minZ": -0.168523852,
+        "maxZ": 0.168422533
+      },
       "styleTags": [
         "natural",
         "minimal"
@@ -2112,6 +2496,12 @@
         "width": 0.3418371500697426,
         "depth": 0.3570907760380737,
         "height": 0.6499999931191831
+      },
+      "visualFootprint": {
+        "minX": -0.202676924,
+        "maxX": 0.191393805,
+        "minZ": -0.184364964,
+        "maxZ": 0.182203735
       },
       "styleTags": [
         "midcentury",
@@ -2147,6 +2537,12 @@
         "depth": 0.10344419281736927,
         "height": 0.1400000007522717
       },
+      "visualFootprint": {
+        "minX": -0.050665827,
+        "maxX": 0.05205347,
+        "minZ": -0.053381959,
+        "maxZ": 0.05229539
+      },
       "styleTags": [
         "natural",
         "minimal"
@@ -2179,6 +2575,12 @@
         "width": 1.3,
         "depth": 1.6,
         "height": 0.009
+      },
+      "visualFootprint": {
+        "minX": -0.649999976,
+        "maxX": 0.649999976,
+        "minZ": -0.800000012,
+        "maxZ": 0.800000012
       },
       "styleTags": [
         "midcentury",
@@ -2214,6 +2616,12 @@
         "depth": 1.8,
         "height": 0.002
       },
+      "visualFootprint": {
+        "minX": -0.600000024,
+        "maxX": 0.600000024,
+        "minZ": -0.899999976,
+        "maxZ": 0.899999976
+      },
       "styleTags": [
         "natural",
         "minimal"
@@ -2243,6 +2651,12 @@
         "width": 1.3,
         "depth": 1.3,
         "height": 0.018
+      },
+      "visualFootprint": {
+        "minX": -0.649999976,
+        "maxX": 0.649999976,
+        "minZ": -0.649999976,
+        "maxZ": 0.649999976
       },
       "styleTags": [
         "natural",
@@ -2274,6 +2688,12 @@
         "depth": 1.8,
         "height": 0.006
       },
+      "visualFootprint": {
+        "minX": -0.349999994,
+        "maxX": 0.349999994,
+        "minZ": -0.899999976,
+        "maxZ": 0.899999976
+      },
       "styleTags": [
         "natural",
         "minimal"
@@ -2304,6 +2724,12 @@
         "width": 0.9,
         "depth": 0.55,
         "height": 0.45
+      },
+      "visualFootprint": {
+        "minX": -0.449999988,
+        "maxX": 0.449999988,
+        "minZ": -0.275000006,
+        "maxZ": 0.275000006
       },
       "styleTags": [
         "minimal",
@@ -2337,6 +2763,12 @@
         "depth": 0.48,
         "height": 0.51
       },
+      "visualFootprint": {
+        "minX": -0.239999995,
+        "maxX": 0.239999995,
+        "minZ": -0.239999995,
+        "maxZ": 0.239999995
+      },
       "styleTags": [
         "midcentury",
         "modern"
@@ -2367,6 +2799,12 @@
         "width": 0.49,
         "depth": 0.49,
         "height": 0.51
+      },
+      "visualFootprint": {
+        "minX": -0.245000005,
+        "maxX": 0.245000005,
+        "minZ": -0.245000005,
+        "maxZ": 0.245000005
       },
       "styleTags": [
         "minimal",
@@ -2400,6 +2838,12 @@
         "depth": 0.31,
         "height": 0.52
       },
+      "visualFootprint": {
+        "minX": -0.400000006,
+        "maxX": 0.400000006,
+        "minZ": -0.155000001,
+        "maxZ": 0.155000001
+      },
       "styleTags": [
         "minimal",
         "natural"
@@ -2431,6 +2875,12 @@
         "width": 2.09,
         "depth": 0.89,
         "height": 0.83
+      },
+      "visualFootprint": {
+        "minX": -1.044999999,
+        "maxX": 1.044999999,
+        "minZ": -0.444999999,
+        "maxZ": 0.445
       },
       "styleTags": [
         "classic",
@@ -2467,6 +2917,12 @@
         "depth": 1,
         "height": 0.87
       },
+      "visualFootprint": {
+        "minX": -0.709999979,
+        "maxX": 0.709999979,
+        "minZ": -0.5,
+        "maxZ": 0.5
+      },
       "styleTags": [
         "modern",
         "minimal"
@@ -2498,6 +2954,12 @@
         "width": 2.05,
         "depth": 0.87,
         "height": 0.63
+      },
+      "visualFootprint": {
+        "minX": -1.024999999,
+        "maxX": 1.024999999,
+        "minZ": -0.435000002,
+        "maxZ": 0.435000002
       },
       "styleTags": [
         "modern",
@@ -2532,6 +2994,12 @@
         "depth": 0.97,
         "height": 0.9
       },
+      "visualFootprint": {
+        "minX": -1,
+        "maxX": 1,
+        "minZ": -0.485000014,
+        "maxZ": 0.485000014
+      },
       "styleTags": [
         "modern",
         "minimal"
@@ -2563,6 +3031,12 @@
         "width": 1.89,
         "depth": 1.02,
         "height": 0.88
+      },
+      "visualFootprint": {
+        "minX": -0.944999997,
+        "maxX": 0.944999997,
+        "minZ": -0.510000004,
+        "maxZ": 0.509999999
       },
       "styleTags": [
         "midcentury",
@@ -2597,6 +3071,12 @@
         "depth": 0.88,
         "height": 0.88
       },
+      "visualFootprint": {
+        "minX": -1.090000033,
+        "maxX": 1.090000033,
+        "minZ": -0.439999998,
+        "maxZ": 0.439999998
+      },
       "styleTags": [
         "classic",
         "natural"
@@ -2628,6 +3108,12 @@
         "width": 1.32,
         "depth": 0.74,
         "height": 0.79
+      },
+      "visualFootprint": {
+        "minX": -0.659999999,
+        "maxX": 0.659999999,
+        "minZ": -0.369999999,
+        "maxZ": 0.369999999
       },
       "styleTags": [
         "midcentury",
@@ -2665,6 +3151,12 @@
         "depth": 0.95,
         "height": 0.71
       },
+      "visualFootprint": {
+        "minX": -0.699999994,
+        "maxX": 0.699999994,
+        "minZ": -0.475,
+        "maxZ": 0.475
+      },
       "styleTags": [
         "modern",
         "natural"
@@ -2696,6 +3188,12 @@
         "width": 0.93,
         "depth": 0.99,
         "height": 0.83
+      },
+      "visualFootprint": {
+        "minX": -0.465000004,
+        "maxX": 0.465000004,
+        "minZ": -0.495000001,
+        "maxZ": 0.495000013
       },
       "styleTags": [
         "modern",
@@ -2730,6 +3228,12 @@
         "depth": 0.78,
         "height": 0.68
       },
+      "visualFootprint": {
+        "minX": -0.605,
+        "maxX": 0.605,
+        "minZ": -0.390000001,
+        "maxZ": 0.389999986
+      },
       "styleTags": [
         "modern",
         "natural"
@@ -2763,6 +3267,12 @@
         "depth": 0.191,
         "height": 0.6097
       },
+      "visualFootprint": {
+        "minX": -0.483749986,
+        "maxX": 0.483749986,
+        "minZ": -0.0955,
+        "maxZ": 0.0955
+      },
       "styleTags": [
         "modern",
         "minimal"
@@ -2794,6 +3304,12 @@
         "width": 0.9695,
         "depth": 0.1968,
         "height": 0.5919
+      },
+      "visualFootprint": {
+        "minX": -0.484750003,
+        "maxX": 0.484750003,
+        "minZ": -0.098399997,
+        "maxZ": 0.098399997
       },
       "styleTags": [
         "modern",
@@ -2827,6 +3343,12 @@
         "depth": 0.1505,
         "height": 0.4654
       },
+      "visualFootprint": {
+        "minX": -0.368699998,
+        "maxX": 0.368699998,
+        "minZ": -0.07525,
+        "maxZ": 0.07525
+      },
       "styleTags": [
         "modern",
         "minimal"
@@ -2858,6 +3380,12 @@
         "width": 1.2341,
         "depth": 0.237,
         "height": 0.758
+      },
+      "visualFootprint": {
+        "minX": -0.617049992,
+        "maxX": 0.617049992,
+        "minZ": -0.118500002,
+        "maxZ": 0.118500002
       },
       "styleTags": [
         "modern",
@@ -2891,6 +3419,12 @@
         "depth": 0.64,
         "height": 2.01
       },
+      "visualFootprint": {
+        "minX": -0.639999986,
+        "maxX": 0.639999986,
+        "minZ": -0.32,
+        "maxZ": 0.32
+      },
       "styleTags": [
         "classic",
         "natural"
@@ -2921,6 +3455,12 @@
         "width": 0.79,
         "depth": 0.55,
         "height": 1.76
+      },
+      "visualFootprint": {
+        "minX": -0.395000011,
+        "maxX": 0.395000011,
+        "minZ": -0.275000006,
+        "maxZ": 0.275000006
       },
       "styleTags": [
         "minimal",
@@ -2954,6 +3494,12 @@
         "depth": 0.47,
         "height": 1.86
       },
+      "visualFootprint": {
+        "minX": -0.600000024,
+        "maxX": 0.600000024,
+        "minZ": -0.235,
+        "maxZ": 0.235
+      },
       "styleTags": [
         "natural",
         "minimal"
@@ -2986,6 +3532,12 @@
         "depth": 0.51,
         "height": 1.73
       },
+      "visualFootprint": {
+        "minX": -0.495000005,
+        "maxX": 0.495000005,
+        "minZ": -0.254999995,
+        "maxZ": 0.254999995
+      },
       "styleTags": [
         "minimal",
         "modern"
@@ -3016,6 +3568,12 @@
         "width": 1.17,
         "depth": 0.55,
         "height": 1.76
+      },
+      "visualFootprint": {
+        "minX": -0.585,
+        "maxX": 0.585,
+        "minZ": -0.275000006,
+        "maxZ": 0.275000006
       },
       "styleTags": [
         "minimal",

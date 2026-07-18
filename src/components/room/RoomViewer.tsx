@@ -89,6 +89,7 @@ export function RoomViewer({
             <FurnitureMesh
               key={item.id}
               item={item}
+              room={room}
               isSelected={selectedFurnitureId === item.id}
               canTransform={showEditingHelpers}
               showSelectionIndicator={showEditingHelpers}

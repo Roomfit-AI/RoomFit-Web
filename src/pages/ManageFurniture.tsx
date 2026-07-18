@@ -3,6 +3,12 @@ import { FiChevronDown, FiChevronUp, FiMoreHorizontal, FiPlus, FiRotateCcw, FiTr
 
 import { getSampleRoomLayouts } from "../api/rooms";
 import { RoomViewer } from "../components/room/RoomViewer";
+import {
+  clampFurniturePositionToRoom,
+  moveFurnitureInsideRoom,
+  resolveFurnitureLocalFootprint,
+  rotateFurnitureInsideRoom,
+} from "../components/room/furnitureBoundary";
 import { resolveRoomLayoutPreferredColorTone } from "../config/appliedColorTone";
 import { getLiveMirrorForSelectedRoom } from "../config/confirmedLayouts";
 import { captureCanvasThumbnail, saveRoomThumbnail } from "../config/roomThumbnails";
@@ -186,11 +192,22 @@ export default function ManageFurniture() {
 
   const addFurniture = (item: Furniture) => {
     addedFurnitureSequenceRef.current += 1;
-    const nextItem = {
+    const proposedItem = {
       ...item,
       id: `added-${item.id}-${addedFurnitureSequenceRef.current}`,
       position: findOpenPosition(furniture.length),
     };
+    const position = clampFurniturePositionToRoom(
+      selectedRoom,
+      proposedItem.dimensions,
+      proposedItem.position,
+      proposedItem.rotationY,
+      resolveFurnitureLocalFootprint(proposedItem),
+    );
+    if (!position) {
+      return;
+    }
+    const nextItem = { ...proposedItem, position };
 
     setFurniture((current) => [...current, nextItem]);
     setSelectedFurnitureId(nextItem.id);
@@ -202,7 +219,9 @@ export default function ManageFurniture() {
   };
 
   const moveFurniture = (id: string, position: Vector2D) => {
-    setFurniture((current) => current.map((item) => (item.id === id ? { ...item, position } : item)));
+    setFurniture((current) => current.map((item) => (
+      item.id === id ? moveFurnitureInsideRoom(selectedRoom, item, position) : item
+    )));
   };
 
   const resetFurniture = () => {
@@ -212,7 +231,11 @@ export default function ManageFurniture() {
 
   const rotateFurniture = (id: string) => {
     setFurniture((current) =>
-      current.map((item) => (item.id === id ? { ...item, rotationY: item.rotationY + Math.PI / 2 } : item)),
+      current.map((item) => (
+        item.id === id
+          ? rotateFurnitureInsideRoom(selectedRoom, item, item.rotationY + Math.PI / 2)
+          : item
+      )),
     );
   };
 
