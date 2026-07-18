@@ -1,0 +1,149 @@
+{
+  "schemaVersion": "1.0",
+  "name": "롤 블라인드",
+  "furnitureType": "커튼·블라인드",
+  "variant": "롤 블라인드",
+  "units": "meter",
+  "coordinateSystem": {
+    "origin": "floor-center",
+    "axes": {
+      "x": "right",
+      "y": "up",
+      "z": "front"
+    }
+  },
+  "rotationUnit": "radian",
+  "dimensions": {
+    "width": 1.28,
+    "depth": 0.1,
+    "height": 1.79
+  },
+  "materials": [
+    "fabricLight",
+    "fabricDark",
+    "metal",
+    "metalLight"
+  ],
+  "parts": [
+    {
+      "id": "roller-panel",
+      "geometry": "box",
+      "size": [
+        1.2,
+        1.68,
+        0.018
+      ],
+      "position": [
+        0,
+        0.84,
+        0
+      ],
+      "material": "fabricLight"
+    },
+    {
+      "id": "roller-bottom-rail",
+      "geometry": "box",
+      "size": [
+        1.2,
+        0.05,
+        0.04
+      ],
+      "position": [
+        0,
+        0.025,
+        0
+      ],
+      "material": "metalLight"
+    },
+    {
+      "id": "roller-tube",
+      "geometry": "cylinder",
+      "size": [
+        0.05,
+        0.05,
+        1.2
+      ],
+      "position": [
+        0,
+        1.73,
+        0
+      ],
+      "rotation": [
+        0,
+        0,
+        1.5707963267948966
+      ],
+      "material": "metal"
+    },
+    {
+      "id": "roller-bracket-left",
+      "geometry": "box",
+      "size": [
+        0.04,
+        0.12,
+        0.1
+      ],
+      "position": [
+        -0.62,
+        1.73,
+        0
+      ],
+      "material": "metal"
+    },
+    {
+      "id": "roller-bracket-right",
+      "geometry": "box",
+      "size": [
+        0.04,
+        0.12,
+        0.1
+      ],
+      "position": [
+        0.62,
+        1.73,
+        0
+      ],
+      "material": "metal"
+    },
+    {
+      "id": "roller-pull-cord",
+      "geometry": "cylinder",
+      "size": [
+        0.008,
+        0.008,
+        0.66
+      ],
+      "position": [
+        0.56,
+        1.35,
+        0.006
+      ],
+      "material": "fabricDark"
+    },
+    {
+      "id": "roller-pull-weight",
+      "geometry": "box",
+      "size": [
+        0.035,
+        0.07,
+        0.025
+      ],
+      "position": [
+        0.56,
+        1.02,
+        0.006
+      ],
+      "material": "metalLight"
+    }
+  ],
+  "variantId": "blind-roller",
+  "furnitureTypeCode": "CURTAIN_BLIND",
+  "styleTags": [
+    "minimal",
+    "natural"
+  ],
+  "lifestyleTags": [
+    "REST"
+  ],
+  "purchaseUrl": "https://www.ikea.com/kr/ko/p/sandvedel-roller-blind-beige-00469785/"
+}

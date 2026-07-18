@@ -1,0 +1,144 @@
+{
+  "schemaVersion": "1.0",
+  "name": "수납형 사이드 테이블",
+  "furnitureType": "사이드 테이블",
+  "variant": "수납형",
+  "units": "meter",
+  "coordinateSystem": {
+    "origin": "floor-center",
+    "axes": {
+      "x": "right",
+      "y": "up",
+      "z": "front"
+    }
+  },
+  "rotationUnit": "radian",
+  "dimensions": {
+    "width": 0.8,
+    "depth": 0.31,
+    "height": 0.52
+  },
+  "materials": [
+    "wood",
+    "woodLight",
+    "woodDark"
+  ],
+  "parts": [
+    {
+      "id": "bottom-panel",
+      "geometry": "box",
+      "size": [
+        0.8,
+        0.06,
+        0.31
+      ],
+      "position": [
+        0,
+        0.03,
+        0
+      ],
+      "material": "woodDark"
+    },
+    {
+      "id": "side-left",
+      "geometry": "box",
+      "size": [
+        0.04,
+        0.42,
+        0.31
+      ],
+      "position": [
+        -0.38,
+        0.27,
+        0
+      ],
+      "material": "wood"
+    },
+    {
+      "id": "side-right",
+      "geometry": "box",
+      "size": [
+        0.04,
+        0.42,
+        0.31
+      ],
+      "position": [
+        0.38,
+        0.27,
+        0
+      ],
+      "material": "wood"
+    },
+    {
+      "id": "partition",
+      "geometry": "box",
+      "size": [
+        0.04,
+        0.42,
+        0.31
+      ],
+      "position": [
+        0.08,
+        0.27,
+        0
+      ],
+      "material": "wood"
+    },
+    {
+      "id": "shelf-wide",
+      "geometry": "box",
+      "size": [
+        0.42,
+        0.03,
+        0.27
+      ],
+      "position": [
+        -0.15,
+        0.29,
+        0
+      ],
+      "material": "woodLight"
+    },
+    {
+      "id": "shelf-narrow",
+      "geometry": "box",
+      "size": [
+        0.26,
+        0.03,
+        0.27
+      ],
+      "position": [
+        0.23,
+        0.2,
+        0
+      ],
+      "material": "woodLight"
+    },
+    {
+      "id": "top-panel",
+      "geometry": "box",
+      "size": [
+        0.8,
+        0.04,
+        0.31
+      ],
+      "position": [
+        0,
+        0.5,
+        0
+      ],
+      "material": "woodDark"
+    }
+  ],
+  "variantId": "side-table-storage",
+  "furnitureTypeCode": "SIDE_TABLE",
+  "styleTags": [
+    "minimal",
+    "natural"
+  ],
+  "lifestyleTags": [
+    "REST",
+    "STORAGE"
+  ],
+  "purchaseUrl": "https://www.ikea.com/kr/ko/p/holmerud-side-table-oak-effect-00541423/"
+}

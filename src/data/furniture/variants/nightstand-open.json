@@ -1,0 +1,143 @@
+{
+  "schemaVersion": "1.0",
+  "name": "오픈형 협탁",
+  "furnitureType": "협탁",
+  "variant": "오픈형",
+  "units": "meter",
+  "coordinateSystem": {
+    "origin": "floor-center",
+    "axes": {
+      "x": "right",
+      "y": "up",
+      "z": "front"
+    }
+  },
+  "rotationUnit": "radian",
+  "dimensions": {
+    "width": 0.37,
+    "depth": 0.28,
+    "height": 0.45
+  },
+  "materials": [
+    "metal",
+    "metalLight"
+  ],
+  "parts": [
+    {
+      "id": "base-frame",
+      "geometry": "box",
+      "size": [
+        0.37,
+        0.02,
+        0.28
+      ],
+      "position": [
+        0,
+        0.01,
+        0
+      ],
+      "material": "metal"
+    },
+    {
+      "id": "leg-left-front",
+      "geometry": "box",
+      "size": [
+        0.025,
+        0.42,
+        0.025
+      ],
+      "position": [
+        -0.16,
+        0.22,
+        0.115
+      ],
+      "material": "metal"
+    },
+    {
+      "id": "leg-left-back",
+      "geometry": "box",
+      "size": [
+        0.025,
+        0.42,
+        0.025
+      ],
+      "position": [
+        -0.16,
+        0.22,
+        -0.115
+      ],
+      "material": "metal"
+    },
+    {
+      "id": "leg-right-front",
+      "geometry": "box",
+      "size": [
+        0.025,
+        0.42,
+        0.025
+      ],
+      "position": [
+        0.16,
+        0.22,
+        0.115
+      ],
+      "material": "metal"
+    },
+    {
+      "id": "leg-right-back",
+      "geometry": "box",
+      "size": [
+        0.025,
+        0.42,
+        0.025
+      ],
+      "position": [
+        0.16,
+        0.22,
+        -0.115
+      ],
+      "material": "metal"
+    },
+    {
+      "id": "open-shelf",
+      "geometry": "box",
+      "size": [
+        0.32,
+        0.02,
+        0.23
+      ],
+      "position": [
+        0,
+        0.18,
+        0
+      ],
+      "material": "metalLight"
+    },
+    {
+      "id": "top",
+      "geometry": "box",
+      "size": [
+        0.37,
+        0.02,
+        0.28
+      ],
+      "position": [
+        0,
+        0.44,
+        0
+      ],
+      "material": "metalLight"
+    }
+  ],
+  "variantId": "nightstand-open",
+  "furnitureTypeCode": "NIGHTSTAND",
+  "styleTags": [
+    "minimal",
+    "natural"
+  ],
+  "lifestyleTags": [
+    "REST",
+    "STORAGE"
+  ],
+  "purchaseUrl": "https://www.ikea.com/kr/ko/p/knarrevik-bedside-table-black-80576319/"
+}

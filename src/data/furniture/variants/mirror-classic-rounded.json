@@ -1,0 +1,101 @@
+{
+  "schemaVersion": "1.0",
+  "name": "내추럴 와이드 전신거울",
+  "furnitureType": "전신거울",
+  "variant": "내추럴 와이드 스탠드형",
+  "units": "meter",
+  "coordinateSystem": {
+    "origin": "floor-center",
+    "axes": {
+      "x": "right",
+      "y": "up",
+      "z": "front"
+    }
+  },
+  "rotationUnit": "radian",
+  "dimensions": {
+    "width": 0.78,
+    "depth": 0.097,
+    "height": 1.968
+  },
+  "materials": [
+    "woodDark",
+    "metal",
+    "mirror"
+  ],
+  "parts": [
+    {
+      "id": "base-foot",
+      "geometry": "box",
+      "size": [
+        0.78,
+        0.016,
+        0.06
+      ],
+      "position": [
+        0,
+        0.008,
+        -0.0185
+      ],
+      "material": "woodDark"
+    },
+    {
+      "id": "rounded-frame",
+      "geometry": "roundedBox",
+      "size": [
+        0.78,
+        1.96,
+        0.05
+      ],
+      "radius": 0.006,
+      "smoothness": 4,
+      "position": [
+        0,
+        0.988,
+        0.0115
+      ],
+      "material": "woodDark"
+    },
+    {
+      "id": "mirror-panel",
+      "geometry": "box",
+      "size": [
+        0.7,
+        1.88,
+        0.012
+      ],
+      "position": [
+        0,
+        0.988,
+        0.0425
+      ],
+      "material": "mirror"
+    },
+    {
+      "id": "rear-stand",
+      "geometry": "box",
+      "size": [
+        0.16,
+        0.035,
+        0.02
+      ],
+      "position": [
+        0,
+        1.72,
+        -0.0085
+      ],
+      "material": "metal"
+    }
+  ],
+  "variantId": "mirror-classic-rounded",
+  "furnitureTypeCode": "FULL_LENGTH_MIRROR",
+  "styleTags": [
+    "classic",
+    "natural"
+  ],
+  "lifestyleTags": [
+    "REST",
+    "HOBBY_LEISURE"
+  ],
+  "purchaseUrl": "https://www.ikea.com/kr/ko/p/hovet-mirror-oak-effect-brown-20625600/"
+}

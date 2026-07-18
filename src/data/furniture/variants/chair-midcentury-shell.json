@@ -1,0 +1,227 @@
+{
+  "schemaVersion": "1.0",
+  "name": "미드센추리 쉘 책상 의자",
+  "furnitureType": "책상 의자",
+  "variant": "미드센추리 쉘형",
+  "units": "meter",
+  "coordinateSystem": {
+    "origin": "floor-center",
+    "axes": {
+      "x": "right",
+      "y": "up",
+      "z": "front"
+    }
+  },
+  "rotationUnit": "radian",
+  "dimensions": {
+    "width": 0.56,
+    "depth": 0.54,
+    "height": 0.88
+  },
+  "materials": [
+    "woodDark",
+    "chrome",
+    "tealFabric",
+    "fabricLight"
+  ],
+  "parts": [
+    {
+      "id": "left-front-leg",
+      "geometry": "roundedBox",
+      "size": [
+        0.048,
+        0.43,
+        0.048
+      ],
+      "radius": 0.014,
+      "smoothness": 5,
+      "position": [
+        -0.21,
+        0.215,
+        0.19
+      ],
+      "material": "woodDark"
+    },
+    {
+      "id": "right-front-leg",
+      "geometry": "roundedBox",
+      "size": [
+        0.048,
+        0.43,
+        0.048
+      ],
+      "radius": 0.014,
+      "smoothness": 5,
+      "position": [
+        0.21,
+        0.215,
+        0.19
+      ],
+      "material": "woodDark"
+    },
+    {
+      "id": "left-back-leg",
+      "geometry": "roundedBox",
+      "size": [
+        0.048,
+        0.43,
+        0.048
+      ],
+      "radius": 0.014,
+      "smoothness": 5,
+      "position": [
+        -0.21,
+        0.215,
+        -0.19
+      ],
+      "material": "woodDark"
+    },
+    {
+      "id": "right-back-leg",
+      "geometry": "roundedBox",
+      "size": [
+        0.048,
+        0.43,
+        0.048
+      ],
+      "radius": 0.014,
+      "smoothness": 5,
+      "position": [
+        0.21,
+        0.215,
+        -0.19
+      ],
+      "material": "woodDark"
+    },
+    {
+      "id": "front-stretcher",
+      "geometry": "roundedBox",
+      "size": [
+        0.45,
+        0.035,
+        0.035
+      ],
+      "radius": 0.012,
+      "smoothness": 4,
+      "position": [
+        0,
+        0.31,
+        0.19
+      ],
+      "material": "chrome"
+    },
+    {
+      "id": "back-stretcher",
+      "geometry": "roundedBox",
+      "size": [
+        0.45,
+        0.035,
+        0.035
+      ],
+      "radius": 0.012,
+      "smoothness": 4,
+      "position": [
+        0,
+        0.31,
+        -0.19
+      ],
+      "material": "chrome"
+    },
+    {
+      "id": "seat-shell",
+      "geometry": "roundedBox",
+      "size": [
+        0.56,
+        0.09,
+        0.5
+      ],
+      "radius": 0.055,
+      "smoothness": 8,
+      "position": [
+        0,
+        0.47,
+        0.02
+      ],
+      "material": "tealFabric"
+    },
+    {
+      "id": "seat-pad",
+      "geometry": "roundedBox",
+      "size": [
+        0.46,
+        0.035,
+        0.39
+      ],
+      "radius": 0.025,
+      "smoothness": 6,
+      "position": [
+        0,
+        0.525,
+        0.045
+      ],
+      "material": "fabricLight"
+    },
+    {
+      "id": "back-support-left",
+      "geometry": "roundedBox",
+      "size": [
+        0.04,
+        0.27,
+        0.045
+      ],
+      "radius": 0.012,
+      "smoothness": 4,
+      "position": [
+        -0.19,
+        0.635,
+        -0.247
+      ],
+      "material": "woodDark"
+    },
+    {
+      "id": "back-support-right",
+      "geometry": "roundedBox",
+      "size": [
+        0.04,
+        0.27,
+        0.045
+      ],
+      "radius": 0.012,
+      "smoothness": 4,
+      "position": [
+        0.19,
+        0.635,
+        -0.247
+      ],
+      "material": "woodDark"
+    },
+    {
+      "id": "curved-back-shell",
+      "geometry": "roundedBox",
+      "size": [
+        0.5,
+        0.37,
+        0.08
+      ],
+      "radius": 0.07,
+      "smoothness": 10,
+      "position": [
+        0,
+        0.695,
+        -0.23
+      ],
+      "material": "tealFabric"
+    }
+  ],
+  "variantId": "chair-midcentury-shell",
+  "furnitureTypeCode": "DESK_CHAIR",
+  "styleTags": [
+    "midcentury",
+    "modern"
+  ],
+  "lifestyleTags": [
+    "WORK_STUDY",
+    "HOBBY_LEISURE"
+  ],
+  "purchaseUrl": "https://store.hermanmiller.com/dining-furniture-chairs-stools/eames-molded-plastic-side-chair/1104.html?lang=en_US"
+}

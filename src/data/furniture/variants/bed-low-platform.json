@@ -1,0 +1,228 @@
+{
+  "schemaVersion": "1.0",
+  "name": "로우 플랫폼 침대",
+  "furnitureType": "침대",
+  "variant": "로우 플랫폼형",
+  "units": "meter",
+  "coordinateSystem": {
+    "origin": "floor-center",
+    "axes": {
+      "x": "right",
+      "y": "up",
+      "z": "front"
+    }
+  },
+  "rotationUnit": "radian",
+  "dimensions": {
+    "width": 0.83,
+    "depth": 2.05,
+    "height": 0.7
+  },
+  "materials": [
+    "wood",
+    "woodLight",
+    "fabric",
+    "fabricLight",
+    "fabricDark"
+  ],
+  "parts": [
+    {
+      "id": "lower-side-left",
+      "geometry": "box",
+      "size": [
+        0.06,
+        0.23,
+        2.05
+      ],
+      "position": [
+        -0.385,
+        0.115,
+        0
+      ],
+      "material": "wood"
+    },
+    {
+      "id": "lower-side-right",
+      "geometry": "box",
+      "size": [
+        0.06,
+        0.23,
+        2.05
+      ],
+      "position": [
+        0.385,
+        0.115,
+        0
+      ],
+      "material": "wood"
+    },
+    {
+      "id": "lower-head",
+      "geometry": "box",
+      "size": [
+        0.71,
+        0.23,
+        0.06
+      ],
+      "position": [
+        0,
+        0.115,
+        -0.995
+      ],
+      "material": "wood"
+    },
+    {
+      "id": "lower-foot",
+      "geometry": "box",
+      "size": [
+        0.71,
+        0.23,
+        0.06
+      ],
+      "position": [
+        0,
+        0.115,
+        0.995
+      ],
+      "material": "wood"
+    },
+    {
+      "id": "upper-side-left",
+      "geometry": "box",
+      "size": [
+        0.06,
+        0.23,
+        2.05
+      ],
+      "position": [
+        -0.385,
+        0.345,
+        0
+      ],
+      "material": "woodLight"
+    },
+    {
+      "id": "upper-side-right",
+      "geometry": "box",
+      "size": [
+        0.06,
+        0.23,
+        2.05
+      ],
+      "position": [
+        0.385,
+        0.345,
+        0
+      ],
+      "material": "woodLight"
+    },
+    {
+      "id": "upper-head",
+      "geometry": "box",
+      "size": [
+        0.71,
+        0.23,
+        0.06
+      ],
+      "position": [
+        0,
+        0.345,
+        -0.995
+      ],
+      "material": "woodLight"
+    },
+    {
+      "id": "upper-foot",
+      "geometry": "box",
+      "size": [
+        0.71,
+        0.23,
+        0.06
+      ],
+      "position": [
+        0,
+        0.345,
+        0.995
+      ],
+      "material": "woodLight"
+    },
+    {
+      "id": "mattress-lower",
+      "geometry": "roundedBox",
+      "size": [
+        0.8,
+        0.08,
+        2
+      ],
+      "radius": 0.035,
+      "smoothness": 5,
+      "position": [
+        0,
+        0.5,
+        0
+      ],
+      "material": "fabricLight"
+    },
+    {
+      "id": "mattress-upper",
+      "geometry": "roundedBox",
+      "size": [
+        0.8,
+        0.08,
+        2
+      ],
+      "radius": 0.035,
+      "smoothness": 5,
+      "position": [
+        0,
+        0.58,
+        0
+      ],
+      "material": "fabric"
+    },
+    {
+      "id": "pillow",
+      "geometry": "roundedBox",
+      "size": [
+        0.52,
+        0.08,
+        0.28
+      ],
+      "radius": 0.035,
+      "smoothness": 5,
+      "position": [
+        0,
+        0.66,
+        -0.67
+      ],
+      "material": "fabricLight"
+    },
+    {
+      "id": "runner",
+      "geometry": "roundedBox",
+      "size": [
+        0.74,
+        0.03,
+        0.38
+      ],
+      "radius": 0.012,
+      "smoothness": 4,
+      "position": [
+        0,
+        0.635,
+        0.55
+      ],
+      "material": "fabricDark"
+    }
+  ],
+  "variantId": "bed-low-platform",
+  "furnitureTypeCode": "BED",
+  "styleTags": [
+    "natural",
+    "minimal"
+  ],
+  "lifestyleTags": [
+    "REST"
+  ],
+  "purchaseUrl": "https://www.ikea.com/kr/ko/p/utaker-stackable-bed-with-2-mattresses-pine-agotnes-firm-s49428133/"
+}

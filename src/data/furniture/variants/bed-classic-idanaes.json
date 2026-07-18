@@ -1,0 +1,370 @@
+{
+  "schemaVersion": "1.0",
+  "name": "클래식 버튼 패브릭 침대",
+  "furnitureType": "침대",
+  "variant": "클래식 버튼형",
+  "units": "meter",
+  "coordinateSystem": {
+    "origin": "floor-center",
+    "axes": {
+      "x": "right",
+      "y": "up",
+      "z": "front"
+    }
+  },
+  "rotationUnit": "radian",
+  "dimensions": {
+    "width": 1.57,
+    "depth": 2.22,
+    "height": 1.21
+  },
+  "materials": [
+    "woodDark",
+    "fabric",
+    "fabricLight",
+    "fabricDark"
+  ],
+  "parts": [
+    {
+      "id": "leg-left-head",
+      "geometry": "cylinder",
+      "size": [
+        0.045,
+        0.065,
+        0.2
+      ],
+      "position": [
+        -0.72,
+        0.1,
+        -1.01
+      ],
+      "material": "woodDark"
+    },
+    {
+      "id": "leg-right-head",
+      "geometry": "cylinder",
+      "size": [
+        0.045,
+        0.065,
+        0.2
+      ],
+      "position": [
+        0.72,
+        0.1,
+        -1.01
+      ],
+      "material": "woodDark"
+    },
+    {
+      "id": "leg-left-foot",
+      "geometry": "cylinder",
+      "size": [
+        0.045,
+        0.065,
+        0.2
+      ],
+      "position": [
+        -0.72,
+        0.1,
+        1.01
+      ],
+      "material": "woodDark"
+    },
+    {
+      "id": "leg-right-foot",
+      "geometry": "cylinder",
+      "size": [
+        0.045,
+        0.065,
+        0.2
+      ],
+      "position": [
+        0.72,
+        0.1,
+        1.01
+      ],
+      "material": "woodDark"
+    },
+    {
+      "id": "side-rail-left",
+      "geometry": "roundedBox",
+      "size": [
+        0.13,
+        0.25,
+        2.08
+      ],
+      "radius": 0.04,
+      "smoothness": 5,
+      "position": [
+        -0.72,
+        0.32,
+        0
+      ],
+      "material": "fabricDark"
+    },
+    {
+      "id": "side-rail-right",
+      "geometry": "roundedBox",
+      "size": [
+        0.13,
+        0.25,
+        2.08
+      ],
+      "radius": 0.04,
+      "smoothness": 5,
+      "position": [
+        0.72,
+        0.32,
+        0
+      ],
+      "material": "fabricDark"
+    },
+    {
+      "id": "foot-rail",
+      "geometry": "roundedBox",
+      "size": [
+        1.45,
+        0.24,
+        0.14
+      ],
+      "radius": 0.045,
+      "smoothness": 5,
+      "position": [
+        0,
+        0.3,
+        1.04
+      ],
+      "material": "fabricDark"
+    },
+    {
+      "id": "mattress-support",
+      "geometry": "box",
+      "size": [
+        1.4,
+        0.08,
+        2
+      ],
+      "position": [
+        0,
+        0.42,
+        0
+      ],
+      "material": "woodDark"
+    },
+    {
+      "id": "mattress",
+      "geometry": "roundedBox",
+      "size": [
+        1.4,
+        0.28,
+        2
+      ],
+      "radius": 0.09,
+      "smoothness": 6,
+      "position": [
+        0,
+        0.58,
+        0
+      ],
+      "material": "fabricLight"
+    },
+    {
+      "id": "headboard",
+      "geometry": "roundedBox",
+      "size": [
+        1.57,
+        0.92,
+        0.14
+      ],
+      "radius": 0.065,
+      "smoothness": 6,
+      "position": [
+        0,
+        0.75,
+        -1.04
+      ],
+      "material": "fabricDark"
+    },
+    {
+      "id": "headboard-inner",
+      "geometry": "roundedBox",
+      "size": [
+        1.39,
+        0.7,
+        0.025
+      ],
+      "radius": 0.04,
+      "smoothness": 5,
+      "position": [
+        0,
+        0.78,
+        -0.9575
+      ],
+      "material": "fabricDark"
+    },
+    {
+      "id": "tuft-left-upper",
+      "geometry": "cylinder",
+      "size": [
+        0.018,
+        0.018,
+        0.012
+      ],
+      "position": [
+        -0.43,
+        0.94,
+        -0.939
+      ],
+      "rotation": [
+        1.5707963267948966,
+        0,
+        0
+      ],
+      "material": "woodDark"
+    },
+    {
+      "id": "tuft-center-upper",
+      "geometry": "cylinder",
+      "size": [
+        0.018,
+        0.018,
+        0.012
+      ],
+      "position": [
+        0,
+        0.94,
+        -0.939
+      ],
+      "rotation": [
+        1.5707963267948966,
+        0,
+        0
+      ],
+      "material": "woodDark"
+    },
+    {
+      "id": "tuft-right-upper",
+      "geometry": "cylinder",
+      "size": [
+        0.018,
+        0.018,
+        0.012
+      ],
+      "position": [
+        0.43,
+        0.94,
+        -0.939
+      ],
+      "rotation": [
+        1.5707963267948966,
+        0,
+        0
+      ],
+      "material": "woodDark"
+    },
+    {
+      "id": "tuft-left-lower",
+      "geometry": "cylinder",
+      "size": [
+        0.018,
+        0.018,
+        0.012
+      ],
+      "position": [
+        -0.43,
+        0.69,
+        -0.939
+      ],
+      "rotation": [
+        1.5707963267948966,
+        0,
+        0
+      ],
+      "material": "woodDark"
+    },
+    {
+      "id": "tuft-center-lower",
+      "geometry": "cylinder",
+      "size": [
+        0.018,
+        0.018,
+        0.012
+      ],
+      "position": [
+        0,
+        0.69,
+        -0.939
+      ],
+      "rotation": [
+        1.5707963267948966,
+        0,
+        0
+      ],
+      "material": "woodDark"
+    },
+    {
+      "id": "tuft-right-lower",
+      "geometry": "cylinder",
+      "size": [
+        0.018,
+        0.018,
+        0.012
+      ],
+      "position": [
+        0.43,
+        0.69,
+        -0.939
+      ],
+      "rotation": [
+        1.5707963267948966,
+        0,
+        0
+      ],
+      "material": "woodDark"
+    },
+    {
+      "id": "pillow-left",
+      "geometry": "roundedBox",
+      "size": [
+        0.56,
+        0.11,
+        0.34
+      ],
+      "radius": 0.055,
+      "smoothness": 6,
+      "position": [
+        -0.32,
+        0.765,
+        -0.66
+      ],
+      "material": "fabric"
+    },
+    {
+      "id": "pillow-right",
+      "geometry": "roundedBox",
+      "size": [
+        0.56,
+        0.11,
+        0.34
+      ],
+      "radius": 0.055,
+      "smoothness": 6,
+      "position": [
+        0.32,
+        0.765,
+        -0.66
+      ],
+      "material": "fabric"
+    }
+  ],
+  "variantId": "bed-classic-idanaes",
+  "furnitureTypeCode": "BED",
+  "styleTags": [
+    "classic",
+    "natural"
+  ],
+  "lifestyleTags": [
+    "REST"
+  ],
+  "purchaseUrl": "https://www.ikea.com/kr/en/p/idanaes-upholstered-bed-frame-gunnared-dark-grey-80458938/"
+}

@@ -1,0 +1,186 @@
+{
+  "schemaVersion": "1.0",
+  "name": "클래식 옐로 협탁",
+  "furnitureType": "협탁",
+  "variant": "클래식 옐로 서랍형",
+  "units": "meter",
+  "coordinateSystem": {
+    "origin": "floor-center",
+    "axes": {
+      "x": "right",
+      "y": "up",
+      "z": "front"
+    }
+  },
+  "rotationUnit": "radian",
+  "dimensions": {
+    "width": 0.53,
+    "depth": 0.43,
+    "height": 0.69
+  },
+  "materials": [
+    "mustardPaint",
+    "woodDark"
+  ],
+  "parts": [
+    {
+      "id": "leg-left-front",
+      "geometry": "cylinder",
+      "size": [
+        0.024,
+        0.035,
+        0.4
+      ],
+      "position": [
+        -0.22,
+        0.2,
+        0.16
+      ],
+      "material": "mustardPaint"
+    },
+    {
+      "id": "leg-left-back",
+      "geometry": "cylinder",
+      "size": [
+        0.024,
+        0.035,
+        0.4
+      ],
+      "position": [
+        -0.22,
+        0.2,
+        -0.16
+      ],
+      "material": "mustardPaint"
+    },
+    {
+      "id": "leg-right-front",
+      "geometry": "cylinder",
+      "size": [
+        0.024,
+        0.035,
+        0.4
+      ],
+      "position": [
+        0.22,
+        0.2,
+        0.16
+      ],
+      "material": "mustardPaint"
+    },
+    {
+      "id": "leg-right-back",
+      "geometry": "cylinder",
+      "size": [
+        0.024,
+        0.035,
+        0.4
+      ],
+      "position": [
+        0.22,
+        0.2,
+        -0.16
+      ],
+      "material": "mustardPaint"
+    },
+    {
+      "id": "lower-shelf",
+      "geometry": "roundedBox",
+      "size": [
+        0.45,
+        0.035,
+        0.35
+      ],
+      "radius": 0.012,
+      "smoothness": 4,
+      "position": [
+        0,
+        0.235,
+        0
+      ],
+      "material": "mustardPaint"
+    },
+    {
+      "id": "cabinet-body",
+      "geometry": "roundedBox",
+      "size": [
+        0.53,
+        0.27,
+        0.38
+      ],
+      "radius": 0.018,
+      "smoothness": 5,
+      "position": [
+        0,
+        0.535,
+        -0.025
+      ],
+      "material": "mustardPaint"
+    },
+    {
+      "id": "drawer-front",
+      "geometry": "roundedBox",
+      "size": [
+        0.45,
+        0.14,
+        0.025
+      ],
+      "radius": 0.01,
+      "smoothness": 4,
+      "position": [
+        0,
+        0.54,
+        0.1775
+      ],
+      "material": "mustardPaint"
+    },
+    {
+      "id": "drawer-knob",
+      "geometry": "cylinder",
+      "size": [
+        0.02,
+        0.02,
+        0.025
+      ],
+      "rotation": [
+        1.5707963267948966,
+        0,
+        0
+      ],
+      "position": [
+        0,
+        0.54,
+        0.2025
+      ],
+      "material": "woodDark"
+    },
+    {
+      "id": "top",
+      "geometry": "roundedBox",
+      "size": [
+        0.53,
+        0.02,
+        0.43
+      ],
+      "radius": 0.01,
+      "smoothness": 4,
+      "position": [
+        0,
+        0.68,
+        0
+      ],
+      "material": "mustardPaint"
+    }
+  ],
+  "variantId": "nightstand-classic-gullaberg",
+  "furnitureTypeCode": "NIGHTSTAND",
+  "styleTags": [
+    "classic",
+    "natural"
+  ],
+  "lifestyleTags": [
+    "REST",
+    "STORAGE"
+  ],
+  "purchaseUrl": "https://www.ikea.com/kr/en/p/gullaberg-bedside-table-yellow-with-1-drawer-with-shelf-50593443/"
+}

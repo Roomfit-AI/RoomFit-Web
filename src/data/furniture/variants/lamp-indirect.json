@@ -1,0 +1,119 @@
+{
+  "schemaVersion": "1.0",
+  "name": "LED 무드등",
+  "furnitureType": "무드등",
+  "variant": "LED 단스탠드형",
+  "units": "meter",
+  "coordinateSystem": {
+    "origin": "floor-center",
+    "axes": {
+      "x": "right",
+      "y": "up",
+      "z": "front"
+    }
+  },
+  "rotationUnit": "radian",
+  "dimensions": {
+    "width": 0.19,
+    "depth": 0.19,
+    "height": 0.3745
+  },
+  "materials": [
+    "paintedWhite",
+    "ledDiffuser",
+    "light"
+  ],
+  "parts": [
+    {
+      "id": "led-bottom-pad",
+      "geometry": "cylinder",
+      "size": [
+        0.095,
+        0.095,
+        0.016
+      ],
+      "position": [
+        0,
+        0.008,
+        0
+      ],
+      "material": "paintedWhite"
+    },
+    {
+      "id": "led-wood-base",
+      "geometry": "cylinder",
+      "size": [
+        0.072,
+        0.075,
+        0.03
+      ],
+      "position": [
+        0,
+        0.031,
+        0
+      ],
+      "material": "paintedWhite"
+    },
+    {
+      "id": "led-inner-light",
+      "geometry": "roundedBox",
+      "size": [
+        0.045,
+        0.255,
+        0.045
+      ],
+      "radius": 0.014,
+      "smoothness": 4,
+      "position": [
+        0,
+        0.1735,
+        0
+      ],
+      "material": "paintedWhite"
+    },
+    {
+      "id": "led-diffuser",
+      "geometry": "roundedBox",
+      "size": [
+        0.135,
+        0.075,
+        0.04
+      ],
+      "radius": 0.02,
+      "smoothness": 4,
+      "position": [
+        0,
+        0.325,
+        0.015
+      ],
+      "material": "ledDiffuser"
+    },
+    {
+      "id": "led-top-glow",
+      "geometry": "roundedBox",
+      "size": [
+        0.105,
+        0.012,
+        0.025
+      ],
+      "radius": 0.006,
+      "smoothness": 3,
+      "position": [
+        0,
+        0.3685,
+        0.025
+      ],
+      "material": "light"
+    }
+  ],
+  "variantId": "lamp-indirect",
+  "furnitureTypeCode": "MOOD_LAMP",
+  "styleTags": [
+    "modern",
+    "minimal"
+  ],
+  "lifestyleTags": [
+    "REST"
+  ],
+  "purchaseUrl": "https://www.coupang.com/vp/products/8266251139"
+}

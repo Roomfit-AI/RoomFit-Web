@@ -1,0 +1,111 @@
+{
+  "schemaVersion": "1.0",
+  "name": "암막 플리츠 커튼",
+  "furnitureType": "커튼·블라인드",
+  "variant": "암막 플리츠형",
+  "units": "meter",
+  "coordinateSystem": {
+    "origin": "floor-center",
+    "axes": {
+      "x": "right",
+      "y": "up",
+      "z": "front"
+    }
+  },
+  "rotationUnit": "radian",
+  "dimensions": {
+    "width": 1.82,
+    "depth": 0.2,
+    "height": 2.4
+  },
+  "materials": [
+    "fabricDark",
+    "metalLight"
+  ],
+  "parts": [
+    {
+      "id": "blackout-panel-left",
+      "geometry": "curtain",
+      "size": [
+        0.86,
+        2.3,
+        0.2
+      ],
+      "folds": 5,
+      "segmentsX": 48,
+      "segmentsY": 64,
+      "position": [
+        -0.44,
+        1.15,
+        0
+      ],
+      "material": "fabricDark"
+    },
+    {
+      "id": "blackout-panel-right",
+      "geometry": "curtain",
+      "size": [
+        0.86,
+        2.3,
+        0.2
+      ],
+      "folds": 5,
+      "segmentsX": 48,
+      "segmentsY": 64,
+      "position": [
+        0.44,
+        1.15,
+        0
+      ],
+      "material": "fabricDark"
+    },
+    {
+      "id": "blackout-header",
+      "geometry": "roundedBox",
+      "size": [
+        1.74,
+        0.1,
+        0.11
+      ],
+      "radius": 0.02,
+      "smoothness": 4,
+      "position": [
+        0,
+        2.32,
+        0
+      ],
+      "material": "metalLight"
+    },
+    {
+      "id": "blackout-rod",
+      "geometry": "cylinder",
+      "size": [
+        0.03,
+        0.03,
+        1.82
+      ],
+      "position": [
+        0,
+        2.37,
+        0
+      ],
+      "rotation": [
+        0,
+        0,
+        1.5707963267948966
+      ],
+      "material": "metalLight"
+    }
+  ],
+  "variantId": "curtain-blackout",
+  "furnitureTypeCode": "CURTAIN_BLIND",
+  "styleTags": [
+    "modern",
+    "minimal"
+  ],
+  "lifestyleTags": [
+    "REST",
+    "HOBBY_LEISURE"
+  ],
+  "purchaseUrl": "https://www.ikea.com/kr/ko/p/majgull-room-darkening-curtains-1-pair-dark-grey-turquoise-with-heading-tape-00586020/"
+}

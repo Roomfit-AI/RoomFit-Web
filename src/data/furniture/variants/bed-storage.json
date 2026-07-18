@@ -1,0 +1,196 @@
+{
+  "schemaVersion": "1.0",
+  "name": "수납형 침대",
+  "furnitureType": "침대",
+  "variant": "수납형",
+  "units": "meter",
+  "coordinateSystem": {
+    "origin": "floor-center",
+    "axes": {
+      "x": "right",
+      "y": "up",
+      "z": "front"
+    }
+  },
+  "rotationUnit": "radian",
+  "dimensions": {
+    "width": 0.96,
+    "depth": 2.06,
+    "height": 0.635
+  },
+  "materials": [
+    "woodLight",
+    "fabric",
+    "fabricLight",
+    "metal"
+  ],
+  "parts": [
+    {
+      "id": "storage-base",
+      "geometry": "box",
+      "size": [
+        0.94,
+        0.36,
+        2.06
+      ],
+      "position": [
+        0,
+        0.18,
+        0
+      ],
+      "material": "woodLight"
+    },
+    {
+      "id": "mattress",
+      "geometry": "roundedBox",
+      "size": [
+        0.9,
+        0.2,
+        1.96
+      ],
+      "radius": 0.065,
+      "smoothness": 5,
+      "position": [
+        0,
+        0.46,
+        0
+      ],
+      "material": "fabricLight"
+    },
+    {
+      "id": "head-panel",
+      "geometry": "box",
+      "size": [
+        0.96,
+        0.47,
+        0.05
+      ],
+      "position": [
+        0,
+        0.235,
+        -1.005
+      ],
+      "material": "woodLight"
+    },
+    {
+      "id": "foot-panel",
+      "geometry": "box",
+      "size": [
+        0.96,
+        0.47,
+        0.05
+      ],
+      "position": [
+        0,
+        0.235,
+        1.005
+      ],
+      "material": "woodLight"
+    },
+    {
+      "id": "drawer-left",
+      "geometry": "box",
+      "size": [
+        0.01,
+        0.2,
+        0.94
+      ],
+      "position": [
+        -0.465,
+        0.18,
+        0.28
+      ],
+      "material": "woodLight"
+    },
+    {
+      "id": "drawer-right",
+      "geometry": "box",
+      "size": [
+        0.01,
+        0.2,
+        0.94
+      ],
+      "position": [
+        0.465,
+        0.18,
+        0.28
+      ],
+      "material": "woodLight"
+    },
+    {
+      "id": "handle-left",
+      "geometry": "box",
+      "size": [
+        0.01,
+        0.03,
+        0.16
+      ],
+      "position": [
+        -0.475,
+        0.2,
+        0.28
+      ],
+      "material": "metal"
+    },
+    {
+      "id": "handle-right",
+      "geometry": "box",
+      "size": [
+        0.01,
+        0.03,
+        0.16
+      ],
+      "position": [
+        0.475,
+        0.2,
+        0.28
+      ],
+      "material": "metal"
+    },
+    {
+      "id": "pillow-left",
+      "geometry": "roundedBox",
+      "size": [
+        0.34,
+        0.08,
+        0.25
+      ],
+      "radius": 0.035,
+      "smoothness": 5,
+      "position": [
+        -0.21,
+        0.595,
+        -0.63
+      ],
+      "material": "fabric"
+    },
+    {
+      "id": "pillow-right",
+      "geometry": "roundedBox",
+      "size": [
+        0.34,
+        0.08,
+        0.25
+      ],
+      "radius": 0.035,
+      "smoothness": 5,
+      "position": [
+        0.21,
+        0.595,
+        -0.63
+      ],
+      "material": "fabric"
+    }
+  ],
+  "variantId": "bed-storage",
+  "furnitureTypeCode": "BED",
+  "styleTags": [
+    "natural",
+    "minimal"
+  ],
+  "lifestyleTags": [
+    "REST",
+    "STORAGE"
+  ],
+  "purchaseUrl": "https://www.ikea.com/kr/ko/p/brimnes-bed-frame-with-storage-white-loenset-s39278346/"
+}

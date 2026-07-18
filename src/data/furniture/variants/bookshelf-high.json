@@ -1,0 +1,189 @@
+{
+  "schemaVersion": "1.0",
+  "name": "높은 책장",
+  "furnitureType": "책장/오픈 선반",
+  "variant": "높은 책장",
+  "units": "meter",
+  "coordinateSystem": {
+    "origin": "floor-center",
+    "axes": {
+      "x": "right",
+      "y": "up",
+      "z": "front"
+    }
+  },
+  "rotationUnit": "radian",
+  "dimensions": {
+    "width": 0.8,
+    "depth": 0.28,
+    "height": 2.02
+  },
+  "materials": [
+    "wood",
+    "woodLight",
+    "woodDark"
+  ],
+  "parts": [
+    {
+      "id": "plinth",
+      "geometry": "box",
+      "size": [
+        0.8,
+        0.06,
+        0.28
+      ],
+      "position": [
+        0,
+        0.03,
+        0
+      ],
+      "material": "woodDark"
+    },
+    {
+      "id": "side-left",
+      "geometry": "box",
+      "size": [
+        0.04,
+        1.96,
+        0.28
+      ],
+      "position": [
+        -0.38,
+        1.04,
+        0
+      ],
+      "material": "woodLight"
+    },
+    {
+      "id": "side-right",
+      "geometry": "box",
+      "size": [
+        0.04,
+        1.96,
+        0.28
+      ],
+      "position": [
+        0.38,
+        1.04,
+        0
+      ],
+      "material": "woodLight"
+    },
+    {
+      "id": "top",
+      "geometry": "box",
+      "size": [
+        0.72,
+        0.04,
+        0.28
+      ],
+      "position": [
+        0,
+        2,
+        0
+      ],
+      "material": "wood"
+    },
+    {
+      "id": "shelf-1",
+      "geometry": "box",
+      "size": [
+        0.72,
+        0.03,
+        0.25
+      ],
+      "position": [
+        0,
+        0.4,
+        0.015
+      ],
+      "material": "wood"
+    },
+    {
+      "id": "shelf-2",
+      "geometry": "box",
+      "size": [
+        0.72,
+        0.03,
+        0.25
+      ],
+      "position": [
+        0,
+        0.75,
+        0.015
+      ],
+      "material": "wood"
+    },
+    {
+      "id": "shelf-3",
+      "geometry": "box",
+      "size": [
+        0.72,
+        0.03,
+        0.25
+      ],
+      "position": [
+        0,
+        1.1,
+        0.015
+      ],
+      "material": "wood"
+    },
+    {
+      "id": "shelf-4",
+      "geometry": "box",
+      "size": [
+        0.72,
+        0.03,
+        0.25
+      ],
+      "position": [
+        0,
+        1.45,
+        0.015
+      ],
+      "material": "wood"
+    },
+    {
+      "id": "shelf-5",
+      "geometry": "box",
+      "size": [
+        0.72,
+        0.03,
+        0.25
+      ],
+      "position": [
+        0,
+        1.8,
+        0.015
+      ],
+      "material": "wood"
+    },
+    {
+      "id": "back-panel",
+      "geometry": "box",
+      "size": [
+        0.72,
+        1.92,
+        0.02
+      ],
+      "position": [
+        0,
+        1.02,
+        -0.13
+      ],
+      "material": "woodDark"
+    }
+  ],
+  "variantId": "bookshelf-high",
+  "furnitureTypeCode": "BOOKSHELF",
+  "styleTags": [
+    "minimal",
+    "modern"
+  ],
+  "lifestyleTags": [
+    "STORAGE",
+    "WORK_STUDY"
+  ],
+  "purchaseUrl": "https://www.ikea.com/kr/ko/p/billy-bookcase-white-00522047/"
+}

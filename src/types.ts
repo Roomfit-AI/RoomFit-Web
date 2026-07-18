@@ -4,7 +4,8 @@ export type FurnitureCategory =
   | "chair"
   | "cabinet"
   | "rug"
-  | "lighting";
+  | "lighting"
+  | "unsupported";
 
 export type FurnitureStatus = "existing" | "recommended";
 export type FurnitureGeometry = "box" | "rounded-box" | "cylinder" | "plane" | "model";

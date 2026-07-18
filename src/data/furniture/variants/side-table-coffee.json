@@ -1,0 +1,129 @@
+{
+  "schemaVersion": "1.0",
+  "name": "낮은 커피 테이블",
+  "furnitureType": "사이드 테이블",
+  "variant": "낮은 커피형",
+  "units": "meter",
+  "coordinateSystem": {
+    "origin": "floor-center",
+    "axes": {
+      "x": "right",
+      "y": "up",
+      "z": "front"
+    }
+  },
+  "rotationUnit": "radian",
+  "dimensions": {
+    "width": 0.9,
+    "depth": 0.55,
+    "height": 0.45
+  },
+  "materials": [
+    "wood",
+    "woodLight",
+    "woodDark"
+  ],
+  "parts": [
+    {
+      "id": "leg-left-back",
+      "geometry": "box",
+      "size": [
+        0.05,
+        0.4,
+        0.05
+      ],
+      "position": [
+        -0.4,
+        0.2,
+        -0.225
+      ],
+      "material": "woodDark"
+    },
+    {
+      "id": "leg-right-back",
+      "geometry": "box",
+      "size": [
+        0.05,
+        0.4,
+        0.05
+      ],
+      "position": [
+        0.4,
+        0.2,
+        -0.225
+      ],
+      "material": "woodDark"
+    },
+    {
+      "id": "leg-left-front",
+      "geometry": "box",
+      "size": [
+        0.05,
+        0.4,
+        0.05
+      ],
+      "position": [
+        -0.4,
+        0.2,
+        0.225
+      ],
+      "material": "woodDark"
+    },
+    {
+      "id": "leg-right-front",
+      "geometry": "box",
+      "size": [
+        0.05,
+        0.4,
+        0.05
+      ],
+      "position": [
+        0.4,
+        0.2,
+        0.225
+      ],
+      "material": "woodDark"
+    },
+    {
+      "id": "magazine-shelf",
+      "geometry": "box",
+      "size": [
+        0.78,
+        0.025,
+        0.43
+      ],
+      "position": [
+        0,
+        0.18,
+        0
+      ],
+      "material": "woodLight"
+    },
+    {
+      "id": "tabletop",
+      "geometry": "box",
+      "size": [
+        0.9,
+        0.05,
+        0.55
+      ],
+      "position": [
+        0,
+        0.425,
+        0
+      ],
+      "material": "wood"
+    }
+  ],
+  "variantId": "side-table-coffee",
+  "furnitureTypeCode": "SIDE_TABLE",
+  "styleTags": [
+    "minimal",
+    "natural"
+  ],
+  "lifestyleTags": [
+    "REST",
+    "HOBBY_LEISURE"
+  ],
+  "purchaseUrl": "https://www.ikea.com/kr/ko/p/lack-coffee-table-black-brown-20352987/"
+}

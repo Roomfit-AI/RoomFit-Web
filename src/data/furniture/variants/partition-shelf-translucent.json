@@ -1,0 +1,238 @@
+{
+  "schemaVersion": "1.0",
+  "name": "반투명 파티션",
+  "furnitureType": "파티션·양면 선반",
+  "variant": "반투명형",
+  "units": "meter",
+  "coordinateSystem": {
+    "origin": "floor-center",
+    "axes": {
+      "x": "right",
+      "y": "up",
+      "z": "front"
+    }
+  },
+  "rotationUnit": "radian",
+  "dimensions": {
+    "width": 1.52,
+    "depth": 0.3,
+    "height": 1.52
+  },
+  "materials": [
+    "paintedWhite",
+    "screenFrame"
+  ],
+  "parts": [
+    {
+      "id": "foot-left",
+      "geometry": "box",
+      "size": [
+        0.48,
+        0.045,
+        0.07
+      ],
+      "position": [
+        -0.48,
+        0.0225,
+        0
+      ],
+      "rotation": [
+        0,
+        -0.24,
+        0
+      ],
+      "material": "screenFrame"
+    },
+    {
+      "id": "foot-right",
+      "geometry": "box",
+      "size": [
+        0.48,
+        0.045,
+        0.07
+      ],
+      "position": [
+        0.48,
+        0.0225,
+        0
+      ],
+      "rotation": [
+        0,
+        0.24,
+        0
+      ],
+      "material": "screenFrame"
+    },
+    {
+      "id": "post-left",
+      "geometry": "box",
+      "size": [
+        0.04,
+        1.48,
+        0.04
+      ],
+      "position": [
+        -0.74,
+        0.76,
+        0.1
+      ],
+      "material": "screenFrame"
+    },
+    {
+      "id": "post-right",
+      "geometry": "box",
+      "size": [
+        0.04,
+        1.48,
+        0.04
+      ],
+      "position": [
+        0.74,
+        0.76,
+        0.1
+      ],
+      "material": "screenFrame"
+    },
+    {
+      "id": "bottom-rail",
+      "geometry": "box",
+      "size": [
+        1.5,
+        0.08,
+        0.3
+      ],
+      "position": [
+        0,
+        0.04,
+        0
+      ],
+      "material": "screenFrame"
+    },
+    {
+      "id": "middle-rail",
+      "geometry": "box",
+      "size": [
+        0.5,
+        0.04,
+        0.04
+      ],
+      "position": [
+        0,
+        0.76,
+        0
+      ],
+      "material": "screenFrame"
+    },
+    {
+      "id": "top-rail",
+      "geometry": "box",
+      "size": [
+        1.5,
+        0.08,
+        0.3
+      ],
+      "position": [
+        0,
+        1.48,
+        0
+      ],
+      "material": "screenFrame"
+    },
+    {
+      "id": "panel-left",
+      "geometry": "box",
+      "size": [
+        0.44,
+        1.36,
+        0.018
+      ],
+      "position": [
+        -0.48,
+        0.76,
+        0.06895454053766667
+      ],
+      "rotation": [
+        0,
+        -0.24,
+        0
+      ],
+      "material": "paintedWhite"
+    },
+    {
+      "id": "panel-center",
+      "geometry": "box",
+      "size": [
+        0.44,
+        1.36,
+        0.018
+      ],
+      "position": [
+        0,
+        0.76,
+        0
+      ],
+      "material": "paintedWhite"
+    },
+    {
+      "id": "panel-right",
+      "geometry": "box",
+      "size": [
+        0.44,
+        1.36,
+        0.018
+      ],
+      "position": [
+        0.48,
+        0.76,
+        0.06895454053766667
+      ],
+      "rotation": [
+        0,
+        0.24,
+        0
+      ],
+      "material": "paintedWhite"
+    },
+    {
+      "id": "panel-hinge-1",
+      "geometry": "cylinder",
+      "size": [
+        0.014,
+        0.014,
+        1.36
+      ],
+      "position": [
+        -0.25,
+        0.76,
+        0.1
+      ],
+      "material": "screenFrame"
+    },
+    {
+      "id": "panel-hinge-2",
+      "geometry": "cylinder",
+      "size": [
+        0.014,
+        0.014,
+        1.36
+      ],
+      "position": [
+        0.25,
+        0.76,
+        0.1
+      ],
+      "material": "screenFrame"
+    }
+  ],
+  "variantId": "partition-shelf-translucent",
+  "furnitureTypeCode": "PARTITION_SHELF",
+  "styleTags": [
+    "modern",
+    "minimal"
+  ],
+  "lifestyleTags": [
+    "STORAGE",
+    "WORK_STUDY"
+  ],
+  "purchaseUrl": "https://www.ikea.com/kr/ko/p/risoer-room-divider-white-black-50370782/"
+}

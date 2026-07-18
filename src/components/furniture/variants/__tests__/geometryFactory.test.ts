@@ -1,4 +1,11 @@
-import { BoxGeometry, CylinderGeometry } from "three";
+import {
+  BoxGeometry,
+  CylinderGeometry,
+  PlaneGeometry,
+  ShapeGeometry,
+  SphereGeometry,
+  TubeGeometry,
+} from "three";
 import { RoundedBoxGeometry } from "three/examples/jsm/geometries/RoundedBoxGeometry.js";
 import { describe, expect, it } from "vitest";
 import {
@@ -96,6 +103,48 @@ describe("createFurniturePartGeometry", () => {
     expect(bounds?.min.z).toBeCloseTo(2);
     expect(bounds?.max.z).toBeCloseTo(3);
     geometry.dispose();
+  });
+
+  it("creates the five extended production geometry types", () => {
+    const geometries = [
+      createFurniturePartGeometry({
+        ...PART_BASE,
+        geometry: "curtain",
+        size: [1, 2, 0.2],
+        folds: 4,
+        segmentsX: 16,
+        segmentsY: 8,
+      }),
+      createFurniturePartGeometry({ ...PART_BASE, geometry: "ellipsoid", size: [1, 2, 0.5] }),
+      createFurniturePartGeometry({
+        ...PART_BASE,
+        geometry: "leaf",
+        width: 0.2,
+        height: 0.5,
+        curveSegments: 8,
+      }),
+      createFurniturePartGeometry({
+        ...PART_BASE,
+        geometry: "planter",
+        size: [0.4, 0.3, 0.5],
+        segments: 24,
+      }),
+      createFurniturePartGeometry({
+        ...PART_BASE,
+        geometry: "tube",
+        curvePoints: [[0, 0, 0], [0.1, 0.3, 0], [0.2, 0.5, 0.1]],
+        radius: 0.01,
+        tubularSegments: 12,
+        radialSegments: 6,
+      }),
+    ];
+
+    expect(geometries[0]).toBeInstanceOf(PlaneGeometry);
+    expect(geometries[1]).toBeInstanceOf(SphereGeometry);
+    expect(geometries[2]).toBeInstanceOf(ShapeGeometry);
+    expect(geometries[3]).toBeInstanceOf(CylinderGeometry);
+    expect(geometries[4]).toBeInstanceOf(TubeGeometry);
+    geometries.forEach((geometry) => geometry.dispose());
   });
 
   it("keeps the validated preview fixture on the floor with no scaling", () => {

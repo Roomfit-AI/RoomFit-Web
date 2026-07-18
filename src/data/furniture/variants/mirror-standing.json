@@ -1,0 +1,226 @@
+{
+  "schemaVersion": "1.0",
+  "name": "스탠드형 전신거울",
+  "furnitureType": "전신거울",
+  "variant": "스탠드형",
+  "units": "meter",
+  "coordinateSystem": {
+    "origin": "floor-center",
+    "axes": {
+      "x": "right",
+      "y": "up",
+      "z": "front"
+    }
+  },
+  "rotationUnit": "radian",
+  "dimensions": {
+    "width": 0.45,
+    "depth": 0.36,
+    "height": 1.6825
+  },
+  "materials": [
+    "screenFrame",
+    "metal",
+    "mirror"
+  ],
+  "parts": [
+    {
+      "id": "base-foot",
+      "geometry": "box",
+      "size": [
+        0.44,
+        0.03,
+        0.36
+      ],
+      "position": [
+        0,
+        0.015,
+        0
+      ],
+      "material": "screenFrame"
+    },
+    {
+      "id": "frame-left",
+      "geometry": "roundedBox",
+      "size": [
+        0.035,
+        1.55,
+        0.04
+      ],
+      "radius": 0.008,
+      "smoothness": 4,
+      "position": [
+        -0.2075,
+        0.8,
+        0.03
+      ],
+      "material": "screenFrame"
+    },
+    {
+      "id": "frame-right",
+      "geometry": "roundedBox",
+      "size": [
+        0.035,
+        1.55,
+        0.04
+      ],
+      "radius": 0.008,
+      "smoothness": 4,
+      "position": [
+        0.2075,
+        0.8,
+        0.03
+      ],
+      "material": "screenFrame"
+    },
+    {
+      "id": "frame-top",
+      "geometry": "roundedBox",
+      "size": [
+        0.45,
+        0.035,
+        0.04
+      ],
+      "radius": 0.008,
+      "smoothness": 4,
+      "position": [
+        0,
+        1.575,
+        0.03
+      ],
+      "material": "screenFrame"
+    },
+    {
+      "id": "frame-bottom",
+      "geometry": "roundedBox",
+      "size": [
+        0.45,
+        0.035,
+        0.04
+      ],
+      "radius": 0.008,
+      "smoothness": 4,
+      "position": [
+        0,
+        0.025,
+        0.03
+      ],
+      "material": "screenFrame"
+    },
+    {
+      "id": "mirror-panel",
+      "geometry": "box",
+      "size": [
+        0.38,
+        1.46,
+        0.012
+      ],
+      "position": [
+        0,
+        0.8,
+        0.056
+      ],
+      "material": "mirror"
+    },
+    {
+      "id": "rear-stand",
+      "geometry": "box",
+      "size": [
+        0.035,
+        1.3,
+        0.035
+      ],
+      "position": [
+        0,
+        0.665,
+        -0.14
+      ],
+      "material": "screenFrame"
+    },
+    {
+      "id": "rear-clothes-rail",
+      "geometry": "cylinder",
+      "size": [
+        0.012,
+        0.012,
+        0.35
+      ],
+      "position": [
+        0,
+        1.12,
+        -0.13
+      ],
+      "rotation": [
+        0,
+        0,
+        1.5707963267948966
+      ],
+      "material": "metal"
+    },
+    {
+      "id": "ornament-top",
+      "geometry": "ellipsoid",
+      "size": [
+        0.13,
+        0.09,
+        0.04
+      ],
+      "position": [
+        0,
+        1.6375,
+        0.03
+      ],
+      "material": "screenFrame"
+    },
+    {
+      "id": "rear-hook-left",
+      "geometry": "cylinder",
+      "size": [
+        0.01,
+        0.01,
+        0.1
+      ],
+      "position": [
+        -0.12,
+        1.105,
+        -0.1
+      ],
+      "rotation": [
+        1.5707963267948966,
+        0,
+        0
+      ],
+      "material": "metal"
+    },
+    {
+      "id": "rear-hook-right",
+      "geometry": "cylinder",
+      "size": [
+        0.01,
+        0.01,
+        0.1
+      ],
+      "position": [
+        0.12,
+        1.105,
+        -0.1
+      ],
+      "rotation": [
+        1.5707963267948966,
+        0,
+        0
+      ],
+      "material": "metal"
+    }
+  ],
+  "variantId": "mirror-standing",
+  "furnitureTypeCode": "FULL_LENGTH_MIRROR",
+  "styleTags": [
+    "modern",
+    "minimal"
+  ],
+  "lifestyleTags": [
+    "STORAGE"
+  ],
+  "purchaseUrl": "https://www.ikea.com/kr/ko/p/karmsund-standing-mirror-black-60294981/"
+}

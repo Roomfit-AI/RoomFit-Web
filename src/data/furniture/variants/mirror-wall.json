@@ -1,0 +1,98 @@
+{
+  "schemaVersion": "1.0",
+  "name": "벽걸이형 전신거울",
+  "furnitureType": "전신거울",
+  "variant": "벽걸이형",
+  "units": "meter",
+  "coordinateSystem": {
+    "origin": "floor-center",
+    "axes": {
+      "x": "right",
+      "y": "up",
+      "z": "front"
+    }
+  },
+  "rotationUnit": "radian",
+  "dimensions": {
+    "width": 0.42,
+    "depth": 0.072,
+    "height": 1.55
+  },
+  "materials": [
+    "screenFrame",
+    "metal",
+    "mirror"
+  ],
+  "parts": [
+    {
+      "id": "wall-frame",
+      "geometry": "box",
+      "size": [
+        0.42,
+        1.55,
+        0.04
+      ],
+      "position": [
+        0,
+        0.775,
+        0.004
+      ],
+      "material": "screenFrame"
+    },
+    {
+      "id": "wall-mirror-panel",
+      "geometry": "box",
+      "size": [
+        0.35,
+        1.45,
+        0.012
+      ],
+      "position": [
+        0,
+        0.775,
+        0.03
+      ],
+      "material": "mirror"
+    },
+    {
+      "id": "mounting-bracket-upper",
+      "geometry": "box",
+      "size": [
+        0.2,
+        0.05,
+        0.02
+      ],
+      "position": [
+        0,
+        1.34,
+        -0.026
+      ],
+      "material": "metal"
+    },
+    {
+      "id": "mounting-bracket-lower",
+      "geometry": "box",
+      "size": [
+        0.2,
+        0.05,
+        0.02
+      ],
+      "position": [
+        0,
+        0.21,
+        -0.026
+      ],
+      "material": "metal"
+    }
+  ],
+  "variantId": "mirror-wall",
+  "furnitureTypeCode": "FULL_LENGTH_MIRROR",
+  "styleTags": [
+    "modern",
+    "minimal"
+  ],
+  "lifestyleTags": [
+    "STORAGE"
+  ],
+  "purchaseUrl": "https://www.ikea.com/kr/ko/p/nissedal-mirror-black-00320313/"
+}

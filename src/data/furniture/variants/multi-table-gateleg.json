@@ -1,0 +1,331 @@
+{
+  "schemaVersion": "1.0",
+  "name": "클래식 게이트레그 다용도 테이블",
+  "furnitureType": "다용도 테이블",
+  "variant": "클래식 확장 수납형",
+  "units": "meter",
+  "coordinateSystem": {
+    "origin": "floor-center",
+    "axes": {
+      "x": "right",
+      "y": "up",
+      "z": "front"
+    }
+  },
+  "rotationUnit": "radian",
+  "dimensions": {
+    "width": 1.52,
+    "depth": 0.8,
+    "height": 0.74
+  },
+  "materials": [
+    "wood",
+    "woodLight",
+    "woodDark",
+    "metal"
+  ],
+  "parts": [
+    {
+      "id": "center-cabinet",
+      "geometry": "box",
+      "size": [
+        0.38,
+        0.64,
+        0.64
+      ],
+      "position": [
+        0,
+        0.34,
+        0
+      ],
+      "material": "wood"
+    },
+    {
+      "id": "center-top",
+      "geometry": "roundedBox",
+      "size": [
+        0.42,
+        0.045,
+        0.8
+      ],
+      "radius": 0.012,
+      "smoothness": 4,
+      "position": [
+        0,
+        0.7175,
+        0
+      ],
+      "material": "woodLight"
+    },
+    {
+      "id": "drop-leaf-left",
+      "geometry": "roundedBox",
+      "size": [
+        0.55,
+        0.04,
+        0.8
+      ],
+      "radius": 0.012,
+      "smoothness": 4,
+      "position": [
+        -0.485,
+        0.72,
+        0
+      ],
+      "material": "woodLight"
+    },
+    {
+      "id": "drop-leaf-right",
+      "geometry": "roundedBox",
+      "size": [
+        0.55,
+        0.04,
+        0.8
+      ],
+      "radius": 0.012,
+      "smoothness": 4,
+      "position": [
+        0.485,
+        0.72,
+        0
+      ],
+      "material": "woodLight"
+    },
+    {
+      "id": "gate-leg-front-1",
+      "geometry": "box",
+      "size": [
+        0.05,
+        0.7,
+        0.05
+      ],
+      "position": [
+        -0.695,
+        0.35,
+        0.345
+      ],
+      "material": "woodDark"
+    },
+    {
+      "id": "gate-leg-back-1",
+      "geometry": "box",
+      "size": [
+        0.05,
+        0.7,
+        0.05
+      ],
+      "position": [
+        -0.695,
+        0.35,
+        -0.345
+      ],
+      "material": "woodDark"
+    },
+    {
+      "id": "gate-rail-1",
+      "geometry": "box",
+      "size": [
+        0.05,
+        0.055,
+        0.74
+      ],
+      "position": [
+        -0.695,
+        0.63,
+        0
+      ],
+      "material": "wood"
+    },
+    {
+      "id": "gate-cross-brace-1",
+      "geometry": "box",
+      "size": [
+        0.05,
+        0.05,
+        0.72
+      ],
+      "position": [
+        -0.695,
+        0.16,
+        0
+      ],
+      "material": "wood"
+    },
+    {
+      "id": "gate-leg-front-2",
+      "geometry": "box",
+      "size": [
+        0.05,
+        0.7,
+        0.05
+      ],
+      "position": [
+        0.695,
+        0.35,
+        0.345
+      ],
+      "material": "woodDark"
+    },
+    {
+      "id": "gate-leg-back-2",
+      "geometry": "box",
+      "size": [
+        0.05,
+        0.7,
+        0.05
+      ],
+      "position": [
+        0.695,
+        0.35,
+        -0.345
+      ],
+      "material": "woodDark"
+    },
+    {
+      "id": "gate-rail-2",
+      "geometry": "box",
+      "size": [
+        0.05,
+        0.055,
+        0.74
+      ],
+      "position": [
+        0.695,
+        0.63,
+        0
+      ],
+      "material": "wood"
+    },
+    {
+      "id": "gate-cross-brace-2",
+      "geometry": "box",
+      "size": [
+        0.05,
+        0.05,
+        0.72
+      ],
+      "position": [
+        0.695,
+        0.16,
+        0
+      ],
+      "material": "wood"
+    },
+    {
+      "id": "drawer-front-1",
+      "geometry": "box",
+      "size": [
+        0.09,
+        0.14,
+        0.018
+      ],
+      "position": [
+        -0.11,
+        0.43,
+        0.329
+      ],
+      "material": "woodLight"
+    },
+    {
+      "id": "drawer-front-2",
+      "geometry": "box",
+      "size": [
+        0.09,
+        0.14,
+        0.018
+      ],
+      "position": [
+        0,
+        0.43,
+        0.329
+      ],
+      "material": "woodLight"
+    },
+    {
+      "id": "drawer-front-3",
+      "geometry": "box",
+      "size": [
+        0.09,
+        0.14,
+        0.018
+      ],
+      "position": [
+        0.11,
+        0.43,
+        0.329
+      ],
+      "material": "woodLight"
+    },
+    {
+      "id": "drawer-pull-1",
+      "geometry": "cylinder",
+      "size": [
+        0.009,
+        0.009,
+        0.045
+      ],
+      "position": [
+        -0.11,
+        0.43,
+        0.345
+      ],
+      "rotation": [
+        1.5707963267948966,
+        0,
+        0
+      ],
+      "material": "metal"
+    },
+    {
+      "id": "drawer-pull-2",
+      "geometry": "cylinder",
+      "size": [
+        0.009,
+        0.009,
+        0.045
+      ],
+      "position": [
+        0,
+        0.43,
+        0.345
+      ],
+      "rotation": [
+        1.5707963267948966,
+        0,
+        0
+      ],
+      "material": "metal"
+    },
+    {
+      "id": "drawer-pull-3",
+      "geometry": "cylinder",
+      "size": [
+        0.009,
+        0.009,
+        0.045
+      ],
+      "position": [
+        0.11,
+        0.43,
+        0.345
+      ],
+      "rotation": [
+        1.5707963267948966,
+        0,
+        0
+      ],
+      "material": "metal"
+    }
+  ],
+  "variantId": "multi-table-gateleg",
+  "furnitureTypeCode": "MULTI_TABLE",
+  "styleTags": [
+    "classic",
+    "natural"
+  ],
+  "lifestyleTags": [
+    "STORAGE",
+    "HOBBY_LEISURE"
+  ],
+  "purchaseUrl": "https://www.ikea.com/kr/ko/p/norden-gateleg-table-birch-80423883/"
+}

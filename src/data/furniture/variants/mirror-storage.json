@@ -1,0 +1,223 @@
+{
+  "schemaVersion": "1.0",
+  "name": "수납 결합 전신거울",
+  "furnitureType": "전신거울",
+  "variant": "수납 결합형",
+  "units": "meter",
+  "coordinateSystem": {
+    "origin": "floor-center",
+    "axes": {
+      "x": "right",
+      "y": "up",
+      "z": "front"
+    }
+  },
+  "rotationUnit": "radian",
+  "dimensions": {
+    "width": 0.485,
+    "depth": 0.36,
+    "height": 1.585
+  },
+  "materials": [
+    "paintedWhite",
+    "metal",
+    "mirror"
+  ],
+  "parts": [
+    {
+      "id": "bottom-panel",
+      "geometry": "box",
+      "size": [
+        0.48,
+        0.035,
+        0.36
+      ],
+      "position": [
+        0,
+        0.0175,
+        0
+      ],
+      "material": "paintedWhite"
+    },
+    {
+      "id": "back-panel",
+      "geometry": "box",
+      "size": [
+        0.035,
+        1.47,
+        0.035
+      ],
+      "position": [
+        0,
+        0.77,
+        -0.14
+      ],
+      "material": "paintedWhite"
+    },
+    {
+      "id": "side-left",
+      "geometry": "box",
+      "size": [
+        0.035,
+        1.55,
+        0.035
+      ],
+      "position": [
+        -0.225,
+        0.7925,
+        0.02
+      ],
+      "material": "paintedWhite"
+    },
+    {
+      "id": "center-divider",
+      "geometry": "box",
+      "size": [
+        0.035,
+        1.47,
+        0.035
+      ],
+      "position": [
+        0,
+        0.77,
+        -0.14
+      ],
+      "material": "paintedWhite"
+    },
+    {
+      "id": "side-right",
+      "geometry": "box",
+      "size": [
+        0.035,
+        1.55,
+        0.035
+      ],
+      "position": [
+        0.225,
+        0.7925,
+        0.02
+      ],
+      "material": "paintedWhite"
+    },
+    {
+      "id": "top-panel",
+      "geometry": "box",
+      "size": [
+        0.48,
+        0.035,
+        0.035
+      ],
+      "position": [
+        0,
+        1.5675,
+        0.02
+      ],
+      "material": "paintedWhite"
+    },
+    {
+      "id": "storage-shelf-lower",
+      "geometry": "cylinder",
+      "size": [
+        0.012,
+        0.012,
+        0.34
+      ],
+      "position": [
+        0,
+        0.48,
+        -0.12
+      ],
+      "rotation": [
+        0,
+        0,
+        1.5707963267948966
+      ],
+      "material": "metal"
+    },
+    {
+      "id": "storage-shelf-upper",
+      "geometry": "cylinder",
+      "size": [
+        0.012,
+        0.012,
+        0.34
+      ],
+      "position": [
+        0,
+        1.24,
+        -0.12
+      ],
+      "rotation": [
+        0,
+        0,
+        1.5707963267948966
+      ],
+      "material": "metal"
+    },
+    {
+      "id": "storage-mirror-panel",
+      "geometry": "box",
+      "size": [
+        0.415,
+        1.45,
+        0.012
+      ],
+      "position": [
+        0,
+        0.8,
+        0.04
+      ],
+      "material": "mirror"
+    },
+    {
+      "id": "rear-hook-left",
+      "geometry": "cylinder",
+      "size": [
+        0.01,
+        0.01,
+        0.09
+      ],
+      "position": [
+        -0.11,
+        1.24,
+        -0.12
+      ],
+      "rotation": [
+        1.5707963267948966,
+        0,
+        0
+      ],
+      "material": "metal"
+    },
+    {
+      "id": "rear-hook-right",
+      "geometry": "cylinder",
+      "size": [
+        0.01,
+        0.01,
+        0.09
+      ],
+      "position": [
+        0.11,
+        1.24,
+        -0.12
+      ],
+      "rotation": [
+        1.5707963267948966,
+        0,
+        0
+      ],
+      "material": "metal"
+    }
+  ],
+  "variantId": "mirror-storage",
+  "furnitureTypeCode": "FULL_LENGTH_MIRROR",
+  "styleTags": [
+    "modern",
+    "minimal"
+  ],
+  "lifestyleTags": [
+    "STORAGE"
+  ],
+  "purchaseUrl": "https://www.ikea.com/kr/ko/p/knapper-standing-mirror-white-80396243/"
+}

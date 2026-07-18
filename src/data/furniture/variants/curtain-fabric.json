@@ -1,0 +1,108 @@
+{
+  "schemaVersion": "1.0",
+  "name": "패브릭 커튼",
+  "furnitureType": "커튼·블라인드",
+  "variant": "패브릭 커튼",
+  "units": "meter",
+  "coordinateSystem": {
+    "origin": "floor-center",
+    "axes": {
+      "x": "right",
+      "y": "up",
+      "z": "front"
+    }
+  },
+  "rotationUnit": "radian",
+  "dimensions": {
+    "width": 2.96,
+    "depth": 0.18,
+    "height": 2.54
+  },
+  "materials": [
+    "fabricDark",
+    "metal"
+  ],
+  "parts": [
+    {
+      "id": "curtain-panel-left",
+      "geometry": "curtain",
+      "size": [
+        1.38,
+        2.45,
+        0.18
+      ],
+      "folds": 6,
+      "segmentsX": 56,
+      "segmentsY": 64,
+      "position": [
+        -0.72,
+        1.225,
+        0
+      ],
+      "material": "fabricDark"
+    },
+    {
+      "id": "curtain-panel-right",
+      "geometry": "curtain",
+      "size": [
+        1.38,
+        2.45,
+        0.18
+      ],
+      "folds": 6,
+      "segmentsX": 56,
+      "segmentsY": 64,
+      "position": [
+        0.72,
+        1.225,
+        0
+      ],
+      "material": "fabricDark"
+    },
+    {
+      "id": "curtain-header",
+      "geometry": "box",
+      "size": [
+        2.9,
+        0.07,
+        0.1
+      ],
+      "position": [
+        0,
+        2.45,
+        0
+      ],
+      "material": "fabricDark"
+    },
+    {
+      "id": "curtain-rod",
+      "geometry": "cylinder",
+      "size": [
+        0.03,
+        0.03,
+        2.96
+      ],
+      "position": [
+        0,
+        2.51,
+        0
+      ],
+      "rotation": [
+        0,
+        0,
+        1.5707963267948966
+      ],
+      "material": "metal"
+    }
+  ],
+  "variantId": "curtain-fabric",
+  "furnitureTypeCode": "CURTAIN_BLIND",
+  "styleTags": [
+    "minimal",
+    "natural"
+  ],
+  "lifestyleTags": [
+    "REST"
+  ],
+  "purchaseUrl": "https://www.ikea.com/kr/ko/p/majgull-room-darkening-curtains-1-pair-dark-grey-turquoise-with-heading-tape-00586020/"
+}

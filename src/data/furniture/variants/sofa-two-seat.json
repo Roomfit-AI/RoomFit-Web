@@ -1,0 +1,270 @@
+{
+  "schemaVersion": "1.0",
+  "name": "2인용 소파",
+  "furnitureType": "소파",
+  "variant": "2인형",
+  "units": "meter",
+  "coordinateSystem": {
+    "origin": "floor-center",
+    "axes": {
+      "x": "right",
+      "y": "up",
+      "z": "front"
+    }
+  },
+  "rotationUnit": "radian",
+  "dimensions": {
+    "width": 1.21,
+    "depth": 0.78,
+    "height": 0.68
+  },
+  "materials": [
+    "woodDark",
+    "fabric",
+    "fabricLight",
+    "fabricDark"
+  ],
+  "parts": [
+    {
+      "id": "leg-left-front",
+      "geometry": "box",
+      "size": [
+        0.06,
+        0.23,
+        0.08
+      ],
+      "position": [
+        -0.5,
+        0.115,
+        0.3
+      ],
+      "material": "woodDark"
+    },
+    {
+      "id": "leg-left-back",
+      "geometry": "box",
+      "size": [
+        0.06,
+        0.23,
+        0.08
+      ],
+      "position": [
+        -0.5,
+        0.115,
+        -0.3
+      ],
+      "material": "woodDark"
+    },
+    {
+      "id": "leg-right-front",
+      "geometry": "box",
+      "size": [
+        0.06,
+        0.23,
+        0.08
+      ],
+      "position": [
+        0.5,
+        0.115,
+        0.3
+      ],
+      "material": "woodDark"
+    },
+    {
+      "id": "leg-right-back",
+      "geometry": "box",
+      "size": [
+        0.06,
+        0.23,
+        0.08
+      ],
+      "position": [
+        0.5,
+        0.115,
+        -0.3
+      ],
+      "material": "woodDark"
+    },
+    {
+      "id": "seat-base",
+      "geometry": "roundedBox",
+      "size": [
+        1.14,
+        0.1,
+        0.78
+      ],
+      "radius": 0.04,
+      "smoothness": 5,
+      "position": [
+        0,
+        0.28,
+        0
+      ],
+      "material": "fabricDark"
+    },
+    {
+      "id": "arm-left",
+      "geometry": "roundedBox",
+      "size": [
+        0.035,
+        0.34,
+        0.78
+      ],
+      "radius": 0.014,
+      "smoothness": 4,
+      "position": [
+        -0.5875,
+        0.4,
+        0
+      ],
+      "material": "fabricDark"
+    },
+    {
+      "id": "arm-right",
+      "geometry": "roundedBox",
+      "size": [
+        0.035,
+        0.34,
+        0.78
+      ],
+      "radius": 0.014,
+      "smoothness": 4,
+      "position": [
+        0.5875,
+        0.4,
+        0
+      ],
+      "material": "fabricDark"
+    },
+    {
+      "id": "seat-cushion-left",
+      "geometry": "roundedBox",
+      "size": [
+        0.54,
+        0.08,
+        0.54
+      ],
+      "radius": 0.035,
+      "smoothness": 5,
+      "position": [
+        -0.28,
+        0.37,
+        0.06
+      ],
+      "material": "fabricLight"
+    },
+    {
+      "id": "seat-cushion-right",
+      "geometry": "roundedBox",
+      "size": [
+        0.54,
+        0.08,
+        0.54
+      ],
+      "radius": 0.035,
+      "smoothness": 5,
+      "position": [
+        0.28,
+        0.37,
+        0.06
+      ],
+      "material": "fabric"
+    },
+    {
+      "id": "back-support-left",
+      "geometry": "roundedBox",
+      "size": [
+        0.05,
+        0.34,
+        0.07
+      ],
+      "radius": 0.016,
+      "smoothness": 4,
+      "position": [
+        -0.46,
+        0.38,
+        -0.35
+      ],
+      "material": "fabricDark"
+    },
+    {
+      "id": "back-support-right",
+      "geometry": "roundedBox",
+      "size": [
+        0.05,
+        0.34,
+        0.07
+      ],
+      "radius": 0.016,
+      "smoothness": 4,
+      "position": [
+        0.46,
+        0.38,
+        -0.35
+      ],
+      "material": "fabricDark"
+    },
+    {
+      "id": "back-frame",
+      "geometry": "roundedBox",
+      "size": [
+        1.14,
+        0.39,
+        0.1
+      ],
+      "radius": 0.04,
+      "smoothness": 5,
+      "position": [
+        0,
+        0.455,
+        -0.34
+      ],
+      "material": "fabricDark"
+    },
+    {
+      "id": "back-cushion-left",
+      "geometry": "roundedBox",
+      "size": [
+        0.54,
+        0.27,
+        0.12
+      ],
+      "radius": 0.05,
+      "smoothness": 5,
+      "position": [
+        -0.28,
+        0.545,
+        -0.28
+      ],
+      "material": "fabricLight"
+    },
+    {
+      "id": "back-cushion-right",
+      "geometry": "roundedBox",
+      "size": [
+        0.54,
+        0.27,
+        0.12
+      ],
+      "radius": 0.05,
+      "smoothness": 5,
+      "position": [
+        0.28,
+        0.545,
+        -0.28
+      ],
+      "material": "fabric"
+    }
+  ],
+  "variantId": "sofa-two-seat",
+  "furnitureTypeCode": "SOFA",
+  "styleTags": [
+    "modern",
+    "natural"
+  ],
+  "lifestyleTags": [
+    "REST",
+    "HOBBY_LEISURE"
+  ],
+  "purchaseUrl": "https://www.ikea.com/kr/ko/p/glostad-2-seat-sofa-knisa-medium-blue-00488821/"
+}

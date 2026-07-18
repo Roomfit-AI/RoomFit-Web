@@ -1,0 +1,99 @@
+{
+  "schemaVersion": "1.0",
+  "name": "미드센추리 글로브 무드등",
+  "furnitureType": "무드등",
+  "variant": "미드센추리 글로브형",
+  "units": "meter",
+  "coordinateSystem": {
+    "origin": "floor-center",
+    "axes": {
+      "x": "right",
+      "y": "up",
+      "z": "front"
+    }
+  },
+  "rotationUnit": "radian",
+  "dimensions": {
+    "width": 0.28,
+    "depth": 0.28,
+    "height": 0.285
+  },
+  "materials": [
+    "redPlastic",
+    "ledDiffuser",
+    "light"
+  ],
+  "parts": [
+    {
+      "id": "globe-base",
+      "geometry": "cylinder",
+      "size": [
+        0.14,
+        0.14,
+        0.02
+      ],
+      "position": [
+        0,
+        0.01,
+        0
+      ],
+      "material": "redPlastic"
+    },
+    {
+      "id": "globe-neck",
+      "geometry": "cylinder",
+      "size": [
+        0.09,
+        0.09,
+        0.06
+      ],
+      "position": [
+        0,
+        0.04,
+        0
+      ],
+      "material": "redPlastic"
+    },
+    {
+      "id": "globe-light",
+      "geometry": "ellipsoid",
+      "size": [
+        0.22,
+        0.22,
+        0.22
+      ],
+      "position": [
+        0,
+        0.17,
+        0
+      ],
+      "material": "light"
+    },
+    {
+      "id": "globe-diffuser",
+      "geometry": "ellipsoid",
+      "size": [
+        0.23,
+        0.23,
+        0.23
+      ],
+      "position": [
+        0,
+        0.17,
+        0
+      ],
+      "material": "ledDiffuser"
+    }
+  ],
+  "variantId": "lamp-midcentury-globe",
+  "furnitureTypeCode": "MOOD_LAMP",
+  "styleTags": [
+    "midcentury",
+    "modern"
+  ],
+  "lifestyleTags": [
+    "REST",
+    "HOBBY_LEISURE"
+  ],
+  "purchaseUrl": "https://www.ikea.com/kr/ko/p/fado-table-lamp-pink-glass-60592631/"
+}

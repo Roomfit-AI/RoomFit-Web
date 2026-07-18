@@ -17,7 +17,6 @@ import type {
 
 const STYLE_TAGS = new Set<string>(FURNITURE_STYLE_TAGS);
 const LIFESTYLE_TAGS = new Set<string>(FURNITURE_LIFESTYLE_TAGS);
-const MAX_ROUNDED_BOX_RADIUS_RATIO = 0.5;
 
 export class FurnitureVariantValidationError extends Error {
   constructor(message: string) {
@@ -154,9 +153,6 @@ function readPartGeometry(
     case "roundedBox": {
       const size = readPositiveTuple3(part.size, "size", variantId, partId);
       const radius = readOptionalPositiveNumber(part.radius, "radius", variantId, partId);
-      if (radius !== undefined && radius > Math.min(...size) * MAX_ROUNDED_BOX_RADIUS_RATIO) {
-        fail(variantId, "radius must not exceed 50% of the smallest size", partId);
-      }
       const smoothness = readOptionalIntegerInRange(
         part.smoothness,
         "smoothness",
@@ -190,6 +186,64 @@ function readPartGeometry(
         fail(variantId, "extrudedPolygon bevel must be omitted or false in schema 1.0", partId);
       }
       return { ...base, geometry: "extrudedPolygon", points, height, bevel: false };
+    }
+    case "curtain":
+      return {
+        ...base,
+        geometry: "curtain",
+        size: readPositiveTuple3(part.size, "size", variantId, partId),
+        folds: readIntegerInRange(part.folds, "folds", 1, 32, variantId, partId),
+        segmentsX: readIntegerInRange(part.segmentsX, "segmentsX", 1, 128, variantId, partId),
+        segmentsY: readIntegerInRange(part.segmentsY, "segmentsY", 1, 128, variantId, partId),
+      };
+    case "ellipsoid":
+      return {
+        ...base,
+        geometry: "ellipsoid",
+        size: readPositiveTuple3(part.size, "size", variantId, partId),
+      };
+    case "leaf":
+      return {
+        ...base,
+        geometry: "leaf",
+        width: readPositiveNumber(part.width, "width", variantId, partId),
+        height: readPositiveNumber(part.height, "height", variantId, partId),
+        curveSegments: readIntegerInRange(part.curveSegments, "curveSegments", 1, 64, variantId, partId),
+      };
+    case "planter":
+      return {
+        ...base,
+        geometry: "planter",
+        size: readPositiveTuple3(part.size, "size", variantId, partId),
+        segments: readIntegerInRange(part.segments, "segments", 3, 128, variantId, partId),
+      };
+    case "tube": {
+      if (!Array.isArray(part.curvePoints) || part.curvePoints.length < 2) {
+        fail(variantId, "curvePoints must contain at least 2 points", partId);
+      }
+      return {
+        ...base,
+        geometry: "tube",
+        curvePoints: part.curvePoints.map((point, index) =>
+          readFiniteTuple3(point, `curvePoints[${index}]`, variantId, partId)),
+        radius: readPositiveNumber(part.radius, "radius", variantId, partId),
+        tubularSegments: readIntegerInRange(
+          part.tubularSegments,
+          "tubularSegments",
+          1,
+          256,
+          variantId,
+          partId,
+        ),
+        radialSegments: readIntegerInRange(
+          part.radialSegments,
+          "radialSegments",
+          3,
+          64,
+          variantId,
+          partId,
+        ),
+      };
     }
     default:
       fail(variantId, `Unsupported geometry type "${String(part.geometry)}"`, partId);
@@ -347,6 +401,21 @@ function readOptionalIntegerInRange(
     fail(variantId, `${label} must be an integer between ${minimum} and ${maximum}`, partId);
   }
   return value as number;
+}
+
+function readIntegerInRange(
+  value: unknown,
+  label: string,
+  minimum: number,
+  maximum: number,
+  variantId: string,
+  partId: string,
+): number {
+  const result = readOptionalIntegerInRange(value, label, minimum, maximum, variantId, partId);
+  if (result === undefined) {
+    fail(variantId, `${label} is required`, partId);
+  }
+  return result;
 }
 
 function readNonBlankString(value: unknown, label: string, variantId: string, partId?: string): string {

@@ -1,0 +1,517 @@
+{
+  "schemaVersion": "1.0",
+  "name": "미드센추리 오렌지 소파베드",
+  "furnitureType": "소파베드",
+  "variant": "미드센추리 오렌지형",
+  "units": "meter",
+  "coordinateSystem": {
+    "origin": "floor-center",
+    "axes": {
+      "x": "right",
+      "y": "up",
+      "z": "front"
+    }
+  },
+  "rotationUnit": "radian",
+  "dimensions": {
+    "width": 1.89,
+    "depth": 1.02,
+    "height": 0.88
+  },
+  "materials": [
+    "woodDark",
+    "orangeFabric",
+    "orangeFabricDark",
+    "brass"
+  ],
+  "parts": [
+    {
+      "id": "leg-left-back",
+      "geometry": "cylinder",
+      "size": [
+        0.035,
+        0.06,
+        0.15
+      ],
+      "position": [
+        -0.76,
+        0.075,
+        -0.31
+      ],
+      "material": "woodDark"
+    },
+    {
+      "id": "leg-right-back",
+      "geometry": "cylinder",
+      "size": [
+        0.035,
+        0.06,
+        0.15
+      ],
+      "position": [
+        0.76,
+        0.075,
+        -0.31
+      ],
+      "material": "woodDark"
+    },
+    {
+      "id": "leg-left-front",
+      "geometry": "cylinder",
+      "size": [
+        0.035,
+        0.06,
+        0.15
+      ],
+      "position": [
+        -0.76,
+        0.075,
+        0.31
+      ],
+      "material": "woodDark"
+    },
+    {
+      "id": "leg-right-front",
+      "geometry": "cylinder",
+      "size": [
+        0.035,
+        0.06,
+        0.15
+      ],
+      "position": [
+        0.76,
+        0.075,
+        0.31
+      ],
+      "material": "woodDark"
+    },
+    {
+      "id": "base-frame",
+      "geometry": "roundedBox",
+      "size": [
+        1.89,
+        0.22,
+        1.02
+      ],
+      "radius": 0.1,
+      "smoothness": 6,
+      "position": [
+        0,
+        0.25,
+        0
+      ],
+      "material": "orangeFabric"
+    },
+    {
+      "id": "rear-support-left",
+      "geometry": "box",
+      "size": [
+        0.07,
+        0.52,
+        0.08
+      ],
+      "position": [
+        -0.72,
+        0.44,
+        -0.43
+      ],
+      "material": "woodDark"
+    },
+    {
+      "id": "rear-support-right",
+      "geometry": "box",
+      "size": [
+        0.07,
+        0.52,
+        0.08
+      ],
+      "position": [
+        0.72,
+        0.44,
+        -0.43
+      ],
+      "material": "woodDark"
+    },
+    {
+      "id": "click-clack-hinge",
+      "geometry": "box",
+      "size": [
+        1.55,
+        0.06,
+        0.08
+      ],
+      "position": [
+        0,
+        0.36,
+        -0.39
+      ],
+      "material": "brass"
+    },
+    {
+      "id": "seat-cushion",
+      "geometry": "roundedBox",
+      "size": [
+        1.71,
+        0.19,
+        0.68
+      ],
+      "radius": 0.095,
+      "smoothness": 6,
+      "position": [
+        0,
+        0.445,
+        0.09
+      ],
+      "material": "orangeFabric"
+    },
+    {
+      "id": "front-roll",
+      "geometry": "roundedBox",
+      "size": [
+        1.89,
+        0.2,
+        0.22
+      ],
+      "radius": 0.095,
+      "smoothness": 6,
+      "position": [
+        0,
+        0.39,
+        0.4
+      ],
+      "material": "orangeFabric"
+    },
+    {
+      "id": "side-roll-left",
+      "geometry": "roundedBox",
+      "size": [
+        0.21,
+        0.24,
+        0.72
+      ],
+      "radius": 0.09,
+      "smoothness": 6,
+      "position": [
+        -0.84,
+        0.43,
+        0.08
+      ],
+      "material": "orangeFabric"
+    },
+    {
+      "id": "side-roll-right",
+      "geometry": "roundedBox",
+      "size": [
+        0.21,
+        0.24,
+        0.72
+      ],
+      "radius": 0.09,
+      "smoothness": 6,
+      "position": [
+        0.84,
+        0.43,
+        0.08
+      ],
+      "material": "orangeFabric"
+    },
+    {
+      "id": "back-frame",
+      "geometry": "roundedBox",
+      "size": [
+        1.79,
+        0.56,
+        0.18
+      ],
+      "radius": 0.085,
+      "smoothness": 6,
+      "position": [
+        0,
+        0.6,
+        -0.42
+      ],
+      "material": "orangeFabric"
+    },
+    {
+      "id": "back-seam-1",
+      "geometry": "box",
+      "size": [
+        0.012,
+        0.35,
+        0.008
+      ],
+      "position": [
+        -0.596,
+        0.66,
+        -0.326
+      ],
+      "material": "orangeFabricDark"
+    },
+    {
+      "id": "back-seam-2",
+      "geometry": "box",
+      "size": [
+        0.012,
+        0.35,
+        0.008
+      ],
+      "position": [
+        -0.298,
+        0.66,
+        -0.326
+      ],
+      "material": "orangeFabricDark"
+    },
+    {
+      "id": "back-seam-3",
+      "geometry": "box",
+      "size": [
+        0.012,
+        0.35,
+        0.008
+      ],
+      "position": [
+        0,
+        0.66,
+        -0.326
+      ],
+      "material": "orangeFabricDark"
+    },
+    {
+      "id": "back-seam-4",
+      "geometry": "box",
+      "size": [
+        0.012,
+        0.35,
+        0.008
+      ],
+      "position": [
+        0.298,
+        0.66,
+        -0.326
+      ],
+      "material": "orangeFabricDark"
+    },
+    {
+      "id": "back-seam-5",
+      "geometry": "box",
+      "size": [
+        0.012,
+        0.35,
+        0.008
+      ],
+      "position": [
+        0.596,
+        0.66,
+        -0.326
+      ],
+      "material": "orangeFabricDark"
+    },
+    {
+      "id": "back-tuft-1",
+      "geometry": "cylinder",
+      "size": [
+        0.032,
+        0.032,
+        0.014
+      ],
+      "position": [
+        -0.74,
+        0.65,
+        -0.323
+      ],
+      "rotation": [
+        1.5707963267948966,
+        0,
+        0
+      ],
+      "material": "orangeFabricDark"
+    },
+    {
+      "id": "back-tuft-2",
+      "geometry": "cylinder",
+      "size": [
+        0.032,
+        0.032,
+        0.014
+      ],
+      "position": [
+        -0.445,
+        0.65,
+        -0.323
+      ],
+      "rotation": [
+        1.5707963267948966,
+        0,
+        0
+      ],
+      "material": "orangeFabricDark"
+    },
+    {
+      "id": "back-tuft-3",
+      "geometry": "cylinder",
+      "size": [
+        0.032,
+        0.032,
+        0.014
+      ],
+      "position": [
+        -0.15,
+        0.65,
+        -0.323
+      ],
+      "rotation": [
+        1.5707963267948966,
+        0,
+        0
+      ],
+      "material": "orangeFabricDark"
+    },
+    {
+      "id": "back-tuft-4",
+      "geometry": "cylinder",
+      "size": [
+        0.032,
+        0.032,
+        0.014
+      ],
+      "position": [
+        0.15,
+        0.65,
+        -0.323
+      ],
+      "rotation": [
+        1.5707963267948966,
+        0,
+        0
+      ],
+      "material": "orangeFabricDark"
+    },
+    {
+      "id": "back-tuft-5",
+      "geometry": "cylinder",
+      "size": [
+        0.032,
+        0.032,
+        0.014
+      ],
+      "position": [
+        0.445,
+        0.65,
+        -0.323
+      ],
+      "rotation": [
+        1.5707963267948966,
+        0,
+        0
+      ],
+      "material": "orangeFabricDark"
+    },
+    {
+      "id": "back-tuft-6",
+      "geometry": "cylinder",
+      "size": [
+        0.032,
+        0.032,
+        0.014
+      ],
+      "position": [
+        0.74,
+        0.65,
+        -0.323
+      ],
+      "rotation": [
+        1.5707963267948966,
+        0,
+        0
+      ],
+      "material": "orangeFabricDark"
+    },
+    {
+      "id": "seat-tuft-1",
+      "geometry": "cylinder",
+      "size": [
+        0.025,
+        0.025,
+        0.012
+      ],
+      "position": [
+        -0.6,
+        0.536,
+        0.1
+      ],
+      "material": "orangeFabricDark"
+    },
+    {
+      "id": "seat-tuft-2",
+      "geometry": "cylinder",
+      "size": [
+        0.025,
+        0.025,
+        0.012
+      ],
+      "position": [
+        -0.3,
+        0.536,
+        0.1
+      ],
+      "material": "orangeFabricDark"
+    },
+    {
+      "id": "seat-tuft-3",
+      "geometry": "cylinder",
+      "size": [
+        0.025,
+        0.025,
+        0.012
+      ],
+      "position": [
+        0,
+        0.536,
+        0.1
+      ],
+      "material": "orangeFabricDark"
+    },
+    {
+      "id": "seat-tuft-4",
+      "geometry": "cylinder",
+      "size": [
+        0.025,
+        0.025,
+        0.012
+      ],
+      "position": [
+        0.3,
+        0.536,
+        0.1
+      ],
+      "material": "orangeFabricDark"
+    },
+    {
+      "id": "seat-tuft-5",
+      "geometry": "cylinder",
+      "size": [
+        0.025,
+        0.025,
+        0.012
+      ],
+      "position": [
+        0.6,
+        0.536,
+        0.1
+      ],
+      "material": "orangeFabricDark"
+    }
+  ],
+  "variantId": "sofa-bed-midcentury-orange",
+  "furnitureTypeCode": "SOFA_BED",
+  "styleTags": [
+    "midcentury",
+    "modern"
+  ],
+  "lifestyleTags": [
+    "REST",
+    "HOBBY_LEISURE"
+  ],
+  "purchaseUrl": "https://www.habitat.co.uk/product/7571745"
+}

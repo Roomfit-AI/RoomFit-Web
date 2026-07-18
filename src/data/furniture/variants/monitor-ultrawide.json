@@ -1,0 +1,116 @@
+{
+  "schemaVersion": "1.0",
+  "name": "울트라와이드 모니터",
+  "furnitureType": "모니터",
+  "variant": "울트라와이드형",
+  "units": "meter",
+  "coordinateSystem": {
+    "origin": "floor-center",
+    "axes": {
+      "x": "right",
+      "y": "up",
+      "z": "front"
+    }
+  },
+  "rotationUnit": "radian",
+  "dimensions": {
+    "width": 0.809,
+    "depth": 0.223,
+    "height": 0.483
+  },
+  "materials": [
+    "metal",
+    "metalLight",
+    "screenFrame",
+    "screen"
+  ],
+  "parts": [
+    {
+      "id": "base",
+      "geometry": "box",
+      "size": [
+        0.32,
+        0.025,
+        0.223
+      ],
+      "position": [
+        0,
+        0.0125,
+        0
+      ],
+      "material": "metal"
+    },
+    {
+      "id": "stem",
+      "geometry": "box",
+      "size": [
+        0.04,
+        0.235,
+        0.04
+      ],
+      "position": [
+        0,
+        0.1425,
+        -0.025
+      ],
+      "material": "metalLight"
+    },
+    {
+      "id": "wide-frame",
+      "geometry": "roundedBox",
+      "size": [
+        0.809,
+        0.34,
+        0.04
+      ],
+      "radius": 0.014,
+      "smoothness": 4,
+      "position": [
+        0,
+        0.313,
+        0
+      ],
+      "material": "screenFrame"
+    },
+    {
+      "id": "wide-display",
+      "geometry": "box",
+      "size": [
+        0.769,
+        0.3,
+        0.01
+      ],
+      "position": [
+        0,
+        0.313,
+        0.025
+      ],
+      "material": "screen"
+    },
+    {
+      "id": "wide-lower-bezel",
+      "geometry": "box",
+      "size": [
+        0.769,
+        0.02,
+        0.008
+      ],
+      "position": [
+        0,
+        0.153,
+        0.026
+      ],
+      "material": "metalLight"
+    }
+  ],
+  "variantId": "monitor-ultrawide",
+  "furnitureTypeCode": "MONITOR",
+  "styleTags": [
+    "modern",
+    "minimal"
+  ],
+  "lifestyleTags": [
+    "WORK_STUDY"
+  ],
+  "purchaseUrl": "https://www.samsung.com/sec/monitors/high-resolution-ls34c500gakxkr-d2c/LS34C500GAKXKR/"
+}

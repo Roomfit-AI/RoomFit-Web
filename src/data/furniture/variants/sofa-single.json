@@ -1,0 +1,202 @@
+{
+  "schemaVersion": "1.0",
+  "name": "1인용 소파",
+  "furnitureType": "소파",
+  "variant": "1인형",
+  "units": "meter",
+  "coordinateSystem": {
+    "origin": "floor-center",
+    "axes": {
+      "x": "right",
+      "y": "up",
+      "z": "front"
+    }
+  },
+  "rotationUnit": "radian",
+  "dimensions": {
+    "width": 0.93,
+    "depth": 0.99,
+    "height": 0.83
+  },
+  "materials": [
+    "metal",
+    "fabric",
+    "fabricLight",
+    "fabricDark"
+  ],
+  "parts": [
+    {
+      "id": "leg-left-front",
+      "geometry": "box",
+      "size": [
+        0.06,
+        0.16,
+        0.06
+      ],
+      "position": [
+        -0.37,
+        0.08,
+        0.36
+      ],
+      "material": "metal"
+    },
+    {
+      "id": "leg-left-back",
+      "geometry": "box",
+      "size": [
+        0.06,
+        0.16,
+        0.06
+      ],
+      "position": [
+        -0.37,
+        0.08,
+        -0.34
+      ],
+      "material": "metal"
+    },
+    {
+      "id": "leg-right-front",
+      "geometry": "box",
+      "size": [
+        0.06,
+        0.16,
+        0.06
+      ],
+      "position": [
+        0.37,
+        0.08,
+        0.36
+      ],
+      "material": "metal"
+    },
+    {
+      "id": "leg-right-back",
+      "geometry": "box",
+      "size": [
+        0.06,
+        0.16,
+        0.06
+      ],
+      "position": [
+        0.37,
+        0.08,
+        -0.34
+      ],
+      "material": "metal"
+    },
+    {
+      "id": "seat-base",
+      "geometry": "roundedBox",
+      "size": [
+        0.93,
+        0.16,
+        0.91
+      ],
+      "radius": 0.055,
+      "smoothness": 5,
+      "position": [
+        0,
+        0.24,
+        0.04
+      ],
+      "material": "fabricDark"
+    },
+    {
+      "id": "seat-cushion",
+      "geometry": "roundedBox",
+      "size": [
+        0.85,
+        0.14,
+        0.67
+      ],
+      "radius": 0.06,
+      "smoothness": 5,
+      "position": [
+        0,
+        0.39,
+        0.115
+      ],
+      "material": "fabricLight"
+    },
+    {
+      "id": "back-support-left",
+      "geometry": "roundedBox",
+      "size": [
+        0.055,
+        0.42,
+        0.075
+      ],
+      "radius": 0.018,
+      "smoothness": 4,
+      "position": [
+        -0.34,
+        0.39,
+        -0.42
+      ],
+      "material": "fabricDark"
+    },
+    {
+      "id": "back-support-right",
+      "geometry": "roundedBox",
+      "size": [
+        0.055,
+        0.42,
+        0.075
+      ],
+      "radius": 0.018,
+      "smoothness": 4,
+      "position": [
+        0.34,
+        0.39,
+        -0.42
+      ],
+      "material": "fabricDark"
+    },
+    {
+      "id": "back-frame",
+      "geometry": "roundedBox",
+      "size": [
+        0.93,
+        0.46,
+        0.1
+      ],
+      "radius": 0.04,
+      "smoothness": 5,
+      "position": [
+        0,
+        0.55,
+        -0.445
+      ],
+      "material": "fabricDark"
+    },
+    {
+      "id": "back-cushion",
+      "geometry": "roundedBox",
+      "size": [
+        0.82,
+        0.44,
+        0.13
+      ],
+      "radius": 0.055,
+      "smoothness": 5,
+      "position": [
+        0,
+        0.61,
+        -0.36
+      ],
+      "material": "fabric"
+    }
+  ],
+  "variantId": "sofa-single",
+  "furnitureTypeCode": "SOFA",
+  "styleTags": [
+    "modern",
+    "natural"
+  ],
+  "lifestyleTags": [
+    "REST",
+    "HOBBY_LEISURE"
+  ],
+  "purchaseUrl": "https://www.ikea.com/kr/ko/p/soederhamn-1-seat-section-kelinge-rust-s19514561/"
+}

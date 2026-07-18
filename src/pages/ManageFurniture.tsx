@@ -98,6 +98,7 @@ const specs: Record<FurnitureCategory, string> = {
   cabinet: "W1200 D380 H900",
   rug: "W1650 D1200",
   lighting: "W350 D350 H1550",
+  unsupported: "크기 정보 없음",
 };
 
 export default function ManageFurniture() {

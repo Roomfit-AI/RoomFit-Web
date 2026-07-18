@@ -1,0 +1,220 @@
+{
+  "schemaVersion": "1.0",
+  "name": "서랍형 미디어 콘솔",
+  "furnitureType": "TV장/미디어 콘솔",
+  "variant": "서랍형",
+  "units": "meter",
+  "coordinateSystem": {
+    "origin": "floor-center",
+    "axes": {
+      "x": "right",
+      "y": "up",
+      "z": "front"
+    }
+  },
+  "rotationUnit": "radian",
+  "dimensions": {
+    "width": 1.2,
+    "depth": 0.42,
+    "height": 0.48
+  },
+  "materials": [
+    "wood",
+    "woodLight",
+    "woodDark",
+    "metal"
+  ],
+  "parts": [
+    {
+      "id": "plinth",
+      "geometry": "box",
+      "size": [
+        1.2,
+        0.06,
+        0.39
+      ],
+      "position": [
+        0,
+        0.03,
+        -0.015
+      ],
+      "material": "woodDark"
+    },
+    {
+      "id": "side-left",
+      "geometry": "box",
+      "size": [
+        0.04,
+        0.37,
+        0.39
+      ],
+      "position": [
+        -0.58,
+        0.245,
+        -0.015
+      ],
+      "material": "wood"
+    },
+    {
+      "id": "side-right",
+      "geometry": "box",
+      "size": [
+        0.04,
+        0.37,
+        0.39
+      ],
+      "position": [
+        0.58,
+        0.245,
+        -0.015
+      ],
+      "material": "wood"
+    },
+    {
+      "id": "center-divider",
+      "geometry": "box",
+      "size": [
+        0.04,
+        0.37,
+        0.39
+      ],
+      "position": [
+        0,
+        0.245,
+        -0.015
+      ],
+      "material": "wood"
+    },
+    {
+      "id": "back-panel",
+      "geometry": "box",
+      "size": [
+        1.12,
+        0.34,
+        0.03
+      ],
+      "position": [
+        0,
+        0.23,
+        -0.195
+      ],
+      "material": "woodDark"
+    },
+    {
+      "id": "drawer-box-left",
+      "geometry": "box",
+      "size": [
+        0.56,
+        0.27,
+        0.36
+      ],
+      "position": [
+        -0.3,
+        0.255,
+        0.005
+      ],
+      "material": "woodLight"
+    },
+    {
+      "id": "drawer-box-right",
+      "geometry": "box",
+      "size": [
+        0.56,
+        0.27,
+        0.36
+      ],
+      "position": [
+        0.3,
+        0.255,
+        0.005
+      ],
+      "material": "woodLight"
+    },
+    {
+      "id": "drawer-front-left",
+      "geometry": "box",
+      "size": [
+        0.56,
+        0.27,
+        0.02
+      ],
+      "position": [
+        -0.3,
+        0.255,
+        0.195
+      ],
+      "material": "wood"
+    },
+    {
+      "id": "drawer-front-right",
+      "geometry": "box",
+      "size": [
+        0.56,
+        0.27,
+        0.02
+      ],
+      "position": [
+        0.3,
+        0.255,
+        0.195
+      ],
+      "material": "wood"
+    },
+    {
+      "id": "pull-left",
+      "geometry": "box",
+      "size": [
+        0.18,
+        0.025,
+        0.005
+      ],
+      "position": [
+        -0.3,
+        0.255,
+        0.2075
+      ],
+      "material": "metal"
+    },
+    {
+      "id": "pull-right",
+      "geometry": "box",
+      "size": [
+        0.18,
+        0.025,
+        0.005
+      ],
+      "position": [
+        0.3,
+        0.255,
+        0.2075
+      ],
+      "material": "metal"
+    },
+    {
+      "id": "console-top",
+      "geometry": "box",
+      "size": [
+        1.2,
+        0.05,
+        0.42
+      ],
+      "position": [
+        0,
+        0.455,
+        0
+      ],
+      "material": "woodDark"
+    }
+  ],
+  "variantId": "media-console-drawer",
+  "furnitureTypeCode": "MEDIA_CONSOLE",
+  "styleTags": [
+    "minimal",
+    "modern"
+  ],
+  "lifestyleTags": [
+    "STORAGE",
+    "HOBBY_LEISURE"
+  ],
+  "purchaseUrl": "https://www.ikea.com/kr/ko/p/besta-tv-bench-with-drawers-white-pipmakare-white-s29597607/"
+}

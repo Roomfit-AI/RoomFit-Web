@@ -1,0 +1,251 @@
+{
+  "schemaVersion": "1.0",
+  "name": "클래식 우드 책상 의자",
+  "furnitureType": "책상 의자",
+  "variant": "클래식 우드형",
+  "units": "meter",
+  "coordinateSystem": {
+    "origin": "floor-center",
+    "axes": {
+      "x": "right",
+      "y": "up",
+      "z": "front"
+    }
+  },
+  "rotationUnit": "radian",
+  "dimensions": {
+    "width": 0.42,
+    "depth": 0.56,
+    "height": 0.86
+  },
+  "materials": [
+    "woodLight",
+    "woodDark",
+    "fabricDark"
+  ],
+  "parts": [
+    {
+      "id": "foot-left-front",
+      "geometry": "roundedBox",
+      "size": [
+        0.05,
+        0.04,
+        0.12
+      ],
+      "radius": 0.012,
+      "smoothness": 4,
+      "position": [
+        -0.17,
+        0.02,
+        0.22
+      ],
+      "material": "woodDark"
+    },
+    {
+      "id": "foot-left-back",
+      "geometry": "roundedBox",
+      "size": [
+        0.05,
+        0.04,
+        0.12
+      ],
+      "radius": 0.012,
+      "smoothness": 4,
+      "position": [
+        -0.17,
+        0.02,
+        -0.22
+      ],
+      "material": "woodDark"
+    },
+    {
+      "id": "foot-right-front",
+      "geometry": "roundedBox",
+      "size": [
+        0.05,
+        0.04,
+        0.12
+      ],
+      "radius": 0.012,
+      "smoothness": 4,
+      "position": [
+        0.17,
+        0.02,
+        0.22
+      ],
+      "material": "woodDark"
+    },
+    {
+      "id": "foot-right-back",
+      "geometry": "roundedBox",
+      "size": [
+        0.05,
+        0.04,
+        0.12
+      ],
+      "radius": 0.012,
+      "smoothness": 4,
+      "position": [
+        0.17,
+        0.02,
+        -0.22
+      ],
+      "material": "woodDark"
+    },
+    {
+      "id": "leg-left-front",
+      "geometry": "cylinder",
+      "size": [
+        0.024,
+        0.034,
+        0.35
+      ],
+      "position": [
+        -0.17,
+        0.215,
+        0.2
+      ],
+      "material": "woodDark"
+    },
+    {
+      "id": "leg-left-back",
+      "geometry": "cylinder",
+      "size": [
+        0.024,
+        0.034,
+        0.35
+      ],
+      "position": [
+        -0.17,
+        0.215,
+        -0.2
+      ],
+      "material": "woodDark"
+    },
+    {
+      "id": "leg-right-front",
+      "geometry": "cylinder",
+      "size": [
+        0.024,
+        0.034,
+        0.35
+      ],
+      "position": [
+        0.17,
+        0.215,
+        0.2
+      ],
+      "material": "woodDark"
+    },
+    {
+      "id": "leg-right-back",
+      "geometry": "cylinder",
+      "size": [
+        0.024,
+        0.034,
+        0.35
+      ],
+      "position": [
+        0.17,
+        0.215,
+        -0.2
+      ],
+      "material": "woodDark"
+    },
+    {
+      "id": "seat-base",
+      "geometry": "roundedBox",
+      "size": [
+        0.42,
+        0.06,
+        0.46
+      ],
+      "radius": 0.025,
+      "smoothness": 6,
+      "position": [
+        0,
+        0.42,
+        0.01
+      ],
+      "material": "woodLight"
+    },
+    {
+      "id": "seat-cushion",
+      "geometry": "roundedBox",
+      "size": [
+        0.38,
+        0.06,
+        0.4
+      ],
+      "radius": 0.03,
+      "smoothness": 6,
+      "position": [
+        0,
+        0.45,
+        0.02
+      ],
+      "material": "fabricDark"
+    },
+    {
+      "id": "back-post-left",
+      "geometry": "roundedBox",
+      "size": [
+        0.04,
+        0.43,
+        0.05
+      ],
+      "radius": 0.014,
+      "smoothness": 4,
+      "position": [
+        -0.16,
+        0.645,
+        -0.245
+      ],
+      "material": "woodDark"
+    },
+    {
+      "id": "back-post-right",
+      "geometry": "roundedBox",
+      "size": [
+        0.04,
+        0.43,
+        0.05
+      ],
+      "radius": 0.014,
+      "smoothness": 4,
+      "position": [
+        0.16,
+        0.645,
+        -0.245
+      ],
+      "material": "woodDark"
+    },
+    {
+      "id": "upholstered-back",
+      "geometry": "roundedBox",
+      "size": [
+        0.42,
+        0.32,
+        0.08
+      ],
+      "radius": 0.04,
+      "smoothness": 7,
+      "position": [
+        0,
+        0.7,
+        -0.24
+      ],
+      "material": "fabricDark"
+    }
+  ],
+  "variantId": "chair-classic-tonstad",
+  "furnitureTypeCode": "DESK_CHAIR",
+  "styleTags": [
+    "classic",
+    "natural"
+  ],
+  "lifestyleTags": [
+    "WORK_STUDY"
+  ],
+  "purchaseUrl": "https://www.ikea.com/kr/ko/p/tonstad-chair-bomstad-golden-brown-oak-effect-s09602172/"
+}

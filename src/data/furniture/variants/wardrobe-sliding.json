@@ -1,0 +1,190 @@
+{
+  "schemaVersion": "1.0",
+  "name": "슬라이딩형 옷장",
+  "furnitureType": "옷장",
+  "variant": "슬라이딩형",
+  "units": "meter",
+  "coordinateSystem": {
+    "origin": "floor-center",
+    "axes": {
+      "x": "right",
+      "y": "up",
+      "z": "front"
+    }
+  },
+  "rotationUnit": "radian",
+  "dimensions": {
+    "width": 1.17,
+    "depth": 0.55,
+    "height": 1.76
+  },
+  "materials": [
+    "wood",
+    "woodLight",
+    "woodDark",
+    "metal",
+    "metalLight"
+  ],
+  "parts": [
+    {
+      "id": "plinth",
+      "geometry": "box",
+      "size": [
+        1.17,
+        0.08,
+        0.55
+      ],
+      "position": [
+        0,
+        0.04,
+        0
+      ],
+      "material": "woodDark"
+    },
+    {
+      "id": "side-left",
+      "geometry": "box",
+      "size": [
+        0.04,
+        1.68,
+        0.55
+      ],
+      "position": [
+        -0.565,
+        0.92,
+        0
+      ],
+      "material": "woodLight"
+    },
+    {
+      "id": "side-right",
+      "geometry": "box",
+      "size": [
+        0.04,
+        1.68,
+        0.55
+      ],
+      "position": [
+        0.565,
+        0.92,
+        0
+      ],
+      "material": "woodLight"
+    },
+    {
+      "id": "top",
+      "geometry": "box",
+      "size": [
+        1.09,
+        0.04,
+        0.55
+      ],
+      "position": [
+        0,
+        1.74,
+        0
+      ],
+      "material": "wood"
+    },
+    {
+      "id": "back-panel",
+      "geometry": "box",
+      "size": [
+        1.09,
+        1.64,
+        0.02
+      ],
+      "position": [
+        0,
+        0.9,
+        -0.265
+      ],
+      "material": "woodDark"
+    },
+    {
+      "id": "lower-track",
+      "geometry": "box",
+      "size": [
+        1.09,
+        0.025,
+        0.04
+      ],
+      "position": [
+        0,
+        0.1075,
+        0.24
+      ],
+      "material": "metalLight"
+    },
+    {
+      "id": "upper-track",
+      "geometry": "box",
+      "size": [
+        1.09,
+        0.025,
+        0.04
+      ],
+      "position": [
+        0,
+        1.6675,
+        0.24
+      ],
+      "material": "metalLight"
+    },
+    {
+      "id": "sliding-door-left",
+      "geometry": "box",
+      "size": [
+        0.56,
+        1.56,
+        0.025
+      ],
+      "position": [
+        -0.285,
+        0.9,
+        0.2625
+      ],
+      "material": "wood"
+    },
+    {
+      "id": "sliding-door-right",
+      "geometry": "box",
+      "size": [
+        0.56,
+        1.56,
+        0.025
+      ],
+      "position": [
+        0.285,
+        0.9,
+        0.2375
+      ],
+      "material": "woodLight"
+    },
+    {
+      "id": "recessed-grip",
+      "geometry": "box",
+      "size": [
+        0.018,
+        0.32,
+        0.01
+      ],
+      "position": [
+        -0.015,
+        0.93,
+        0.27
+      ],
+      "material": "metal"
+    }
+  ],
+  "variantId": "wardrobe-sliding",
+  "furnitureTypeCode": "WARDROBE",
+  "styleTags": [
+    "minimal",
+    "modern"
+  ],
+  "lifestyleTags": [
+    "STORAGE"
+  ],
+  "purchaseUrl": "https://www.ikea.com/kr/ko/p/kleppstad-wardrobe-with-sliding-doors-white-30437241/"
+}

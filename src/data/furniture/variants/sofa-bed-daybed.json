@@ -1,0 +1,260 @@
+{
+  "schemaVersion": "1.0",
+  "name": "데이베드형 소파베드",
+  "furnitureType": "소파베드",
+  "variant": "데이베드형",
+  "units": "meter",
+  "coordinateSystem": {
+    "origin": "floor-center",
+    "axes": {
+      "x": "right",
+      "y": "up",
+      "z": "front"
+    }
+  },
+  "rotationUnit": "radian",
+  "dimensions": {
+    "width": 2.05,
+    "depth": 0.87,
+    "height": 0.63
+  },
+  "materials": [
+    "paintedWhite",
+    "fabric",
+    "fabricLight",
+    "fabricDark",
+    "metalLight"
+  ],
+  "parts": [
+    {
+      "id": "platform",
+      "geometry": "box",
+      "size": [
+        2.05,
+        0.32,
+        0.87
+      ],
+      "position": [
+        0,
+        0.16,
+        0
+      ],
+      "material": "paintedWhite"
+    },
+    {
+      "id": "end-left",
+      "geometry": "box",
+      "size": [
+        0.08,
+        0.57,
+        0.87
+      ],
+      "position": [
+        -0.985,
+        0.285,
+        0
+      ],
+      "material": "paintedWhite"
+    },
+    {
+      "id": "end-right",
+      "geometry": "box",
+      "size": [
+        0.08,
+        0.57,
+        0.87
+      ],
+      "position": [
+        0.985,
+        0.285,
+        0
+      ],
+      "material": "paintedWhite"
+    },
+    {
+      "id": "back-panel",
+      "geometry": "box",
+      "size": [
+        2.05,
+        0.57,
+        0.08
+      ],
+      "position": [
+        0,
+        0.285,
+        -0.395
+      ],
+      "material": "paintedWhite"
+    },
+    {
+      "id": "drawer-left",
+      "geometry": "box",
+      "size": [
+        0.9,
+        0.22,
+        0.02
+      ],
+      "position": [
+        -0.47,
+        0.16,
+        0.425
+      ],
+      "material": "paintedWhite"
+    },
+    {
+      "id": "drawer-right",
+      "geometry": "box",
+      "size": [
+        0.9,
+        0.22,
+        0.02
+      ],
+      "position": [
+        0.47,
+        0.16,
+        0.425
+      ],
+      "material": "paintedWhite"
+    },
+    {
+      "id": "drawer-grip-left",
+      "geometry": "box",
+      "size": [
+        0.2,
+        0.025,
+        0.01
+      ],
+      "position": [
+        -0.47,
+        0.19,
+        0.43
+      ],
+      "material": "metalLight"
+    },
+    {
+      "id": "drawer-grip-right",
+      "geometry": "box",
+      "size": [
+        0.2,
+        0.025,
+        0.01
+      ],
+      "position": [
+        0.47,
+        0.19,
+        0.43
+      ],
+      "material": "metalLight"
+    },
+    {
+      "id": "pullout-bed-frame",
+      "geometry": "box",
+      "size": [
+        1.93,
+        0.13,
+        0.72
+      ],
+      "position": [
+        0,
+        0.225,
+        0.01
+      ],
+      "material": "paintedWhite"
+    },
+    {
+      "id": "pullout-mattress",
+      "geometry": "roundedBox",
+      "size": [
+        1.91,
+        0.11,
+        0.7
+      ],
+      "radius": 0.045,
+      "smoothness": 5,
+      "position": [
+        0,
+        0.345,
+        0.01
+      ],
+      "material": "fabricLight"
+    },
+    {
+      "id": "mattress",
+      "geometry": "roundedBox",
+      "size": [
+        1.96,
+        0.18,
+        0.76
+      ],
+      "radius": 0.075,
+      "smoothness": 5,
+      "position": [
+        0,
+        0.45,
+        0.02
+      ],
+      "material": "fabricLight"
+    },
+    {
+      "id": "bolster",
+      "geometry": "roundedBox",
+      "size": [
+        1.7,
+        0.14,
+        0.18
+      ],
+      "radius": 0.06,
+      "smoothness": 5,
+      "position": [
+        0,
+        0.56,
+        -0.28
+      ],
+      "material": "fabric"
+    },
+    {
+      "id": "pillow-left",
+      "geometry": "roundedBox",
+      "size": [
+        0.38,
+        0.12,
+        0.32
+      ],
+      "radius": 0.05,
+      "smoothness": 5,
+      "position": [
+        -0.58,
+        0.57,
+        0.08
+      ],
+      "material": "fabricDark"
+    },
+    {
+      "id": "pillow-right",
+      "geometry": "roundedBox",
+      "size": [
+        0.38,
+        0.12,
+        0.32
+      ],
+      "radius": 0.05,
+      "smoothness": 5,
+      "position": [
+        0.58,
+        0.57,
+        0.08
+      ],
+      "material": "fabricDark"
+    }
+  ],
+  "variantId": "sofa-bed-daybed",
+  "furnitureTypeCode": "SOFA_BED",
+  "styleTags": [
+    "modern",
+    "minimal"
+  ],
+  "lifestyleTags": [
+    "REST"
+  ],
+  "purchaseUrl": "https://www.ikea.com/kr/ko/p/brimnes-day-bed-w-2-drawers-2-mattresses-white-agotnes-firm-s29427064/"
+}

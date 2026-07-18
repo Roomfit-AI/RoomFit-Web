@@ -1,0 +1,129 @@
+{
+  "schemaVersion": "1.0",
+  "name": "낮은 콘솔형 TV장",
+  "furnitureType": "TV장/미디어 콘솔",
+  "variant": "낮은 콘솔형",
+  "units": "meter",
+  "coordinateSystem": {
+    "origin": "floor-center",
+    "axes": {
+      "x": "right",
+      "y": "up",
+      "z": "front"
+    }
+  },
+  "rotationUnit": "radian",
+  "dimensions": {
+    "width": 1.2,
+    "depth": 0.35,
+    "height": 0.36
+  },
+  "materials": [
+    "wood",
+    "woodLight",
+    "woodDark"
+  ],
+  "parts": [
+    {
+      "id": "leg-left-back",
+      "geometry": "box",
+      "size": [
+        0.06,
+        0.28,
+        0.06
+      ],
+      "position": [
+        -0.54,
+        0.14,
+        -0.135
+      ],
+      "material": "woodDark"
+    },
+    {
+      "id": "leg-right-back",
+      "geometry": "box",
+      "size": [
+        0.06,
+        0.28,
+        0.06
+      ],
+      "position": [
+        0.54,
+        0.14,
+        -0.135
+      ],
+      "material": "woodDark"
+    },
+    {
+      "id": "leg-left-front",
+      "geometry": "box",
+      "size": [
+        0.06,
+        0.28,
+        0.06
+      ],
+      "position": [
+        -0.54,
+        0.14,
+        0.135
+      ],
+      "material": "woodDark"
+    },
+    {
+      "id": "leg-right-front",
+      "geometry": "box",
+      "size": [
+        0.06,
+        0.28,
+        0.06
+      ],
+      "position": [
+        0.54,
+        0.14,
+        0.135
+      ],
+      "material": "woodDark"
+    },
+    {
+      "id": "media-shelf",
+      "geometry": "box",
+      "size": [
+        1.08,
+        0.03,
+        0.29
+      ],
+      "position": [
+        0,
+        0.12,
+        0
+      ],
+      "material": "woodLight"
+    },
+    {
+      "id": "console-top",
+      "geometry": "box",
+      "size": [
+        1.2,
+        0.08,
+        0.35
+      ],
+      "position": [
+        0,
+        0.32,
+        0
+      ],
+      "material": "wood"
+    }
+  ],
+  "variantId": "media-console-low",
+  "furnitureTypeCode": "MEDIA_CONSOLE",
+  "styleTags": [
+    "minimal",
+    "modern"
+  ],
+  "lifestyleTags": [
+    "STORAGE",
+    "HOBBY_LEISURE"
+  ],
+  "purchaseUrl": "https://www.ikea.com/kr/ko/p/besta-tv-bench-white-10294525/"
+}

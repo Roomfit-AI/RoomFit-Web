@@ -1,0 +1,217 @@
+{
+  "schemaVersion": "1.0",
+  "name": "기본형 책상 의자",
+  "furnitureType": "책상 의자",
+  "variant": "기본형",
+  "units": "meter",
+  "coordinateSystem": {
+    "origin": "floor-center",
+    "axes": {
+      "x": "right",
+      "y": "up",
+      "z": "front"
+    }
+  },
+  "rotationUnit": "radian",
+  "dimensions": {
+    "width": 0.46,
+    "depth": 0.54,
+    "height": 0.8
+  },
+  "materials": [
+    "metal",
+    "woodLight"
+  ],
+  "parts": [
+    {
+      "id": "foot-left-front",
+      "geometry": "box",
+      "size": [
+        0.04,
+        0.04,
+        0.11
+      ],
+      "position": [
+        -0.19,
+        0.02,
+        0.215
+      ],
+      "material": "metal"
+    },
+    {
+      "id": "foot-left-back",
+      "geometry": "box",
+      "size": [
+        0.04,
+        0.04,
+        0.11
+      ],
+      "position": [
+        -0.19,
+        0.02,
+        -0.215
+      ],
+      "material": "metal"
+    },
+    {
+      "id": "foot-right-front",
+      "geometry": "box",
+      "size": [
+        0.04,
+        0.04,
+        0.11
+      ],
+      "position": [
+        0.19,
+        0.02,
+        0.215
+      ],
+      "material": "metal"
+    },
+    {
+      "id": "foot-right-back",
+      "geometry": "box",
+      "size": [
+        0.04,
+        0.04,
+        0.11
+      ],
+      "position": [
+        0.19,
+        0.02,
+        -0.215
+      ],
+      "material": "metal"
+    },
+    {
+      "id": "leg-left-front",
+      "geometry": "box",
+      "size": [
+        0.035,
+        0.4,
+        0.04
+      ],
+      "position": [
+        -0.19,
+        0.22,
+        0.205
+      ],
+      "material": "metal"
+    },
+    {
+      "id": "leg-left-back",
+      "geometry": "box",
+      "size": [
+        0.035,
+        0.4,
+        0.04
+      ],
+      "position": [
+        -0.19,
+        0.22,
+        -0.16
+      ],
+      "material": "metal"
+    },
+    {
+      "id": "leg-right-front",
+      "geometry": "box",
+      "size": [
+        0.035,
+        0.4,
+        0.04
+      ],
+      "position": [
+        0.19,
+        0.22,
+        0.205
+      ],
+      "material": "metal"
+    },
+    {
+      "id": "leg-right-back",
+      "geometry": "box",
+      "size": [
+        0.035,
+        0.4,
+        0.04
+      ],
+      "position": [
+        0.19,
+        0.22,
+        -0.16
+      ],
+      "material": "metal"
+    },
+    {
+      "id": "seat",
+      "geometry": "box",
+      "size": [
+        0.46,
+        0.06,
+        0.4
+      ],
+      "position": [
+        0,
+        0.45,
+        0.03
+      ],
+      "material": "woodLight"
+    },
+    {
+      "id": "back-post-left",
+      "geometry": "box",
+      "size": [
+        0.03,
+        0.32,
+        0.03
+      ],
+      "position": [
+        -0.19,
+        0.6,
+        -0.185
+      ],
+      "material": "metal"
+    },
+    {
+      "id": "back-post-right",
+      "geometry": "box",
+      "size": [
+        0.03,
+        0.32,
+        0.03
+      ],
+      "position": [
+        0.19,
+        0.6,
+        -0.185
+      ],
+      "material": "metal"
+    },
+    {
+      "id": "backrest",
+      "geometry": "box",
+      "size": [
+        0.46,
+        0.3,
+        0.04
+      ],
+      "position": [
+        0,
+        0.65,
+        -0.18
+      ],
+      "material": "woodLight"
+    }
+  ],
+  "variantId": "chair-basic",
+  "furnitureTypeCode": "DESK_CHAIR",
+  "styleTags": [
+    "modern",
+    "minimal"
+  ],
+  "lifestyleTags": [
+    "WORK_STUDY"
+  ],
+  "purchaseUrl": "https://www.ikea.com/kr/ko/p/teodores-chair-black-00530622/"
+}

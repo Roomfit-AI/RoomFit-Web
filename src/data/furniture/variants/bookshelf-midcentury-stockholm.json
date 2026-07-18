@@ -1,0 +1,277 @@
+{
+  "schemaVersion": "1.0",
+  "name": "미드센추리 블루 메탈 선반",
+  "furnitureType": "책장/오픈 선반",
+  "variant": "미드센추리 블루 메탈형",
+  "units": "meter",
+  "coordinateSystem": {
+    "origin": "floor-center",
+    "axes": {
+      "x": "right",
+      "y": "up",
+      "z": "front"
+    }
+  },
+  "rotationUnit": "radian",
+  "dimensions": {
+    "width": 1.524,
+    "depth": 0.381,
+    "height": 1.8034
+  },
+  "materials": [
+    "chrome",
+    "gentianBlueMetal"
+  ],
+  "parts": [
+    {
+      "id": "floor-rail-front",
+      "geometry": "roundedBox",
+      "size": [
+        1.5,
+        0.024,
+        0.024
+      ],
+      "radius": 0.012,
+      "smoothness": 8,
+      "position": [
+        0,
+        0.012,
+        0.1785
+      ],
+      "material": "chrome"
+    },
+    {
+      "id": "floor-rail-back",
+      "geometry": "roundedBox",
+      "size": [
+        1.5,
+        0.024,
+        0.024
+      ],
+      "radius": 0.012,
+      "smoothness": 8,
+      "position": [
+        0,
+        0.012,
+        -0.1785
+      ],
+      "material": "chrome"
+    },
+    {
+      "id": "post-left-front",
+      "geometry": "cylinder",
+      "size": [
+        0.012,
+        0.012,
+        1.7794
+      ],
+      "position": [
+        -0.75,
+        0.9137,
+        0.1785
+      ],
+      "material": "chrome"
+    },
+    {
+      "id": "post-left-back",
+      "geometry": "cylinder",
+      "size": [
+        0.012,
+        0.012,
+        1.7794
+      ],
+      "position": [
+        -0.75,
+        0.9137,
+        -0.1785
+      ],
+      "material": "chrome"
+    },
+    {
+      "id": "post-center-front",
+      "geometry": "cylinder",
+      "size": [
+        0.012,
+        0.012,
+        1.7794
+      ],
+      "position": [
+        0,
+        0.9137,
+        0.1785
+      ],
+      "material": "chrome"
+    },
+    {
+      "id": "post-center-back",
+      "geometry": "cylinder",
+      "size": [
+        0.012,
+        0.012,
+        1.7794
+      ],
+      "position": [
+        0,
+        0.9137,
+        -0.1785
+      ],
+      "material": "chrome"
+    },
+    {
+      "id": "post-right-front",
+      "geometry": "cylinder",
+      "size": [
+        0.012,
+        0.012,
+        1.7794
+      ],
+      "position": [
+        0.75,
+        0.9137,
+        0.1785
+      ],
+      "material": "chrome"
+    },
+    {
+      "id": "post-right-back",
+      "geometry": "cylinder",
+      "size": [
+        0.012,
+        0.012,
+        1.7794
+      ],
+      "position": [
+        0.75,
+        0.9137,
+        -0.1785
+      ],
+      "material": "chrome"
+    },
+    {
+      "id": "shelf-bottom",
+      "geometry": "box",
+      "size": [
+        1.5,
+        0.022,
+        0.357
+      ],
+      "position": [
+        0,
+        0.035,
+        0
+      ],
+      "material": "gentianBlueMetal"
+    },
+    {
+      "id": "shelf-lower",
+      "geometry": "box",
+      "size": [
+        1.5,
+        0.022,
+        0.357
+      ],
+      "position": [
+        0,
+        0.475,
+        0
+      ],
+      "material": "gentianBlueMetal"
+    },
+    {
+      "id": "shelf-middle",
+      "geometry": "box",
+      "size": [
+        1.5,
+        0.022,
+        0.357
+      ],
+      "position": [
+        0,
+        0.915,
+        0
+      ],
+      "material": "gentianBlueMetal"
+    },
+    {
+      "id": "shelf-upper",
+      "geometry": "box",
+      "size": [
+        1.5,
+        0.022,
+        0.357
+      ],
+      "position": [
+        0,
+        1.355,
+        0
+      ],
+      "material": "gentianBlueMetal"
+    },
+    {
+      "id": "shelf-top",
+      "geometry": "box",
+      "size": [
+        1.5,
+        0.022,
+        0.357
+      ],
+      "position": [
+        0,
+        1.7924,
+        0
+      ],
+      "material": "gentianBlueMetal"
+    },
+    {
+      "id": "rear-brace-lower",
+      "geometry": "cylinder",
+      "size": [
+        0.012,
+        0.012,
+        1.5
+      ],
+      "rotation": [
+        0,
+        0,
+        1.5707963267948966
+      ],
+      "position": [
+        0,
+        0.463,
+        -0.1785
+      ],
+      "material": "chrome"
+    },
+    {
+      "id": "rear-brace-upper",
+      "geometry": "cylinder",
+      "size": [
+        0.012,
+        0.012,
+        1.5
+      ],
+      "rotation": [
+        0,
+        0,
+        1.5707963267948966
+      ],
+      "position": [
+        0,
+        1.343,
+        -0.1785
+      ],
+      "material": "chrome"
+    }
+  ],
+  "variantId": "bookshelf-midcentury-stockholm",
+  "furnitureTypeCode": "BOOKSHELF",
+  "styleTags": [
+    "midcentury",
+    "modern"
+  ],
+  "lifestyleTags": [
+    "STORAGE",
+    "HOBBY_LEISURE"
+  ],
+  "purchaseUrl": "https://us.usm.com/products/usm-haller-shelving-h2"
+}

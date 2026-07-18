@@ -1,0 +1,99 @@
+{
+  "schemaVersion": "1.0",
+  "name": "테이블 무드등",
+  "furnitureType": "무드등",
+  "variant": "테이블 램프형",
+  "units": "meter",
+  "coordinateSystem": {
+    "origin": "floor-center",
+    "axes": {
+      "x": "right",
+      "y": "up",
+      "z": "front"
+    }
+  },
+  "rotationUnit": "radian",
+  "dimensions": {
+    "width": 0.28,
+    "depth": 0.28,
+    "height": 0.46
+  },
+  "materials": [
+    "metal",
+    "metalLight",
+    "lampShade",
+    "light"
+  ],
+  "parts": [
+    {
+      "id": "table-base",
+      "geometry": "cylinder",
+      "size": [
+        0.12,
+        0.12,
+        0.04
+      ],
+      "position": [
+        0,
+        0.02,
+        0
+      ],
+      "material": "metal"
+    },
+    {
+      "id": "table-stem",
+      "geometry": "cylinder",
+      "size": [
+        0.015,
+        0.018,
+        0.25
+      ],
+      "position": [
+        0,
+        0.165,
+        0
+      ],
+      "material": "metalLight"
+    },
+    {
+      "id": "table-bulb",
+      "geometry": "ellipsoid",
+      "size": [
+        0.09,
+        0.11,
+        0.09
+      ],
+      "position": [
+        0,
+        0.34,
+        0
+      ],
+      "material": "light"
+    },
+    {
+      "id": "table-shade",
+      "geometry": "cylinder",
+      "size": [
+        0.09,
+        0.14,
+        0.18
+      ],
+      "position": [
+        0,
+        0.37,
+        0
+      ],
+      "material": "lampShade"
+    }
+  ],
+  "variantId": "lamp-table",
+  "furnitureTypeCode": "MOOD_LAMP",
+  "styleTags": [
+    "modern",
+    "minimal"
+  ],
+  "lifestyleTags": [
+    "REST"
+  ],
+  "purchaseUrl": "https://www.ikea.com/kr/ko/p/arstid-table-lamp-brass-white-00321379/"
+}

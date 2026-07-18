@@ -1,0 +1,159 @@
+{
+  "schemaVersion": "1.0",
+  "name": "컴팩트 회전형 책상 의자",
+  "furnitureType": "책상 의자",
+  "variant": "컴팩트 회전형",
+  "units": "meter",
+  "coordinateSystem": {
+    "origin": "floor-center",
+    "axes": {
+      "x": "right",
+      "y": "up",
+      "z": "front"
+    }
+  },
+  "rotationUnit": "radian",
+  "dimensions": {
+    "width": 0.67,
+    "depth": 0.67,
+    "height": 0.9
+  },
+  "materials": [
+    "metal",
+    "metalLight",
+    "fabric",
+    "fabricDark"
+  ],
+  "parts": [
+    {
+      "id": "base-cross-x",
+      "geometry": "box",
+      "size": [
+        0.67,
+        0.035,
+        0.05
+      ],
+      "position": [
+        0,
+        0.0175,
+        0
+      ],
+      "material": "metalLight"
+    },
+    {
+      "id": "base-cross-z",
+      "geometry": "box",
+      "size": [
+        0.05,
+        0.035,
+        0.67
+      ],
+      "position": [
+        0,
+        0.0175,
+        0
+      ],
+      "material": "metalLight"
+    },
+    {
+      "id": "gas-column",
+      "geometry": "cylinder",
+      "size": [
+        0.03,
+        0.03,
+        0.425
+      ],
+      "position": [
+        0,
+        0.2475,
+        0
+      ],
+      "material": "metal"
+    },
+    {
+      "id": "shell-seat",
+      "geometry": "box",
+      "size": [
+        0.43,
+        0.08,
+        0.43
+      ],
+      "position": [
+        0,
+        0.5,
+        0.03
+      ],
+      "material": "fabricDark"
+    },
+    {
+      "id": "seat-pad",
+      "geometry": "box",
+      "size": [
+        0.4,
+        0.03,
+        0.38
+      ],
+      "position": [
+        0,
+        0.555,
+        0.04
+      ],
+      "material": "fabric"
+    },
+    {
+      "id": "back-support-link",
+      "geometry": "box",
+      "size": [
+        0.04,
+        0.04,
+        0.1
+      ],
+      "position": [
+        0,
+        0.515,
+        -0.205
+      ],
+      "material": "metal"
+    },
+    {
+      "id": "back-support",
+      "geometry": "box",
+      "size": [
+        0.04,
+        0.25,
+        0.04
+      ],
+      "position": [
+        0,
+        0.62,
+        -0.25
+      ],
+      "material": "metal"
+    },
+    {
+      "id": "shell-back",
+      "geometry": "box",
+      "size": [
+        0.5,
+        0.38,
+        0.06
+      ],
+      "position": [
+        0,
+        0.71,
+        -0.2
+      ],
+      "material": "fabric"
+    }
+  ],
+  "variantId": "chair-compact-swivel",
+  "furnitureTypeCode": "DESK_CHAIR",
+  "styleTags": [
+    "modern",
+    "minimal"
+  ],
+  "lifestyleTags": [
+    "WORK_STUDY"
+  ],
+  "purchaseUrl": "https://www.ikea.com/kr/ko/p/loberget-malskaer-swivel-chair-pad-white-dark-grey-s79445452/"
+}

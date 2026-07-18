@@ -1,0 +1,203 @@
+{
+  "schemaVersion": "1.0",
+  "name": "내추럴 우드 프레임 TV",
+  "furnitureType": "TV",
+  "variant": "내추럴 우드 프레임형",
+  "units": "meter",
+  "coordinateSystem": {
+    "origin": "floor-center",
+    "axes": {
+      "x": "right",
+      "y": "up",
+      "z": "front"
+    }
+  },
+  "rotationUnit": "radian",
+  "dimensions": {
+    "width": 0.9695,
+    "depth": 0.1968,
+    "height": 0.5919
+  },
+  "materials": [
+    "metal",
+    "woodLight",
+    "screenFrame",
+    "screen"
+  ],
+  "parts": [
+    {
+      "id": "foot-left",
+      "geometry": "roundedBox",
+      "size": [
+        0.18,
+        0.025,
+        0.1968
+      ],
+      "radius": 0.012,
+      "smoothness": 4,
+      "position": [
+        -0.31,
+        0.0125,
+        0
+      ],
+      "material": "metal"
+    },
+    {
+      "id": "foot-right",
+      "geometry": "roundedBox",
+      "size": [
+        0.18,
+        0.025,
+        0.1968
+      ],
+      "radius": 0.012,
+      "smoothness": 4,
+      "position": [
+        0.31,
+        0.0125,
+        0
+      ],
+      "material": "metal"
+    },
+    {
+      "id": "support-left",
+      "geometry": "box",
+      "size": [
+        0.025,
+        0.06,
+        0.025
+      ],
+      "position": [
+        -0.31,
+        0.05,
+        0
+      ],
+      "material": "metal"
+    },
+    {
+      "id": "support-right",
+      "geometry": "box",
+      "size": [
+        0.025,
+        0.06,
+        0.025
+      ],
+      "position": [
+        0.31,
+        0.05,
+        0
+      ],
+      "material": "metal"
+    },
+    {
+      "id": "rear-panel",
+      "geometry": "roundedBox",
+      "size": [
+        0.9695,
+        0.5469,
+        0.035
+      ],
+      "radius": 0.012,
+      "smoothness": 4,
+      "position": [
+        0,
+        0.31845,
+        0
+      ],
+      "material": "screenFrame"
+    },
+    {
+      "id": "bezel-top",
+      "geometry": "roundedBox",
+      "size": [
+        0.9695,
+        0.026,
+        0.018
+      ],
+      "radius": 0.007,
+      "smoothness": 4,
+      "position": [
+        0,
+        0.5789,
+        0.0265
+      ],
+      "material": "woodLight"
+    },
+    {
+      "id": "bezel-bottom",
+      "geometry": "roundedBox",
+      "size": [
+        0.9695,
+        0.026,
+        0.018
+      ],
+      "radius": 0.007,
+      "smoothness": 4,
+      "position": [
+        0,
+        0.05795,
+        0.0265
+      ],
+      "material": "woodLight"
+    },
+    {
+      "id": "bezel-left",
+      "geometry": "roundedBox",
+      "size": [
+        0.026,
+        0.4949,
+        0.018
+      ],
+      "radius": 0.007,
+      "smoothness": 4,
+      "position": [
+        -0.47175,
+        0.31845,
+        0.0265
+      ],
+      "material": "woodLight"
+    },
+    {
+      "id": "bezel-right",
+      "geometry": "roundedBox",
+      "size": [
+        0.026,
+        0.4949,
+        0.018
+      ],
+      "radius": 0.007,
+      "smoothness": 4,
+      "position": [
+        0.47175,
+        0.31845,
+        0.0265
+      ],
+      "material": "woodLight"
+    },
+    {
+      "id": "art-display",
+      "geometry": "box",
+      "size": [
+        0.9175,
+        0.4949,
+        0.006
+      ],
+      "position": [
+        0,
+        0.31845,
+        0.0385
+      ],
+      "material": "screen"
+    }
+  ],
+  "variantId": "tv-natural-frame",
+  "furnitureTypeCode": "TV",
+  "styleTags": [
+    "modern",
+    "natural"
+  ],
+  "lifestyleTags": [
+    "HOBBY_LEISURE"
+  ],
+  "purchaseUrl": "https://www.samsung.com/sec/tvs/packge-kq43lsf03-tk-d2c/KQ43LSF03-TK/"
+}

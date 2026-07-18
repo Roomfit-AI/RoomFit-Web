@@ -1,0 +1,128 @@
+{
+  "schemaVersion": "1.0",
+  "name": "서랍형 협탁",
+  "furnitureType": "협탁",
+  "variant": "서랍형",
+  "units": "meter",
+  "coordinateSystem": {
+    "origin": "floor-center",
+    "axes": {
+      "x": "right",
+      "y": "up",
+      "z": "front"
+    }
+  },
+  "rotationUnit": "radian",
+  "dimensions": {
+    "width": 0.35,
+    "depth": 0.426,
+    "height": 0.49
+  },
+  "materials": [
+    "woodLight",
+    "metalLight"
+  ],
+  "parts": [
+    {
+      "id": "cabinet-body",
+      "geometry": "box",
+      "size": [
+        0.35,
+        0.47,
+        0.4
+      ],
+      "position": [
+        0,
+        0.235,
+        -0.013
+      ],
+      "material": "woodLight"
+    },
+    {
+      "id": "top",
+      "geometry": "box",
+      "size": [
+        0.35,
+        0.02,
+        0.4
+      ],
+      "position": [
+        0,
+        0.48,
+        -0.013
+      ],
+      "material": "woodLight"
+    },
+    {
+      "id": "drawer-upper",
+      "geometry": "box",
+      "size": [
+        0.31,
+        0.18,
+        0.01
+      ],
+      "position": [
+        0,
+        0.36,
+        0.192
+      ],
+      "material": "woodLight"
+    },
+    {
+      "id": "drawer-lower",
+      "geometry": "box",
+      "size": [
+        0.31,
+        0.18,
+        0.01
+      ],
+      "position": [
+        0,
+        0.14,
+        0.192
+      ],
+      "material": "woodLight"
+    },
+    {
+      "id": "grip-upper",
+      "geometry": "box",
+      "size": [
+        0.15,
+        0.02,
+        0.016
+      ],
+      "position": [
+        0,
+        0.405,
+        0.205
+      ],
+      "material": "metalLight"
+    },
+    {
+      "id": "grip-lower",
+      "geometry": "box",
+      "size": [
+        0.15,
+        0.02,
+        0.016
+      ],
+      "position": [
+        0,
+        0.185,
+        0.205
+      ],
+      "material": "metalLight"
+    }
+  ],
+  "variantId": "nightstand-drawer",
+  "furnitureTypeCode": "NIGHTSTAND",
+  "styleTags": [
+    "minimal",
+    "natural"
+  ],
+  "lifestyleTags": [
+    "REST",
+    "STORAGE"
+  ],
+  "purchaseUrl": "https://www.ikea.com/kr/ko/p/kullen-chest-of-2-drawers-white-70355728/"
+}

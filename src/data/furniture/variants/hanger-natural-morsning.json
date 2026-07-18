@@ -1,0 +1,229 @@
+{
+  "schemaVersion": "1.0",
+  "name": "내추럴 대나무 발렛 행거",
+  "furnitureType": "행거",
+  "variant": "내추럴 대나무형",
+  "units": "meter",
+  "coordinateSystem": {
+    "origin": "floor-center",
+    "axes": {
+      "x": "right",
+      "y": "up",
+      "z": "front"
+    }
+  },
+  "rotationUnit": "radian",
+  "dimensions": {
+    "width": 0.54,
+    "depth": 0.47,
+    "height": 1.39
+  },
+  "materials": [
+    "wood",
+    "woodLight"
+  ],
+  "parts": [
+    {
+      "id": "foot-left",
+      "geometry": "roundedBox",
+      "size": [
+        0.1,
+        0.035,
+        0.47
+      ],
+      "radius": 0.015,
+      "smoothness": 4,
+      "position": [
+        -0.22,
+        0.0175,
+        0
+      ],
+      "material": "woodLight"
+    },
+    {
+      "id": "foot-right",
+      "geometry": "roundedBox",
+      "size": [
+        0.1,
+        0.035,
+        0.47
+      ],
+      "radius": 0.015,
+      "smoothness": 4,
+      "position": [
+        0.22,
+        0.0175,
+        0
+      ],
+      "material": "woodLight"
+    },
+    {
+      "id": "post-left",
+      "geometry": "roundedBox",
+      "size": [
+        0.055,
+        1.355,
+        0.055
+      ],
+      "radius": 0.018,
+      "smoothness": 4,
+      "position": [
+        -0.22,
+        0.7125,
+        -0.13
+      ],
+      "material": "wood"
+    },
+    {
+      "id": "post-right",
+      "geometry": "roundedBox",
+      "size": [
+        0.055,
+        1.355,
+        0.055
+      ],
+      "radius": 0.018,
+      "smoothness": 4,
+      "position": [
+        0.22,
+        0.7125,
+        -0.13
+      ],
+      "material": "wood"
+    },
+    {
+      "id": "lower-bar",
+      "geometry": "cylinder",
+      "size": [
+        0.018,
+        0.018,
+        0.44
+      ],
+      "position": [
+        0,
+        0.35,
+        -0.13
+      ],
+      "rotation": [
+        0,
+        0,
+        1.5707963267948966
+      ],
+      "material": "woodLight"
+    },
+    {
+      "id": "mid-bar",
+      "geometry": "cylinder",
+      "size": [
+        0.02,
+        0.02,
+        0.44
+      ],
+      "position": [
+        0,
+        0.83,
+        -0.13
+      ],
+      "rotation": [
+        0,
+        0,
+        1.5707963267948966
+      ],
+      "material": "woodLight"
+    },
+    {
+      "id": "shoulder-rail",
+      "geometry": "cylinder",
+      "size": [
+        0.025,
+        0.025,
+        0.54
+      ],
+      "position": [
+        0,
+        1.365,
+        -0.13
+      ],
+      "rotation": [
+        0,
+        0,
+        1.5707963267948966
+      ],
+      "material": "wood"
+    },
+    {
+      "id": "front-valet-rail",
+      "geometry": "cylinder",
+      "size": [
+        0.02,
+        0.02,
+        0.44
+      ],
+      "position": [
+        0,
+        1.09,
+        0.16
+      ],
+      "rotation": [
+        0,
+        0,
+        1.5707963267948966
+      ],
+      "material": "woodLight"
+    },
+    {
+      "id": "connector-left",
+      "geometry": "roundedBox",
+      "size": [
+        0.04,
+        0.45,
+        0.04
+      ],
+      "radius": 0.012,
+      "smoothness": 4,
+      "position": [
+        -0.2,
+        1.205026154116236,
+        0.015
+      ],
+      "rotation": [
+        -0.7,
+        0,
+        0
+      ],
+      "material": "woodLight"
+    },
+    {
+      "id": "connector-right",
+      "geometry": "roundedBox",
+      "size": [
+        0.04,
+        0.45,
+        0.04
+      ],
+      "radius": 0.012,
+      "smoothness": 4,
+      "position": [
+        0.2,
+        1.205026154116236,
+        0.015
+      ],
+      "rotation": [
+        -0.7,
+        0,
+        0
+      ],
+      "material": "woodLight"
+    }
+  ],
+  "variantId": "hanger-natural-morsning",
+  "furnitureTypeCode": "HANGER",
+  "styleTags": [
+    "natural",
+    "minimal"
+  ],
+  "lifestyleTags": [
+    "STORAGE"
+  ],
+  "purchaseUrl": "https://www.ikea.com/kr/en/p/morsning-valet-stand-bamboo-70464435/"
+}

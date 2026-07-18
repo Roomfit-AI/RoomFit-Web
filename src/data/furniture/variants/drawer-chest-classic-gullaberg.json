@@ -1,0 +1,361 @@
+{
+  "schemaVersion": "1.0",
+  "name": "클래식 6단 서랍장",
+  "furnitureType": "서랍장",
+  "variant": "클래식 2열 6서랍형",
+  "units": "meter",
+  "coordinateSystem": {
+    "origin": "floor-center",
+    "axes": {
+      "x": "right",
+      "y": "up",
+      "z": "front"
+    }
+  },
+  "rotationUnit": "radian",
+  "dimensions": {
+    "width": 0.89,
+    "depth": 0.48,
+    "height": 1.22
+  },
+  "materials": [
+    "paintedWhite",
+    "wood"
+  ],
+  "parts": [
+    {
+      "id": "leg-left-front",
+      "geometry": "roundedBox",
+      "size": [
+        0.075,
+        0.2,
+        0.075
+      ],
+      "radius": 0.016,
+      "smoothness": 4,
+      "position": [
+        -0.35,
+        0.1,
+        0.16
+      ],
+      "material": "paintedWhite"
+    },
+    {
+      "id": "leg-left-back",
+      "geometry": "roundedBox",
+      "size": [
+        0.075,
+        0.2,
+        0.075
+      ],
+      "radius": 0.016,
+      "smoothness": 4,
+      "position": [
+        -0.35,
+        0.1,
+        -0.16
+      ],
+      "material": "paintedWhite"
+    },
+    {
+      "id": "leg-right-front",
+      "geometry": "roundedBox",
+      "size": [
+        0.075,
+        0.2,
+        0.075
+      ],
+      "radius": 0.016,
+      "smoothness": 4,
+      "position": [
+        0.35,
+        0.1,
+        0.16
+      ],
+      "material": "paintedWhite"
+    },
+    {
+      "id": "leg-right-back",
+      "geometry": "roundedBox",
+      "size": [
+        0.075,
+        0.2,
+        0.075
+      ],
+      "radius": 0.016,
+      "smoothness": 4,
+      "position": [
+        0.35,
+        0.1,
+        -0.16
+      ],
+      "material": "paintedWhite"
+    },
+    {
+      "id": "cabinet-body",
+      "geometry": "roundedBox",
+      "size": [
+        0.83,
+        0.98,
+        0.44
+      ],
+      "radius": 0.018,
+      "smoothness": 4,
+      "position": [
+        0,
+        0.69,
+        0
+      ],
+      "material": "paintedWhite"
+    },
+    {
+      "id": "top",
+      "geometry": "roundedBox",
+      "size": [
+        0.89,
+        0.04,
+        0.48
+      ],
+      "radius": 0.015,
+      "smoothness": 4,
+      "position": [
+        0,
+        1.2,
+        0
+      ],
+      "material": "paintedWhite"
+    },
+    {
+      "id": "drawer-1-1",
+      "geometry": "roundedBox",
+      "size": [
+        0.385,
+        0.24,
+        0.025
+      ],
+      "radius": 0.01,
+      "smoothness": 4,
+      "position": [
+        -0.21,
+        0.97,
+        0.2275
+      ],
+      "material": "paintedWhite"
+    },
+    {
+      "id": "knob-1-1",
+      "geometry": "cylinder",
+      "size": [
+        0.018,
+        0.018,
+        0.035
+      ],
+      "position": [
+        -0.21,
+        0.97,
+        0.2225
+      ],
+      "rotation": [
+        1.5707963267948966,
+        0,
+        0
+      ],
+      "material": "wood"
+    },
+    {
+      "id": "drawer-1-2",
+      "geometry": "roundedBox",
+      "size": [
+        0.385,
+        0.24,
+        0.025
+      ],
+      "radius": 0.01,
+      "smoothness": 4,
+      "position": [
+        0.21,
+        0.97,
+        0.2275
+      ],
+      "material": "paintedWhite"
+    },
+    {
+      "id": "knob-1-2",
+      "geometry": "cylinder",
+      "size": [
+        0.018,
+        0.018,
+        0.035
+      ],
+      "position": [
+        0.21,
+        0.97,
+        0.2225
+      ],
+      "rotation": [
+        1.5707963267948966,
+        0,
+        0
+      ],
+      "material": "wood"
+    },
+    {
+      "id": "drawer-2-1",
+      "geometry": "roundedBox",
+      "size": [
+        0.385,
+        0.24,
+        0.025
+      ],
+      "radius": 0.01,
+      "smoothness": 4,
+      "position": [
+        -0.21,
+        0.68,
+        0.2275
+      ],
+      "material": "paintedWhite"
+    },
+    {
+      "id": "knob-2-1",
+      "geometry": "cylinder",
+      "size": [
+        0.018,
+        0.018,
+        0.035
+      ],
+      "position": [
+        -0.21,
+        0.68,
+        0.2225
+      ],
+      "rotation": [
+        1.5707963267948966,
+        0,
+        0
+      ],
+      "material": "wood"
+    },
+    {
+      "id": "drawer-2-2",
+      "geometry": "roundedBox",
+      "size": [
+        0.385,
+        0.24,
+        0.025
+      ],
+      "radius": 0.01,
+      "smoothness": 4,
+      "position": [
+        0.21,
+        0.68,
+        0.2275
+      ],
+      "material": "paintedWhite"
+    },
+    {
+      "id": "knob-2-2",
+      "geometry": "cylinder",
+      "size": [
+        0.018,
+        0.018,
+        0.035
+      ],
+      "position": [
+        0.21,
+        0.68,
+        0.2225
+      ],
+      "rotation": [
+        1.5707963267948966,
+        0,
+        0
+      ],
+      "material": "wood"
+    },
+    {
+      "id": "drawer-3-1",
+      "geometry": "roundedBox",
+      "size": [
+        0.385,
+        0.24,
+        0.025
+      ],
+      "radius": 0.01,
+      "smoothness": 4,
+      "position": [
+        -0.21,
+        0.39,
+        0.2275
+      ],
+      "material": "paintedWhite"
+    },
+    {
+      "id": "knob-3-1",
+      "geometry": "cylinder",
+      "size": [
+        0.018,
+        0.018,
+        0.035
+      ],
+      "position": [
+        -0.21,
+        0.39,
+        0.2225
+      ],
+      "rotation": [
+        1.5707963267948966,
+        0,
+        0
+      ],
+      "material": "wood"
+    },
+    {
+      "id": "drawer-3-2",
+      "geometry": "roundedBox",
+      "size": [
+        0.385,
+        0.24,
+        0.025
+      ],
+      "radius": 0.01,
+      "smoothness": 4,
+      "position": [
+        0.21,
+        0.39,
+        0.2275
+      ],
+      "material": "paintedWhite"
+    },
+    {
+      "id": "knob-3-2",
+      "geometry": "cylinder",
+      "size": [
+        0.018,
+        0.018,
+        0.035
+      ],
+      "position": [
+        0.21,
+        0.39,
+        0.2225
+      ],
+      "rotation": [
+        1.5707963267948966,
+        0,
+        0
+      ],
+      "material": "wood"
+    }
+  ],
+  "variantId": "drawer-chest-classic-gullaberg",
+  "furnitureTypeCode": "DRAWER_CHEST",
+  "styleTags": [
+    "classic",
+    "natural"
+  ],
+  "lifestyleTags": [
+    "STORAGE"
+  ],
+  "purchaseUrl": "https://www.ikea.com/kr/en/p/gullaberg-chest-of-6-drawers-white-anchor-unlock-function-20561778/"
+}

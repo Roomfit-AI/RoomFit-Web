@@ -67,11 +67,50 @@ export interface ExtrudedPolygonFurniturePart extends FurniturePartBase {
   bevel?: false;
 }
 
+export interface CurtainFurniturePart extends FurniturePartBase {
+  geometry: "curtain";
+  size: Vector3Tuple;
+  folds: number;
+  segmentsX: number;
+  segmentsY: number;
+}
+
+export interface EllipsoidFurniturePart extends FurniturePartBase {
+  geometry: "ellipsoid";
+  size: Vector3Tuple;
+}
+
+export interface LeafFurniturePart extends FurniturePartBase {
+  geometry: "leaf";
+  width: number;
+  height: number;
+  curveSegments: number;
+}
+
+export interface PlanterFurniturePart extends FurniturePartBase {
+  geometry: "planter";
+  size: Vector3Tuple;
+  segments: number;
+}
+
+export interface TubeFurniturePart extends FurniturePartBase {
+  geometry: "tube";
+  curvePoints: Vector3Tuple[];
+  radius: number;
+  tubularSegments: number;
+  radialSegments: number;
+}
+
 export type FurniturePart =
   | BoxFurniturePart
   | RoundedBoxFurniturePart
   | CylinderFurniturePart
-  | ExtrudedPolygonFurniturePart;
+  | ExtrudedPolygonFurniturePart
+  | CurtainFurniturePart
+  | EllipsoidFurniturePart
+  | LeafFurniturePart
+  | PlanterFurniturePart
+  | TubeFurniturePart;
 
 export interface FurnitureVariant {
   schemaVersion: typeof FURNITURE_VARIANT_SCHEMA_VERSION;

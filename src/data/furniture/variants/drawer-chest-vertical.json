@@ -1,0 +1,219 @@
+{
+  "schemaVersion": "1.0",
+  "name": "세로형 서랍장",
+  "furnitureType": "서랍장",
+  "variant": "세로형",
+  "units": "meter",
+  "coordinateSystem": {
+    "origin": "floor-center",
+    "axes": {
+      "x": "right",
+      "y": "up",
+      "z": "front"
+    }
+  },
+  "rotationUnit": "radian",
+  "dimensions": {
+    "width": 0.7,
+    "depth": 0.4,
+    "height": 1.12
+  },
+  "materials": [
+    "wood",
+    "woodLight",
+    "woodDark",
+    "metal"
+  ],
+  "parts": [
+    {
+      "id": "tall-cabinet-body",
+      "geometry": "box",
+      "size": [
+        0.7,
+        1.1,
+        0.39
+      ],
+      "position": [
+        0,
+        0.55,
+        -0.005
+      ],
+      "material": "woodLight"
+    },
+    {
+      "id": "tall-top",
+      "geometry": "box",
+      "size": [
+        0.7,
+        0.02,
+        0.4
+      ],
+      "position": [
+        0,
+        1.11,
+        0
+      ],
+      "material": "woodDark"
+    },
+    {
+      "id": "drawer-1",
+      "geometry": "box",
+      "size": [
+        0.64,
+        0.18,
+        0.015
+      ],
+      "position": [
+        0,
+        0.965,
+        0.1925
+      ],
+      "material": "wood"
+    },
+    {
+      "id": "drawer-2",
+      "geometry": "box",
+      "size": [
+        0.64,
+        0.18,
+        0.015
+      ],
+      "position": [
+        0,
+        0.755,
+        0.1925
+      ],
+      "material": "wood"
+    },
+    {
+      "id": "drawer-3",
+      "geometry": "box",
+      "size": [
+        0.64,
+        0.18,
+        0.015
+      ],
+      "position": [
+        0,
+        0.545,
+        0.1925
+      ],
+      "material": "wood"
+    },
+    {
+      "id": "drawer-4",
+      "geometry": "box",
+      "size": [
+        0.64,
+        0.18,
+        0.015
+      ],
+      "position": [
+        0,
+        0.335,
+        0.1925
+      ],
+      "material": "wood"
+    },
+    {
+      "id": "drawer-5",
+      "geometry": "box",
+      "size": [
+        0.64,
+        0.18,
+        0.015
+      ],
+      "position": [
+        0,
+        0.125,
+        0.1925
+      ],
+      "material": "wood"
+    },
+    {
+      "id": "handle-1",
+      "geometry": "box",
+      "size": [
+        0.2,
+        0.025,
+        0.006
+      ],
+      "position": [
+        0,
+        0.965,
+        0.197
+      ],
+      "material": "metal"
+    },
+    {
+      "id": "handle-2",
+      "geometry": "box",
+      "size": [
+        0.2,
+        0.025,
+        0.006
+      ],
+      "position": [
+        0,
+        0.755,
+        0.197
+      ],
+      "material": "metal"
+    },
+    {
+      "id": "handle-3",
+      "geometry": "box",
+      "size": [
+        0.2,
+        0.025,
+        0.006
+      ],
+      "position": [
+        0,
+        0.545,
+        0.197
+      ],
+      "material": "metal"
+    },
+    {
+      "id": "handle-4",
+      "geometry": "box",
+      "size": [
+        0.2,
+        0.025,
+        0.006
+      ],
+      "position": [
+        0,
+        0.335,
+        0.197
+      ],
+      "material": "metal"
+    },
+    {
+      "id": "handle-5",
+      "geometry": "box",
+      "size": [
+        0.2,
+        0.025,
+        0.006
+      ],
+      "position": [
+        0,
+        0.125,
+        0.197
+      ],
+      "material": "metal"
+    }
+  ],
+  "variantId": "drawer-chest-vertical",
+  "furnitureTypeCode": "DRAWER_CHEST",
+  "styleTags": [
+    "minimal",
+    "modern"
+  ],
+  "lifestyleTags": [
+    "STORAGE"
+  ],
+  "purchaseUrl": "https://www.ikea.com/kr/ko/p/kullen-chest-of-5-drawers-white-90355732/"
+}

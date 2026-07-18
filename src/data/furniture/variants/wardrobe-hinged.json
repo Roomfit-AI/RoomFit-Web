@@ -1,0 +1,234 @@
+{
+  "schemaVersion": "1.0",
+  "name": "여닫이형 옷장",
+  "furnitureType": "옷장",
+  "variant": "여닫이형",
+  "units": "meter",
+  "coordinateSystem": {
+    "origin": "floor-center",
+    "axes": {
+      "x": "right",
+      "y": "up",
+      "z": "front"
+    }
+  },
+  "rotationUnit": "radian",
+  "dimensions": {
+    "width": 0.79,
+    "depth": 0.55,
+    "height": 1.76
+  },
+  "materials": [
+    "wood",
+    "woodLight",
+    "woodDark",
+    "metal"
+  ],
+  "parts": [
+    {
+      "id": "plinth",
+      "geometry": "box",
+      "size": [
+        0.79,
+        0.08,
+        0.55
+      ],
+      "position": [
+        0,
+        0.04,
+        0
+      ],
+      "material": "woodDark"
+    },
+    {
+      "id": "side-left",
+      "geometry": "box",
+      "size": [
+        0.04,
+        1.68,
+        0.55
+      ],
+      "position": [
+        -0.375,
+        0.92,
+        0
+      ],
+      "material": "woodLight"
+    },
+    {
+      "id": "side-right",
+      "geometry": "box",
+      "size": [
+        0.04,
+        1.68,
+        0.55
+      ],
+      "position": [
+        0.375,
+        0.92,
+        0
+      ],
+      "material": "woodLight"
+    },
+    {
+      "id": "top",
+      "geometry": "box",
+      "size": [
+        0.71,
+        0.04,
+        0.55
+      ],
+      "position": [
+        0,
+        1.74,
+        0
+      ],
+      "material": "wood"
+    },
+    {
+      "id": "back-panel",
+      "geometry": "box",
+      "size": [
+        0.71,
+        1.64,
+        0.02
+      ],
+      "position": [
+        0,
+        0.9,
+        -0.265
+      ],
+      "material": "woodDark"
+    },
+    {
+      "id": "door-left",
+      "geometry": "box",
+      "size": [
+        0.345,
+        1.6,
+        0.025
+      ],
+      "position": [
+        -0.18,
+        0.9,
+        0.2625
+      ],
+      "material": "wood"
+    },
+    {
+      "id": "door-right",
+      "geometry": "box",
+      "size": [
+        0.345,
+        1.6,
+        0.025
+      ],
+      "position": [
+        0.18,
+        0.9,
+        0.2625
+      ],
+      "material": "wood"
+    },
+    {
+      "id": "hinge-left-lower",
+      "geometry": "box",
+      "size": [
+        0.03,
+        0.05,
+        0.04
+      ],
+      "position": [
+        -0.355,
+        0.35,
+        0.25
+      ],
+      "material": "metal"
+    },
+    {
+      "id": "hinge-left-upper",
+      "geometry": "box",
+      "size": [
+        0.03,
+        0.05,
+        0.04
+      ],
+      "position": [
+        -0.355,
+        1.45,
+        0.25
+      ],
+      "material": "metal"
+    },
+    {
+      "id": "hinge-right-lower",
+      "geometry": "box",
+      "size": [
+        0.03,
+        0.05,
+        0.04
+      ],
+      "position": [
+        0.355,
+        0.35,
+        0.25
+      ],
+      "material": "metal"
+    },
+    {
+      "id": "hinge-right-upper",
+      "geometry": "box",
+      "size": [
+        0.03,
+        0.05,
+        0.04
+      ],
+      "position": [
+        0.355,
+        1.45,
+        0.25
+      ],
+      "material": "metal"
+    },
+    {
+      "id": "handle-left",
+      "geometry": "box",
+      "size": [
+        0.02,
+        0.18,
+        0.012
+      ],
+      "position": [
+        -0.035,
+        0.93,
+        0.269
+      ],
+      "material": "metal"
+    },
+    {
+      "id": "handle-right",
+      "geometry": "box",
+      "size": [
+        0.02,
+        0.18,
+        0.012
+      ],
+      "position": [
+        0.035,
+        0.93,
+        0.269
+      ],
+      "material": "metal"
+    }
+  ],
+  "variantId": "wardrobe-hinged",
+  "furnitureTypeCode": "WARDROBE",
+  "styleTags": [
+    "minimal",
+    "modern"
+  ],
+  "lifestyleTags": [
+    "STORAGE"
+  ],
+  "purchaseUrl": "https://www.ikea.com/kr/ko/p/kleppstad-wardrobe-with-2-doors-white-10437237/"
+}

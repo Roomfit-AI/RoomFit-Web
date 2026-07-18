@@ -1,0 +1,143 @@
+{
+  "schemaVersion": "1.0",
+  "name": "1인 컴팩트 다용도 테이블",
+  "furnitureType": "다용도 테이블",
+  "variant": "1인 컴팩트형",
+  "units": "meter",
+  "coordinateSystem": {
+    "origin": "floor-center",
+    "axes": {
+      "x": "right",
+      "y": "up",
+      "z": "front"
+    }
+  },
+  "rotationUnit": "radian",
+  "dimensions": {
+    "width": 0.67,
+    "depth": 0.67,
+    "height": 0.73
+  },
+  "materials": [
+    "metal",
+    "woodLight"
+  ],
+  "parts": [
+    {
+      "id": "leg-left-back",
+      "geometry": "box",
+      "size": [
+        0.04,
+        0.69,
+        0.04
+      ],
+      "position": [
+        -0.285,
+        0.345,
+        -0.285
+      ],
+      "material": "metal"
+    },
+    {
+      "id": "leg-right-back",
+      "geometry": "box",
+      "size": [
+        0.04,
+        0.69,
+        0.04
+      ],
+      "position": [
+        0.285,
+        0.345,
+        -0.285
+      ],
+      "material": "metal"
+    },
+    {
+      "id": "leg-left-front",
+      "geometry": "box",
+      "size": [
+        0.04,
+        0.69,
+        0.04
+      ],
+      "position": [
+        -0.285,
+        0.345,
+        0.285
+      ],
+      "material": "metal"
+    },
+    {
+      "id": "leg-right-front",
+      "geometry": "box",
+      "size": [
+        0.04,
+        0.69,
+        0.04
+      ],
+      "position": [
+        0.285,
+        0.345,
+        0.285
+      ],
+      "material": "metal"
+    },
+    {
+      "id": "brace-back",
+      "geometry": "box",
+      "size": [
+        0.61,
+        0.045,
+        0.035
+      ],
+      "position": [
+        0,
+        0.34,
+        -0.285
+      ],
+      "material": "metal"
+    },
+    {
+      "id": "brace-front",
+      "geometry": "box",
+      "size": [
+        0.61,
+        0.045,
+        0.035
+      ],
+      "position": [
+        0,
+        0.34,
+        0.285
+      ],
+      "material": "metal"
+    },
+    {
+      "id": "tabletop",
+      "geometry": "box",
+      "size": [
+        0.67,
+        0.04,
+        0.67
+      ],
+      "position": [
+        0,
+        0.71,
+        0
+      ],
+      "material": "woodLight"
+    }
+  ],
+  "variantId": "multi-table-compact",
+  "furnitureTypeCode": "MULTI_TABLE",
+  "styleTags": [
+    "minimal",
+    "modern"
+  ],
+  "lifestyleTags": [
+    "WORK_STUDY",
+    "HOBBY_LEISURE"
+  ],
+  "purchaseUrl": "https://www.ikea.com/kr/ko/p/gunde-folding-table-black-70546894/"
+}

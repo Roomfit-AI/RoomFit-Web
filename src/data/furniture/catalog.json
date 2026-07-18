@@ -1,0 +1,3043 @@
+{
+  "schemaVersion": "1.0",
+  "catalogVersion": "2026-07-18.1",
+  "sourceHash": "sha256:96d726f4a90f3b91d6195f6c63bde17714c92abc9a1f8c41cab3d5faafa30ee1",
+  "variantCount": 93,
+  "typeAliases": {
+    "bed": "bed",
+    "BED": "bed",
+    "bedside table": "nightstand",
+    "bedside_table": "nightstand",
+    "bedside-table": "nightstand",
+    "blind": "curtain_blind",
+    "bookshelf": "bookshelf",
+    "BOOKSHELF": "bookshelf",
+    "chair": "desk_chair",
+    "curtain": "curtain_blind",
+    "curtain_blind": "curtain_blind",
+    "CURTAIN_BLIND": "curtain_blind",
+    "desk": "desk",
+    "DESK": "desk",
+    "desk_chair": "desk_chair",
+    "DESK_CHAIR": "desk_chair",
+    "desk-chair": "desk_chair",
+    "drawer_chest": "drawer_chest",
+    "DRAWER_CHEST": "drawer_chest",
+    "full_length_mirror": "full_length_mirror",
+    "FULL_LENGTH_MIRROR": "full_length_mirror",
+    "hanger": "hanger",
+    "HANGER": "hanger",
+    "lamp": "mood_lamp",
+    "lighting": "mood_lamp",
+    "media_console": "media_console",
+    "MEDIA_CONSOLE": "media_console",
+    "mirror": "full_length_mirror",
+    "monitor": "monitor",
+    "MONITOR": "monitor",
+    "mood_lamp": "mood_lamp",
+    "MOOD_LAMP": "mood_lamp",
+    "mood-light": "mood_lamp",
+    "multi_table": "multi_table",
+    "MULTI_TABLE": "multi_table",
+    "night stand": "nightstand",
+    "night-stand": "nightstand",
+    "nightstand": "nightstand",
+    "NIGHTSTAND": "nightstand",
+    "partition_shelf": "partition_shelf",
+    "PARTITION_SHELF": "partition_shelf",
+    "plant": "plant",
+    "PLANT": "plant",
+    "rug": "rug",
+    "RUG": "rug",
+    "side table": "side_table",
+    "side_table": "side_table",
+    "SIDE_TABLE": "side_table",
+    "side-table": "side_table",
+    "sofa": "sofa",
+    "SOFA": "sofa",
+    "sofa_bed": "sofa_bed",
+    "SOFA_BED": "sofa_bed",
+    "table": "multi_table",
+    "tv": "tv",
+    "TV": "tv",
+    "tv-stand": "media_console",
+    "tvstand": "media_console",
+    "tvStand": "media_console",
+    "wardrobe": "wardrobe",
+    "WARDROBE": "wardrobe"
+  },
+  "products": [
+    {
+      "productId": "desk-compact-01",
+      "variantId": "desk-compact",
+      "furnitureType": "desk",
+      "furnitureTypeCode": "DESK",
+      "label": "컴팩트 책상",
+      "dimensions": {
+        "width": 1.2,
+        "depth": 0.6,
+        "height": 0.73
+      },
+      "styleTags": [
+        "minimal",
+        "classic"
+      ],
+      "lifestyleTags": [
+        "WORK_STUDY"
+      ],
+      "materials": [
+        "paintedWhite",
+        "metal",
+        "metalLight"
+      ],
+      "purchaseUrl": "https://www.ikea.com/kr/ko/p/lagkapten-adils-desk-white-s09416759/",
+      "requiredClearance": {
+        "front": 0.6,
+        "side": 0.2
+      },
+      "renderCapability": "VARIANT_JSON",
+      "variantPath": "variants/desk-compact.json"
+    },
+    {
+      "productId": "desk-storage-01",
+      "variantId": "desk-storage",
+      "furnitureType": "desk",
+      "furnitureTypeCode": "DESK",
+      "label": "수납 결합 책상",
+      "dimensions": {
+        "width": 1.4,
+        "depth": 0.62,
+        "height": 0.73
+      },
+      "styleTags": [
+        "natural",
+        "classic"
+      ],
+      "lifestyleTags": [
+        "WORK_STUDY",
+        "STORAGE"
+      ],
+      "materials": [
+        "woodLight",
+        "wood",
+        "woodDark",
+        "metal"
+      ],
+      "purchaseUrl": "https://www.ikea.com/kr/ko/p/micke-desk-black-brown-60354277/",
+      "requiredClearance": {
+        "front": 0.6,
+        "side": 0.2
+      },
+      "renderCapability": "VARIANT_JSON",
+      "variantPath": "variants/desk-storage.json"
+    },
+    {
+      "productId": "desk-corner-01",
+      "variantId": "desk-corner",
+      "furnitureType": "desk",
+      "furnitureTypeCode": "DESK",
+      "label": "코너 책상",
+      "dimensions": {
+        "width": 1.3,
+        "depth": 1,
+        "height": 1.42
+      },
+      "styleTags": [
+        "minimal",
+        "modern"
+      ],
+      "lifestyleTags": [
+        "WORK_STUDY",
+        "STORAGE",
+        "HOBBY_LEISURE"
+      ],
+      "materials": [
+        "paintedWhite",
+        "metalLight"
+      ],
+      "purchaseUrl": "https://www.ikea.com/kr/ko/p/micke-corner-workstation-white-20354284/",
+      "requiredClearance": {
+        "front": 0.6,
+        "side": 0.2
+      },
+      "renderCapability": "VARIANT_JSON",
+      "variantPath": "variants/desk-corner.json"
+    },
+    {
+      "productId": "desk-midcentury-glass-01",
+      "variantId": "desk-midcentury-glass",
+      "furnitureType": "desk",
+      "furnitureTypeCode": "DESK",
+      "label": "미드센추리 글라스 책상",
+      "dimensions": {
+        "width": 1.75,
+        "depth": 0.74,
+        "height": 0.812
+      },
+      "styleTags": [
+        "midcentury",
+        "modern"
+      ],
+      "lifestyleTags": [
+        "WORK_STUDY"
+      ],
+      "materials": [
+        "glass",
+        "woodDark",
+        "brass"
+      ],
+      "purchaseUrl": "https://www.oldbonesco.com/products/denali-glass-top-desk",
+      "requiredClearance": {
+        "front": 0.6,
+        "side": 0.2
+      },
+      "renderCapability": "VARIANT_JSON",
+      "variantPath": "variants/desk-midcentury-glass.json"
+    },
+    {
+      "productId": "bed-classic-idanaes-01",
+      "variantId": "bed-classic-idanaes",
+      "furnitureType": "bed",
+      "furnitureTypeCode": "BED",
+      "label": "클래식 버튼 패브릭 침대",
+      "dimensions": {
+        "width": 1.57,
+        "depth": 2.22,
+        "height": 1.21
+      },
+      "styleTags": [
+        "classic",
+        "natural"
+      ],
+      "lifestyleTags": [
+        "REST"
+      ],
+      "materials": [
+        "woodDark",
+        "fabric",
+        "fabricLight",
+        "fabricDark"
+      ],
+      "purchaseUrl": "https://www.ikea.com/kr/en/p/idanaes-upholstered-bed-frame-gunnared-dark-grey-80458938/",
+      "requiredClearance": {
+        "front": 0.5,
+        "side": 0.2
+      },
+      "renderCapability": "VARIANT_JSON",
+      "variantPath": "variants/bed-classic-idanaes.json"
+    },
+    {
+      "productId": "bed-fabric-headboard-01",
+      "variantId": "bed-fabric-headboard",
+      "furnitureType": "bed",
+      "furnitureTypeCode": "BED",
+      "label": "패브릭 헤드 침대",
+      "dimensions": {
+        "width": 0.94,
+        "depth": 2.06,
+        "height": 0.85
+      },
+      "styleTags": [
+        "natural",
+        "minimal"
+      ],
+      "lifestyleTags": [
+        "REST"
+      ],
+      "materials": [
+        "fabric",
+        "fabricLight",
+        "fabricDark"
+      ],
+      "purchaseUrl": "https://www.ikea.com/kr/ko/p/slattum-upholstered-bed-frame-vissle-dark-grey-60571252/",
+      "requiredClearance": {
+        "front": 0.5,
+        "side": 0.2
+      },
+      "renderCapability": "VARIANT_JSON",
+      "variantPath": "variants/bed-fabric-headboard.json"
+    },
+    {
+      "productId": "bed-loft-desk-01",
+      "variantId": "bed-loft-desk",
+      "furnitureType": "bed",
+      "furnitureTypeCode": "BED",
+      "label": "책상 수납 로프트 침대",
+      "dimensions": {
+        "width": 2.07,
+        "depth": 1.04,
+        "height": 1.82
+      },
+      "styleTags": [
+        "modern",
+        "minimal"
+      ],
+      "lifestyleTags": [
+        "REST",
+        "WORK_STUDY",
+        "STORAGE"
+      ],
+      "materials": [
+        "paintedWhite",
+        "woodLight",
+        "fabric",
+        "fabricLight",
+        "metalLight"
+      ],
+      "purchaseUrl": "https://www.ikea.com/kr/en/p/smastad-loft-bed-frame-w-desk-and-storage-white-30454037/",
+      "requiredClearance": {
+        "front": 0.5,
+        "side": 0.2
+      },
+      "renderCapability": "VARIANT_JSON",
+      "variantPath": "variants/bed-loft-desk.json"
+    },
+    {
+      "productId": "bed-low-platform-01",
+      "variantId": "bed-low-platform",
+      "furnitureType": "bed",
+      "furnitureTypeCode": "BED",
+      "label": "로우 플랫폼 침대",
+      "dimensions": {
+        "width": 0.83,
+        "depth": 2.05,
+        "height": 0.7
+      },
+      "styleTags": [
+        "natural",
+        "minimal"
+      ],
+      "lifestyleTags": [
+        "REST"
+      ],
+      "materials": [
+        "wood",
+        "woodLight",
+        "fabric",
+        "fabricLight",
+        "fabricDark"
+      ],
+      "purchaseUrl": "https://www.ikea.com/kr/ko/p/utaker-stackable-bed-with-2-mattresses-pine-agotnes-firm-s49428133/",
+      "requiredClearance": {
+        "front": 0.5,
+        "side": 0.2
+      },
+      "renderCapability": "VARIANT_JSON",
+      "variantPath": "variants/bed-low-platform.json"
+    },
+    {
+      "productId": "bed-midcentury-teal-01",
+      "variantId": "bed-midcentury-teal",
+      "furnitureType": "bed",
+      "furnitureTypeCode": "BED",
+      "label": "미드센추리 터쿼이즈 침대",
+      "dimensions": {
+        "width": 1.8,
+        "depth": 2.31,
+        "height": 1.19
+      },
+      "styleTags": [
+        "midcentury",
+        "modern"
+      ],
+      "lifestyleTags": [
+        "REST"
+      ],
+      "materials": [
+        "wood",
+        "woodDark",
+        "fabric",
+        "fabricLight",
+        "tealFabric",
+        "orangeFabric",
+        "brass"
+      ],
+      "purchaseUrl": "https://midinmod.com/products/ashley-platform-queen-bed-dark-teal-velvet",
+      "requiredClearance": {
+        "front": 0.5,
+        "side": 0.2
+      },
+      "renderCapability": "VARIANT_JSON",
+      "variantPath": "variants/bed-midcentury-teal.json"
+    },
+    {
+      "productId": "bed-storage-01",
+      "variantId": "bed-storage",
+      "furnitureType": "bed",
+      "furnitureTypeCode": "BED",
+      "label": "수납형 침대",
+      "dimensions": {
+        "width": 0.96,
+        "depth": 2.06,
+        "height": 0.635
+      },
+      "styleTags": [
+        "natural",
+        "minimal"
+      ],
+      "lifestyleTags": [
+        "REST",
+        "STORAGE"
+      ],
+      "materials": [
+        "woodLight",
+        "fabric",
+        "fabricLight",
+        "metal"
+      ],
+      "purchaseUrl": "https://www.ikea.com/kr/ko/p/brimnes-bed-frame-with-storage-white-loenset-s39278346/",
+      "requiredClearance": {
+        "front": 0.5,
+        "side": 0.2
+      },
+      "renderCapability": "VARIANT_JSON",
+      "variantPath": "variants/bed-storage.json"
+    },
+    {
+      "productId": "blind-roller-01",
+      "variantId": "blind-roller",
+      "furnitureType": "curtain_blind",
+      "furnitureTypeCode": "CURTAIN_BLIND",
+      "label": "롤 블라인드",
+      "dimensions": {
+        "width": 1.28,
+        "depth": 0.1,
+        "height": 1.79
+      },
+      "styleTags": [
+        "minimal",
+        "natural"
+      ],
+      "lifestyleTags": [
+        "REST"
+      ],
+      "materials": [
+        "fabricLight",
+        "fabricDark",
+        "metal",
+        "metalLight"
+      ],
+      "purchaseUrl": "https://www.ikea.com/kr/ko/p/sandvedel-roller-blind-beige-00469785/",
+      "requiredClearance": {
+        "front": 0.1,
+        "side": 0.1
+      },
+      "renderCapability": "VARIANT_JSON",
+      "variantPath": "variants/blind-roller.json"
+    },
+    {
+      "productId": "blind-wood-01",
+      "variantId": "blind-wood",
+      "furnitureType": "curtain_blind",
+      "furnitureTypeCode": "CURTAIN_BLIND",
+      "label": "우드 블라인드",
+      "dimensions": {
+        "width": 1.25,
+        "depth": 0.1,
+        "height": 1.8
+      },
+      "styleTags": [
+        "minimal",
+        "natural"
+      ],
+      "lifestyleTags": [
+        "REST"
+      ],
+      "materials": [
+        "wood",
+        "woodLight",
+        "woodDark",
+        "fabricDark"
+      ],
+      "purchaseUrl": "https://www.ikea.com/kr/ko/p/vecklarfly-venetian-blind-bamboo-80616301/",
+      "requiredClearance": {
+        "front": 0.1,
+        "side": 0.1
+      },
+      "renderCapability": "VARIANT_JSON",
+      "variantPath": "variants/blind-wood.json"
+    },
+    {
+      "productId": "bookshelf-classic-havsta-01",
+      "variantId": "bookshelf-classic-havsta",
+      "furnitureType": "bookshelf",
+      "furnitureTypeCode": "BOOKSHELF",
+      "label": "클래식 유리도어 책장",
+      "dimensions": {
+        "width": 1.21,
+        "depth": 0.37,
+        "height": 1.34
+      },
+      "styleTags": [
+        "classic",
+        "natural"
+      ],
+      "lifestyleTags": [
+        "STORAGE",
+        "REST",
+        "HOBBY_LEISURE"
+      ],
+      "materials": [
+        "paintedWhite",
+        "glass",
+        "metalLight"
+      ],
+      "purchaseUrl": "https://www.ikea.com/kr/ko/p/havsta-glass-door-cabinet-with-plinth-white-clear-glass-s29563141/",
+      "requiredClearance": {
+        "front": 0.5,
+        "side": 0.2
+      },
+      "renderCapability": "VARIANT_JSON",
+      "variantPath": "variants/bookshelf-classic-havsta.json"
+    },
+    {
+      "productId": "bookshelf-double-open-01",
+      "variantId": "bookshelf-double-open",
+      "furnitureType": "bookshelf",
+      "furnitureTypeCode": "BOOKSHELF",
+      "label": "양면 오픈 선반",
+      "dimensions": {
+        "width": 0.765,
+        "depth": 0.39,
+        "height": 1.465
+      },
+      "styleTags": [
+        "minimal",
+        "modern"
+      ],
+      "lifestyleTags": [
+        "STORAGE",
+        "WORK_STUDY"
+      ],
+      "materials": [
+        "wood",
+        "woodLight",
+        "woodDark"
+      ],
+      "purchaseUrl": "https://www.ikea.com/kr/ko/p/kallax-shelving-unit-white-20351884/",
+      "requiredClearance": {
+        "front": 0.5,
+        "side": 0.2
+      },
+      "renderCapability": "VARIANT_JSON",
+      "variantPath": "variants/bookshelf-double-open.json"
+    },
+    {
+      "productId": "bookshelf-high-01",
+      "variantId": "bookshelf-high",
+      "furnitureType": "bookshelf",
+      "furnitureTypeCode": "BOOKSHELF",
+      "label": "높은 책장",
+      "dimensions": {
+        "width": 0.8,
+        "depth": 0.28,
+        "height": 2.02
+      },
+      "styleTags": [
+        "minimal",
+        "modern"
+      ],
+      "lifestyleTags": [
+        "STORAGE",
+        "WORK_STUDY"
+      ],
+      "materials": [
+        "wood",
+        "woodLight",
+        "woodDark"
+      ],
+      "purchaseUrl": "https://www.ikea.com/kr/ko/p/billy-bookcase-white-00522047/",
+      "requiredClearance": {
+        "front": 0.5,
+        "side": 0.2
+      },
+      "renderCapability": "VARIANT_JSON",
+      "variantPath": "variants/bookshelf-high.json"
+    },
+    {
+      "productId": "bookshelf-low-01",
+      "variantId": "bookshelf-low",
+      "furnitureType": "bookshelf",
+      "furnitureTypeCode": "BOOKSHELF",
+      "label": "낮은 책장",
+      "dimensions": {
+        "width": 0.8,
+        "depth": 0.28,
+        "height": 1.06
+      },
+      "styleTags": [
+        "minimal",
+        "modern"
+      ],
+      "lifestyleTags": [
+        "STORAGE",
+        "WORK_STUDY"
+      ],
+      "materials": [
+        "wood",
+        "woodLight",
+        "woodDark"
+      ],
+      "purchaseUrl": "https://www.ikea.com/kr/ko/p/billy-bookcase-white-70522044/",
+      "requiredClearance": {
+        "front": 0.5,
+        "side": 0.2
+      },
+      "renderCapability": "VARIANT_JSON",
+      "variantPath": "variants/bookshelf-low.json"
+    },
+    {
+      "productId": "bookshelf-midcentury-stockholm-01",
+      "variantId": "bookshelf-midcentury-stockholm",
+      "furnitureType": "bookshelf",
+      "furnitureTypeCode": "BOOKSHELF",
+      "label": "미드센추리 블루 메탈 선반",
+      "dimensions": {
+        "width": 1.524,
+        "depth": 0.381,
+        "height": 1.8034
+      },
+      "styleTags": [
+        "midcentury",
+        "modern"
+      ],
+      "lifestyleTags": [
+        "STORAGE",
+        "HOBBY_LEISURE"
+      ],
+      "materials": [
+        "chrome",
+        "gentianBlueMetal"
+      ],
+      "purchaseUrl": "https://us.usm.com/products/usm-haller-shelving-h2",
+      "requiredClearance": {
+        "front": 0.5,
+        "side": 0.2
+      },
+      "renderCapability": "VARIANT_JSON",
+      "variantPath": "variants/bookshelf-midcentury-stockholm.json"
+    },
+    {
+      "productId": "chair-armrest-01",
+      "variantId": "chair-armrest",
+      "furnitureType": "desk_chair",
+      "furnitureTypeCode": "DESK_CHAIR",
+      "label": "팔걸이형 책상 의자",
+      "dimensions": {
+        "width": 0.71,
+        "depth": 0.71,
+        "height": 1.14
+      },
+      "styleTags": [
+        "modern",
+        "minimal"
+      ],
+      "lifestyleTags": [
+        "WORK_STUDY"
+      ],
+      "materials": [
+        "metal",
+        "metalLight",
+        "fabric",
+        "fabricDark"
+      ],
+      "purchaseUrl": "https://www.ikea.com/kr/ko/p/flintan-office-chair-with-armrests-black-s69424469/",
+      "requiredClearance": {
+        "front": 0.4,
+        "side": 0.1
+      },
+      "renderCapability": "VARIANT_JSON",
+      "variantPath": "variants/chair-armrest.json"
+    },
+    {
+      "productId": "chair-basic-01",
+      "variantId": "chair-basic",
+      "furnitureType": "desk_chair",
+      "furnitureTypeCode": "DESK_CHAIR",
+      "label": "기본형 책상 의자",
+      "dimensions": {
+        "width": 0.46,
+        "depth": 0.54,
+        "height": 0.8
+      },
+      "styleTags": [
+        "modern",
+        "minimal"
+      ],
+      "lifestyleTags": [
+        "WORK_STUDY"
+      ],
+      "materials": [
+        "metal",
+        "woodLight"
+      ],
+      "purchaseUrl": "https://www.ikea.com/kr/ko/p/teodores-chair-black-00530622/",
+      "requiredClearance": {
+        "front": 0.4,
+        "side": 0.1
+      },
+      "renderCapability": "VARIANT_JSON",
+      "variantPath": "variants/chair-basic.json"
+    },
+    {
+      "productId": "chair-classic-tonstad-01",
+      "variantId": "chair-classic-tonstad",
+      "furnitureType": "desk_chair",
+      "furnitureTypeCode": "DESK_CHAIR",
+      "label": "클래식 우드 책상 의자",
+      "dimensions": {
+        "width": 0.42,
+        "depth": 0.56,
+        "height": 0.86
+      },
+      "styleTags": [
+        "classic",
+        "natural"
+      ],
+      "lifestyleTags": [
+        "WORK_STUDY"
+      ],
+      "materials": [
+        "woodLight",
+        "woodDark",
+        "fabricDark"
+      ],
+      "purchaseUrl": "https://www.ikea.com/kr/ko/p/tonstad-chair-bomstad-golden-brown-oak-effect-s09602172/",
+      "requiredClearance": {
+        "front": 0.4,
+        "side": 0.1
+      },
+      "renderCapability": "VARIANT_JSON",
+      "variantPath": "variants/chair-classic-tonstad.json"
+    },
+    {
+      "productId": "chair-compact-swivel-01",
+      "variantId": "chair-compact-swivel",
+      "furnitureType": "desk_chair",
+      "furnitureTypeCode": "DESK_CHAIR",
+      "label": "컴팩트 회전형 책상 의자",
+      "dimensions": {
+        "width": 0.67,
+        "depth": 0.67,
+        "height": 0.9
+      },
+      "styleTags": [
+        "modern",
+        "minimal"
+      ],
+      "lifestyleTags": [
+        "WORK_STUDY"
+      ],
+      "materials": [
+        "metal",
+        "metalLight",
+        "fabric",
+        "fabricDark"
+      ],
+      "purchaseUrl": "https://www.ikea.com/kr/ko/p/loberget-malskaer-swivel-chair-pad-white-dark-grey-s79445452/",
+      "requiredClearance": {
+        "front": 0.4,
+        "side": 0.1
+      },
+      "renderCapability": "VARIANT_JSON",
+      "variantPath": "variants/chair-compact-swivel.json"
+    },
+    {
+      "productId": "chair-gaming-matchspel-01",
+      "variantId": "chair-gaming-matchspel",
+      "furnitureType": "desk_chair",
+      "furnitureTypeCode": "DESK_CHAIR",
+      "label": "게이밍 책상 의자",
+      "dimensions": {
+        "width": 0.66,
+        "depth": 0.66,
+        "height": 1.32
+      },
+      "styleTags": [
+        "modern",
+        "minimal"
+      ],
+      "lifestyleTags": [
+        "WORK_STUDY",
+        "HOBBY_LEISURE"
+      ],
+      "materials": [
+        "metal",
+        "metalLight",
+        "fabric",
+        "fabricLight",
+        "fabricDark"
+      ],
+      "purchaseUrl": "https://www.ikea.com/kr/en/p/matchspel-gaming-chair-gunnared-beige-30574285/",
+      "requiredClearance": {
+        "front": 0.4,
+        "side": 0.1
+      },
+      "renderCapability": "VARIANT_JSON",
+      "variantPath": "variants/chair-gaming-matchspel.json"
+    },
+    {
+      "productId": "chair-midcentury-shell-01",
+      "variantId": "chair-midcentury-shell",
+      "furnitureType": "desk_chair",
+      "furnitureTypeCode": "DESK_CHAIR",
+      "label": "미드센추리 쉘 책상 의자",
+      "dimensions": {
+        "width": 0.56,
+        "depth": 0.54,
+        "height": 0.88
+      },
+      "styleTags": [
+        "midcentury",
+        "modern"
+      ],
+      "lifestyleTags": [
+        "WORK_STUDY",
+        "HOBBY_LEISURE"
+      ],
+      "materials": [
+        "woodDark",
+        "chrome",
+        "tealFabric",
+        "fabricLight"
+      ],
+      "purchaseUrl": "https://store.hermanmiller.com/dining-furniture-chairs-stools/eames-molded-plastic-side-chair/1104.html?lang=en_US",
+      "requiredClearance": {
+        "front": 0.4,
+        "side": 0.1
+      },
+      "renderCapability": "VARIANT_JSON",
+      "variantPath": "variants/chair-midcentury-shell.json"
+    },
+    {
+      "productId": "curtain-blackout-01",
+      "variantId": "curtain-blackout",
+      "furnitureType": "curtain_blind",
+      "furnitureTypeCode": "CURTAIN_BLIND",
+      "label": "암막 플리츠 커튼",
+      "dimensions": {
+        "width": 1.82,
+        "depth": 0.2,
+        "height": 2.4
+      },
+      "styleTags": [
+        "modern",
+        "minimal"
+      ],
+      "lifestyleTags": [
+        "REST",
+        "HOBBY_LEISURE"
+      ],
+      "materials": [
+        "fabricDark",
+        "metalLight"
+      ],
+      "purchaseUrl": "https://www.ikea.com/kr/ko/p/majgull-room-darkening-curtains-1-pair-dark-grey-turquoise-with-heading-tape-00586020/",
+      "requiredClearance": {
+        "front": 0.1,
+        "side": 0.1
+      },
+      "renderCapability": "VARIANT_JSON",
+      "variantPath": "variants/curtain-blackout.json"
+    },
+    {
+      "productId": "curtain-fabric-01",
+      "variantId": "curtain-fabric",
+      "furnitureType": "curtain_blind",
+      "furnitureTypeCode": "CURTAIN_BLIND",
+      "label": "패브릭 커튼",
+      "dimensions": {
+        "width": 2.96,
+        "depth": 0.18,
+        "height": 2.54
+      },
+      "styleTags": [
+        "minimal",
+        "natural"
+      ],
+      "lifestyleTags": [
+        "REST"
+      ],
+      "materials": [
+        "fabricDark",
+        "metal"
+      ],
+      "purchaseUrl": "https://www.ikea.com/kr/ko/p/majgull-room-darkening-curtains-1-pair-dark-grey-turquoise-with-heading-tape-00586020/",
+      "requiredClearance": {
+        "front": 0.1,
+        "side": 0.1
+      },
+      "renderCapability": "VARIANT_JSON",
+      "variantPath": "variants/curtain-fabric.json"
+    },
+    {
+      "productId": "drawer-chest-bedside-01",
+      "variantId": "drawer-chest-bedside",
+      "furnitureType": "drawer_chest",
+      "furnitureTypeCode": "DRAWER_CHEST",
+      "label": "협탁 겸용 서랍장",
+      "dimensions": {
+        "width": 0.35,
+        "depth": 0.4,
+        "height": 0.49
+      },
+      "styleTags": [
+        "minimal",
+        "modern"
+      ],
+      "lifestyleTags": [
+        "STORAGE"
+      ],
+      "materials": [
+        "wood",
+        "woodLight",
+        "woodDark",
+        "metal"
+      ],
+      "purchaseUrl": "https://www.ikea.com/kr/ko/p/kullen-chest-of-2-drawers-white-70355728/",
+      "requiredClearance": {
+        "front": 0.5,
+        "side": 0.2
+      },
+      "renderCapability": "VARIANT_JSON",
+      "variantPath": "variants/drawer-chest-bedside.json"
+    },
+    {
+      "productId": "drawer-chest-classic-gullaberg-01",
+      "variantId": "drawer-chest-classic-gullaberg",
+      "furnitureType": "drawer_chest",
+      "furnitureTypeCode": "DRAWER_CHEST",
+      "label": "클래식 6단 서랍장",
+      "dimensions": {
+        "width": 0.89,
+        "depth": 0.48,
+        "height": 1.22
+      },
+      "styleTags": [
+        "classic",
+        "natural"
+      ],
+      "lifestyleTags": [
+        "STORAGE"
+      ],
+      "materials": [
+        "paintedWhite",
+        "wood"
+      ],
+      "purchaseUrl": "https://www.ikea.com/kr/en/p/gullaberg-chest-of-6-drawers-white-anchor-unlock-function-20561778/",
+      "requiredClearance": {
+        "front": 0.5,
+        "side": 0.2
+      },
+      "renderCapability": "VARIANT_JSON",
+      "variantPath": "variants/drawer-chest-classic-gullaberg.json"
+    },
+    {
+      "productId": "drawer-chest-low-wide-01",
+      "variantId": "drawer-chest-low-wide",
+      "furnitureType": "drawer_chest",
+      "furnitureTypeCode": "DRAWER_CHEST",
+      "label": "낮은 와이드형 서랍장",
+      "dimensions": {
+        "width": 1.4,
+        "depth": 0.4,
+        "height": 0.72
+      },
+      "styleTags": [
+        "minimal",
+        "modern"
+      ],
+      "lifestyleTags": [
+        "STORAGE"
+      ],
+      "materials": [
+        "wood",
+        "woodLight",
+        "metal"
+      ],
+      "purchaseUrl": "https://www.ikea.com/kr/ko/p/kullen-chest-of-6-drawers-white-50355734/",
+      "requiredClearance": {
+        "front": 0.5,
+        "side": 0.2
+      },
+      "renderCapability": "VARIANT_JSON",
+      "variantPath": "variants/drawer-chest-low-wide.json"
+    },
+    {
+      "productId": "drawer-chest-vertical-01",
+      "variantId": "drawer-chest-vertical",
+      "furnitureType": "drawer_chest",
+      "furnitureTypeCode": "DRAWER_CHEST",
+      "label": "세로형 서랍장",
+      "dimensions": {
+        "width": 0.7,
+        "depth": 0.4,
+        "height": 1.12
+      },
+      "styleTags": [
+        "minimal",
+        "modern"
+      ],
+      "lifestyleTags": [
+        "STORAGE"
+      ],
+      "materials": [
+        "wood",
+        "woodLight",
+        "woodDark",
+        "metal"
+      ],
+      "purchaseUrl": "https://www.ikea.com/kr/ko/p/kullen-chest-of-5-drawers-white-90355732/",
+      "requiredClearance": {
+        "front": 0.5,
+        "side": 0.2
+      },
+      "renderCapability": "VARIANT_JSON",
+      "variantPath": "variants/drawer-chest-vertical.json"
+    },
+    {
+      "productId": "hanger-basic-01",
+      "variantId": "hanger-basic",
+      "furnitureType": "hanger",
+      "furnitureTypeCode": "HANGER",
+      "label": "기본 스탠드형 행거",
+      "dimensions": {
+        "width": 1.11,
+        "depth": 0.51,
+        "height": 1.75
+      },
+      "styleTags": [
+        "minimal",
+        "modern"
+      ],
+      "lifestyleTags": [
+        "STORAGE"
+      ],
+      "materials": [
+        "paintedWhite",
+        "metal",
+        "metalLight"
+      ],
+      "purchaseUrl": "https://www.ikea.com/kr/ko/p/rigga-clothes-rack-white-30231631/",
+      "requiredClearance": {
+        "front": 0.5,
+        "side": 0.2
+      },
+      "renderCapability": "VARIANT_JSON",
+      "variantPath": "variants/hanger-basic.json"
+    },
+    {
+      "productId": "hanger-corner-01",
+      "variantId": "hanger-corner",
+      "furnitureType": "hanger",
+      "furnitureTypeCode": "HANGER",
+      "label": "코너형 행거",
+      "dimensions": {
+        "width": 0.8,
+        "depth": 0.8,
+        "height": 1.75
+      },
+      "styleTags": [
+        "minimal",
+        "modern"
+      ],
+      "lifestyleTags": [
+        "STORAGE"
+      ],
+      "materials": [
+        "metal",
+        "metalLight"
+      ],
+      "purchaseUrl": "https://www.roomnhome.com/goods/goods_view.php?goodsNo=186797137",
+      "requiredClearance": {
+        "front": 0.5,
+        "side": 0.2
+      },
+      "renderCapability": "VARIANT_JSON",
+      "variantPath": "variants/hanger-corner.json"
+    },
+    {
+      "productId": "hanger-natural-morsning-01",
+      "variantId": "hanger-natural-morsning",
+      "furnitureType": "hanger",
+      "furnitureTypeCode": "HANGER",
+      "label": "내추럴 대나무 발렛 행거",
+      "dimensions": {
+        "width": 0.54,
+        "depth": 0.47,
+        "height": 1.39
+      },
+      "styleTags": [
+        "natural",
+        "minimal"
+      ],
+      "lifestyleTags": [
+        "STORAGE"
+      ],
+      "materials": [
+        "wood",
+        "woodLight"
+      ],
+      "purchaseUrl": "https://www.ikea.com/kr/en/p/morsning-valet-stand-bamboo-70464435/",
+      "requiredClearance": {
+        "front": 0.5,
+        "side": 0.2
+      },
+      "renderCapability": "VARIANT_JSON",
+      "variantPath": "variants/hanger-natural-morsning.json"
+    },
+    {
+      "productId": "hanger-shelf-01",
+      "variantId": "hanger-shelf",
+      "furnitureType": "hanger",
+      "furnitureTypeCode": "HANGER",
+      "label": "선반 결합형 행거",
+      "dimensions": {
+        "width": 0.9,
+        "depth": 0.36,
+        "height": 1.75
+      },
+      "styleTags": [
+        "minimal",
+        "modern"
+      ],
+      "lifestyleTags": [
+        "STORAGE"
+      ],
+      "materials": [
+        "woodDark",
+        "woodLight",
+        "metal",
+        "metalLight"
+      ],
+      "purchaseUrl": "https://www.ikea.com/kr/ko/p/grafjaellet-clothes-rack-with-shoe-storage-anthracite-80570223/",
+      "requiredClearance": {
+        "front": 0.5,
+        "side": 0.2
+      },
+      "renderCapability": "VARIANT_JSON",
+      "variantPath": "variants/hanger-shelf.json"
+    },
+    {
+      "productId": "lamp-floor-01",
+      "variantId": "lamp-floor",
+      "furnitureType": "mood_lamp",
+      "furnitureTypeCode": "MOOD_LAMP",
+      "label": "스탠드 무드등",
+      "dimensions": {
+        "width": 0.52,
+        "depth": 0.52,
+        "height": 1.48
+      },
+      "styleTags": [
+        "modern",
+        "minimal"
+      ],
+      "lifestyleTags": [
+        "REST"
+      ],
+      "materials": [
+        "metal",
+        "metalLight",
+        "lampShade",
+        "light"
+      ],
+      "purchaseUrl": "https://www.ikea.com/kr/ko/p/arstid-floor-lamp-brass-white-80321323/",
+      "requiredClearance": {
+        "front": 0.2,
+        "side": 0.1
+      },
+      "renderCapability": "VARIANT_JSON",
+      "variantPath": "variants/lamp-floor.json"
+    },
+    {
+      "productId": "lamp-indirect-01",
+      "variantId": "lamp-indirect",
+      "furnitureType": "mood_lamp",
+      "furnitureTypeCode": "MOOD_LAMP",
+      "label": "LED 무드등",
+      "dimensions": {
+        "width": 0.19,
+        "depth": 0.19,
+        "height": 0.3745
+      },
+      "styleTags": [
+        "modern",
+        "minimal"
+      ],
+      "lifestyleTags": [
+        "REST"
+      ],
+      "materials": [
+        "paintedWhite",
+        "ledDiffuser",
+        "light"
+      ],
+      "purchaseUrl": "https://www.coupang.com/vp/products/8266251139",
+      "requiredClearance": {
+        "front": 0.2,
+        "side": 0.1
+      },
+      "renderCapability": "VARIANT_JSON",
+      "variantPath": "variants/lamp-indirect.json"
+    },
+    {
+      "productId": "lamp-midcentury-globe-01",
+      "variantId": "lamp-midcentury-globe",
+      "furnitureType": "mood_lamp",
+      "furnitureTypeCode": "MOOD_LAMP",
+      "label": "미드센추리 글로브 무드등",
+      "dimensions": {
+        "width": 0.28,
+        "depth": 0.28,
+        "height": 0.285
+      },
+      "styleTags": [
+        "midcentury",
+        "modern"
+      ],
+      "lifestyleTags": [
+        "REST",
+        "HOBBY_LEISURE"
+      ],
+      "materials": [
+        "redPlastic",
+        "ledDiffuser",
+        "light"
+      ],
+      "purchaseUrl": "https://www.ikea.com/kr/ko/p/fado-table-lamp-pink-glass-60592631/",
+      "requiredClearance": {
+        "front": 0.2,
+        "side": 0.1
+      },
+      "renderCapability": "VARIANT_JSON",
+      "variantPath": "variants/lamp-midcentury-globe.json"
+    },
+    {
+      "productId": "lamp-table-01",
+      "variantId": "lamp-table",
+      "furnitureType": "mood_lamp",
+      "furnitureTypeCode": "MOOD_LAMP",
+      "label": "테이블 무드등",
+      "dimensions": {
+        "width": 0.28,
+        "depth": 0.28,
+        "height": 0.46
+      },
+      "styleTags": [
+        "modern",
+        "minimal"
+      ],
+      "lifestyleTags": [
+        "REST"
+      ],
+      "materials": [
+        "metal",
+        "metalLight",
+        "lampShade",
+        "light"
+      ],
+      "purchaseUrl": "https://www.ikea.com/kr/ko/p/arstid-table-lamp-brass-white-00321379/",
+      "requiredClearance": {
+        "front": 0.2,
+        "side": 0.1
+      },
+      "renderCapability": "VARIANT_JSON",
+      "variantPath": "variants/lamp-table.json"
+    },
+    {
+      "productId": "media-console-drawer-01",
+      "variantId": "media-console-drawer",
+      "furnitureType": "media_console",
+      "furnitureTypeCode": "MEDIA_CONSOLE",
+      "label": "서랍형 미디어 콘솔",
+      "dimensions": {
+        "width": 1.2,
+        "depth": 0.42,
+        "height": 0.48
+      },
+      "styleTags": [
+        "minimal",
+        "modern"
+      ],
+      "lifestyleTags": [
+        "STORAGE",
+        "HOBBY_LEISURE"
+      ],
+      "materials": [
+        "wood",
+        "woodLight",
+        "woodDark",
+        "metal"
+      ],
+      "purchaseUrl": "https://www.ikea.com/kr/ko/p/besta-tv-bench-with-drawers-white-pipmakare-white-s29597607/",
+      "requiredClearance": {
+        "front": 0.4,
+        "side": 0.1
+      },
+      "renderCapability": "VARIANT_JSON",
+      "variantPath": "variants/media-console-drawer.json"
+    },
+    {
+      "productId": "media-console-low-01",
+      "variantId": "media-console-low",
+      "furnitureType": "media_console",
+      "furnitureTypeCode": "MEDIA_CONSOLE",
+      "label": "낮은 콘솔형 TV장",
+      "dimensions": {
+        "width": 1.2,
+        "depth": 0.35,
+        "height": 0.36
+      },
+      "styleTags": [
+        "minimal",
+        "modern"
+      ],
+      "lifestyleTags": [
+        "STORAGE",
+        "HOBBY_LEISURE"
+      ],
+      "materials": [
+        "wood",
+        "woodLight",
+        "woodDark"
+      ],
+      "purchaseUrl": "https://www.ikea.com/kr/ko/p/besta-tv-bench-white-10294525/",
+      "requiredClearance": {
+        "front": 0.4,
+        "side": 0.1
+      },
+      "renderCapability": "VARIANT_JSON",
+      "variantPath": "variants/media-console-low.json"
+    },
+    {
+      "productId": "media-console-midcentury-stockholm-01",
+      "variantId": "media-console-midcentury-stockholm",
+      "furnitureType": "media_console",
+      "furnitureTypeCode": "MEDIA_CONSOLE",
+      "label": "미드센추리 골든 옐로 TV장",
+      "dimensions": {
+        "width": 1.27,
+        "depth": 0.381,
+        "height": 0.6604
+      },
+      "styleTags": [
+        "midcentury",
+        "modern"
+      ],
+      "lifestyleTags": [
+        "STORAGE",
+        "HOBBY_LEISURE"
+      ],
+      "materials": [
+        "chrome",
+        "goldenYellowMetal"
+      ],
+      "purchaseUrl": "https://us.usm.com/products/usm-haller-media-o3",
+      "requiredClearance": {
+        "front": 0.4,
+        "side": 0.1
+      },
+      "renderCapability": "VARIANT_JSON",
+      "variantPath": "variants/media-console-midcentury-stockholm.json"
+    },
+    {
+      "productId": "media-console-open-01",
+      "variantId": "media-console-open",
+      "furnitureType": "media_console",
+      "furnitureTypeCode": "MEDIA_CONSOLE",
+      "label": "오픈 선반형 미디어 콘솔",
+      "dimensions": {
+        "width": 1.2,
+        "depth": 0.4,
+        "height": 0.64
+      },
+      "styleTags": [
+        "minimal",
+        "modern"
+      ],
+      "lifestyleTags": [
+        "STORAGE",
+        "HOBBY_LEISURE"
+      ],
+      "materials": [
+        "wood",
+        "woodLight",
+        "woodDark",
+        "metal"
+      ],
+      "purchaseUrl": "https://www.ikea.com/kr/ko/p/besta-frame-white-90245847/",
+      "requiredClearance": {
+        "front": 0.4,
+        "side": 0.1
+      },
+      "renderCapability": "VARIANT_JSON",
+      "variantPath": "variants/media-console-open.json"
+    },
+    {
+      "productId": "mirror-classic-rounded-01",
+      "variantId": "mirror-classic-rounded",
+      "furnitureType": "full_length_mirror",
+      "furnitureTypeCode": "FULL_LENGTH_MIRROR",
+      "label": "내추럴 와이드 전신거울",
+      "dimensions": {
+        "width": 0.78,
+        "depth": 0.097,
+        "height": 1.968
+      },
+      "styleTags": [
+        "classic",
+        "natural"
+      ],
+      "lifestyleTags": [
+        "REST",
+        "HOBBY_LEISURE"
+      ],
+      "materials": [
+        "woodDark",
+        "metal",
+        "mirror"
+      ],
+      "purchaseUrl": "https://www.ikea.com/kr/ko/p/hovet-mirror-oak-effect-brown-20625600/",
+      "requiredClearance": {
+        "front": 0.2,
+        "side": 0.1
+      },
+      "renderCapability": "VARIANT_JSON",
+      "variantPath": "variants/mirror-classic-rounded.json"
+    },
+    {
+      "productId": "mirror-standing-01",
+      "variantId": "mirror-standing",
+      "furnitureType": "full_length_mirror",
+      "furnitureTypeCode": "FULL_LENGTH_MIRROR",
+      "label": "스탠드형 전신거울",
+      "dimensions": {
+        "width": 0.45,
+        "depth": 0.36,
+        "height": 1.6825
+      },
+      "styleTags": [
+        "modern",
+        "minimal"
+      ],
+      "lifestyleTags": [
+        "STORAGE"
+      ],
+      "materials": [
+        "screenFrame",
+        "metal",
+        "mirror"
+      ],
+      "purchaseUrl": "https://www.ikea.com/kr/ko/p/karmsund-standing-mirror-black-60294981/",
+      "requiredClearance": {
+        "front": 0.2,
+        "side": 0.1
+      },
+      "renderCapability": "VARIANT_JSON",
+      "variantPath": "variants/mirror-standing.json"
+    },
+    {
+      "productId": "mirror-storage-01",
+      "variantId": "mirror-storage",
+      "furnitureType": "full_length_mirror",
+      "furnitureTypeCode": "FULL_LENGTH_MIRROR",
+      "label": "수납 결합 전신거울",
+      "dimensions": {
+        "width": 0.485,
+        "depth": 0.36,
+        "height": 1.585
+      },
+      "styleTags": [
+        "modern",
+        "minimal"
+      ],
+      "lifestyleTags": [
+        "STORAGE"
+      ],
+      "materials": [
+        "paintedWhite",
+        "metal",
+        "mirror"
+      ],
+      "purchaseUrl": "https://www.ikea.com/kr/ko/p/knapper-standing-mirror-white-80396243/",
+      "requiredClearance": {
+        "front": 0.2,
+        "side": 0.1
+      },
+      "renderCapability": "VARIANT_JSON",
+      "variantPath": "variants/mirror-storage.json"
+    },
+    {
+      "productId": "mirror-wall-01",
+      "variantId": "mirror-wall",
+      "furnitureType": "full_length_mirror",
+      "furnitureTypeCode": "FULL_LENGTH_MIRROR",
+      "label": "벽걸이형 전신거울",
+      "dimensions": {
+        "width": 0.42,
+        "depth": 0.072,
+        "height": 1.55
+      },
+      "styleTags": [
+        "modern",
+        "minimal"
+      ],
+      "lifestyleTags": [
+        "STORAGE"
+      ],
+      "materials": [
+        "screenFrame",
+        "metal",
+        "mirror"
+      ],
+      "purchaseUrl": "https://www.ikea.com/kr/ko/p/nissedal-mirror-black-00320313/",
+      "requiredClearance": {
+        "front": 0.2,
+        "side": 0.1
+      },
+      "renderCapability": "VARIANT_JSON",
+      "variantPath": "variants/mirror-wall.json"
+    },
+    {
+      "productId": "monitor-basic-01",
+      "variantId": "monitor-basic",
+      "furnitureType": "monitor",
+      "furnitureTypeCode": "MONITOR",
+      "label": "기본형 모니터",
+      "dimensions": {
+        "width": 0.556,
+        "depth": 0.181,
+        "height": 0.417
+      },
+      "styleTags": [
+        "modern",
+        "minimal"
+      ],
+      "lifestyleTags": [
+        "WORK_STUDY"
+      ],
+      "materials": [
+        "metal",
+        "metalLight",
+        "screenFrame",
+        "screen"
+      ],
+      "purchaseUrl": "https://www.lge.co.kr/monitors/24u631a",
+      "requiredClearance": {
+        "front": 0.1,
+        "side": 0.1
+      },
+      "renderCapability": "VARIANT_JSON",
+      "variantPath": "variants/monitor-basic.json"
+    },
+    {
+      "productId": "monitor-dual-01",
+      "variantId": "monitor-dual",
+      "furnitureType": "monitor",
+      "furnitureTypeCode": "MONITOR",
+      "label": "듀얼 모니터",
+      "dimensions": {
+        "width": 1.132,
+        "depth": 0.181,
+        "height": 0.417
+      },
+      "styleTags": [
+        "modern",
+        "minimal"
+      ],
+      "lifestyleTags": [
+        "WORK_STUDY"
+      ],
+      "materials": [
+        "metal",
+        "metalLight",
+        "screenFrame",
+        "screen"
+      ],
+      "purchaseUrl": "https://www.devicemart.co.kr/goods/view?no=15258546",
+      "requiredClearance": {
+        "front": 0.1,
+        "side": 0.1
+      },
+      "renderCapability": "VARIANT_JSON",
+      "variantPath": "variants/monitor-dual.json"
+    },
+    {
+      "productId": "monitor-gaming-odyssey-01",
+      "variantId": "monitor-gaming-odyssey",
+      "furnitureType": "monitor",
+      "furnitureTypeCode": "MONITOR",
+      "label": "오디세이 게이밍 모니터",
+      "dimensions": {
+        "width": 0.7142,
+        "depth": 0.2635,
+        "height": 0.5819
+      },
+      "styleTags": [
+        "modern",
+        "minimal"
+      ],
+      "lifestyleTags": [
+        "WORK_STUDY",
+        "HOBBY_LEISURE"
+      ],
+      "materials": [
+        "metal",
+        "metalLight",
+        "screenFrame",
+        "screen",
+        "brass"
+      ],
+      "purchaseUrl": "https://www.samsung.com/sec/monitors/gaming-ls32dg504ekxkr-d2c/LS32DG504EKXKR/",
+      "requiredClearance": {
+        "front": 0.1,
+        "side": 0.1
+      },
+      "renderCapability": "VARIANT_JSON",
+      "variantPath": "variants/monitor-gaming-odyssey.json"
+    },
+    {
+      "productId": "monitor-ultrawide-01",
+      "variantId": "monitor-ultrawide",
+      "furnitureType": "monitor",
+      "furnitureTypeCode": "MONITOR",
+      "label": "울트라와이드 모니터",
+      "dimensions": {
+        "width": 0.809,
+        "depth": 0.223,
+        "height": 0.483
+      },
+      "styleTags": [
+        "modern",
+        "minimal"
+      ],
+      "lifestyleTags": [
+        "WORK_STUDY"
+      ],
+      "materials": [
+        "metal",
+        "metalLight",
+        "screenFrame",
+        "screen"
+      ],
+      "purchaseUrl": "https://www.samsung.com/sec/monitors/high-resolution-ls34c500gakxkr-d2c/LS34C500GAKXKR/",
+      "requiredClearance": {
+        "front": 0.1,
+        "side": 0.1
+      },
+      "renderCapability": "VARIANT_JSON",
+      "variantPath": "variants/monitor-ultrawide.json"
+    },
+    {
+      "productId": "multi-table-compact-01",
+      "variantId": "multi-table-compact",
+      "furnitureType": "multi_table",
+      "furnitureTypeCode": "MULTI_TABLE",
+      "label": "1인 컴팩트 다용도 테이블",
+      "dimensions": {
+        "width": 0.67,
+        "depth": 0.67,
+        "height": 0.73
+      },
+      "styleTags": [
+        "minimal",
+        "modern"
+      ],
+      "lifestyleTags": [
+        "WORK_STUDY",
+        "HOBBY_LEISURE"
+      ],
+      "materials": [
+        "metal",
+        "woodLight"
+      ],
+      "purchaseUrl": "https://www.ikea.com/kr/ko/p/gunde-folding-table-black-70546894/",
+      "requiredClearance": {
+        "front": 0.4,
+        "side": 0.1
+      },
+      "renderCapability": "VARIANT_JSON",
+      "variantPath": "variants/multi-table-compact.json"
+    },
+    {
+      "productId": "multi-table-gateleg-01",
+      "variantId": "multi-table-gateleg",
+      "furnitureType": "multi_table",
+      "furnitureTypeCode": "MULTI_TABLE",
+      "label": "클래식 게이트레그 다용도 테이블",
+      "dimensions": {
+        "width": 1.52,
+        "depth": 0.8,
+        "height": 0.74
+      },
+      "styleTags": [
+        "classic",
+        "natural"
+      ],
+      "lifestyleTags": [
+        "STORAGE",
+        "HOBBY_LEISURE"
+      ],
+      "materials": [
+        "wood",
+        "woodLight",
+        "woodDark",
+        "metal"
+      ],
+      "purchaseUrl": "https://www.ikea.com/kr/ko/p/norden-gateleg-table-birch-80423883/",
+      "requiredClearance": {
+        "front": 0.4,
+        "side": 0.1
+      },
+      "renderCapability": "VARIANT_JSON",
+      "variantPath": "variants/multi-table-gateleg.json"
+    },
+    {
+      "productId": "multi-table-storage-01",
+      "variantId": "multi-table-storage",
+      "furnitureType": "multi_table",
+      "furnitureTypeCode": "MULTI_TABLE",
+      "label": "수납 결합 다용도 테이블",
+      "dimensions": {
+        "width": 1.26,
+        "depth": 0.79,
+        "height": 0.9
+      },
+      "styleTags": [
+        "minimal",
+        "modern"
+      ],
+      "lifestyleTags": [
+        "WORK_STUDY",
+        "STORAGE"
+      ],
+      "materials": [
+        "woodDark",
+        "metal",
+        "metalLight"
+      ],
+      "purchaseUrl": "https://www.ikea.com/kr/ko/p/vadholma-kitchen-island-black-oak-80359189/",
+      "requiredClearance": {
+        "front": 0.4,
+        "side": 0.1
+      },
+      "renderCapability": "VARIANT_JSON",
+      "variantPath": "variants/multi-table-storage.json"
+    },
+    {
+      "productId": "multi-table-two-seat-01",
+      "variantId": "multi-table-two-seat",
+      "furnitureType": "multi_table",
+      "furnitureTypeCode": "MULTI_TABLE",
+      "label": "2인용 다용도 테이블",
+      "dimensions": {
+        "width": 0.8,
+        "depth": 0.6,
+        "height": 0.75
+      },
+      "styleTags": [
+        "minimal",
+        "modern"
+      ],
+      "lifestyleTags": [
+        "WORK_STUDY",
+        "HOBBY_LEISURE"
+      ],
+      "materials": [
+        "wood",
+        "woodLight",
+        "woodDark"
+      ],
+      "purchaseUrl": "https://www.ikea.com/kr/ko/p/naesinge-naesinge-table-and-2-chairs-white-white-tibbleby-beige-grey-s69602329/",
+      "requiredClearance": {
+        "front": 0.4,
+        "side": 0.1
+      },
+      "renderCapability": "VARIANT_JSON",
+      "variantPath": "variants/multi-table-two-seat.json"
+    },
+    {
+      "productId": "nightstand-classic-gullaberg-01",
+      "variantId": "nightstand-classic-gullaberg",
+      "furnitureType": "nightstand",
+      "furnitureTypeCode": "NIGHTSTAND",
+      "label": "클래식 옐로 협탁",
+      "dimensions": {
+        "width": 0.53,
+        "depth": 0.43,
+        "height": 0.69
+      },
+      "styleTags": [
+        "classic",
+        "natural"
+      ],
+      "lifestyleTags": [
+        "REST",
+        "STORAGE"
+      ],
+      "materials": [
+        "mustardPaint",
+        "woodDark"
+      ],
+      "purchaseUrl": "https://www.ikea.com/kr/en/p/gullaberg-bedside-table-yellow-with-1-drawer-with-shelf-50593443/",
+      "requiredClearance": {
+        "front": 0.3,
+        "side": 0.1
+      },
+      "renderCapability": "VARIANT_JSON",
+      "variantPath": "variants/nightstand-classic-gullaberg.json"
+    },
+    {
+      "productId": "nightstand-drawer-01",
+      "variantId": "nightstand-drawer",
+      "furnitureType": "nightstand",
+      "furnitureTypeCode": "NIGHTSTAND",
+      "label": "서랍형 협탁",
+      "dimensions": {
+        "width": 0.35,
+        "depth": 0.426,
+        "height": 0.49
+      },
+      "styleTags": [
+        "minimal",
+        "natural"
+      ],
+      "lifestyleTags": [
+        "REST",
+        "STORAGE"
+      ],
+      "materials": [
+        "woodLight",
+        "metalLight"
+      ],
+      "purchaseUrl": "https://www.ikea.com/kr/ko/p/kullen-chest-of-2-drawers-white-70355728/",
+      "requiredClearance": {
+        "front": 0.3,
+        "side": 0.1
+      },
+      "renderCapability": "VARIANT_JSON",
+      "variantPath": "variants/nightstand-drawer.json"
+    },
+    {
+      "productId": "nightstand-midcentury-trolley-01",
+      "variantId": "nightstand-midcentury-trolley",
+      "furnitureType": "nightstand",
+      "furnitureTypeCode": "NIGHTSTAND",
+      "label": "미드센추리 레드 플라스틱 협탁",
+      "dimensions": {
+        "width": 0.32,
+        "depth": 0.32,
+        "height": 0.4
+      },
+      "styleTags": [
+        "midcentury",
+        "modern"
+      ],
+      "lifestyleTags": [
+        "REST",
+        "STORAGE"
+      ],
+      "materials": [
+        "redPlastic",
+        "redVinyl"
+      ],
+      "purchaseUrl": "https://kartellkorea.com/product/4%EC%9B%94-%ED%81%90%EB%A0%88%EC%9D%B4%EC%85%98-25-componibili-2round-%EB%A0%88%EB%93%9C/403/",
+      "requiredClearance": {
+        "front": 0.3,
+        "side": 0.1
+      },
+      "renderCapability": "VARIANT_JSON",
+      "variantPath": "variants/nightstand-midcentury-trolley.json"
+    },
+    {
+      "productId": "nightstand-open-01",
+      "variantId": "nightstand-open",
+      "furnitureType": "nightstand",
+      "furnitureTypeCode": "NIGHTSTAND",
+      "label": "오픈형 협탁",
+      "dimensions": {
+        "width": 0.37,
+        "depth": 0.28,
+        "height": 0.45
+      },
+      "styleTags": [
+        "minimal",
+        "natural"
+      ],
+      "lifestyleTags": [
+        "REST",
+        "STORAGE"
+      ],
+      "materials": [
+        "metal",
+        "metalLight"
+      ],
+      "purchaseUrl": "https://www.ikea.com/kr/ko/p/knarrevik-bedside-table-black-80576319/",
+      "requiredClearance": {
+        "front": 0.3,
+        "side": 0.1
+      },
+      "renderCapability": "VARIANT_JSON",
+      "variantPath": "variants/nightstand-open.json"
+    },
+    {
+      "productId": "nightstand-round-01",
+      "variantId": "nightstand-round",
+      "furnitureType": "nightstand",
+      "furnitureTypeCode": "NIGHTSTAND",
+      "label": "원형 테이블 협탁",
+      "dimensions": {
+        "width": 0.45,
+        "depth": 0.45,
+        "height": 0.53
+      },
+      "styleTags": [
+        "minimal",
+        "natural"
+      ],
+      "lifestyleTags": [
+        "REST",
+        "STORAGE"
+      ],
+      "materials": [
+        "metal",
+        "metalLight"
+      ],
+      "purchaseUrl": "https://www.ikea.com/kr/ko/p/gladom-tray-table-dark-grey-green-50578452/",
+      "requiredClearance": {
+        "front": 0.3,
+        "side": 0.1
+      },
+      "renderCapability": "VARIANT_JSON",
+      "variantPath": "variants/nightstand-round.json"
+    },
+    {
+      "productId": "partition-shelf-kallax-01",
+      "variantId": "partition-shelf-kallax",
+      "furnitureType": "partition_shelf",
+      "furnitureTypeCode": "PARTITION_SHELF",
+      "label": "오픈 수납 파티션 선반",
+      "dimensions": {
+        "width": 1.47,
+        "depth": 0.39,
+        "height": 0.77
+      },
+      "styleTags": [
+        "minimal",
+        "natural"
+      ],
+      "lifestyleTags": [
+        "STORAGE",
+        "HOBBY_LEISURE"
+      ],
+      "materials": [
+        "paintedWhite"
+      ],
+      "purchaseUrl": "https://www.ikea.com/kr/ko/p/kallax-shelving-unit-white-20351884/",
+      "requiredClearance": {
+        "front": 0.5,
+        "side": 0.2
+      },
+      "renderCapability": "VARIANT_JSON",
+      "variantPath": "variants/partition-shelf-kallax.json"
+    },
+    {
+      "productId": "partition-shelf-slim-01",
+      "variantId": "partition-shelf-slim",
+      "furnitureType": "partition_shelf",
+      "furnitureTypeCode": "PARTITION_SHELF",
+      "label": "슬림 파티션",
+      "dimensions": {
+        "width": 1.5,
+        "depth": 0.32,
+        "height": 1.41
+      },
+      "styleTags": [
+        "modern",
+        "minimal"
+      ],
+      "lifestyleTags": [
+        "STORAGE",
+        "WORK_STUDY"
+      ],
+      "materials": [
+        "metal",
+        "wood",
+        "woodLight",
+        "woodDark"
+      ],
+      "purchaseUrl": "https://www.ikea.com/kr/ko/p/naemmaroe-privacy-screen-light-brown-stained-indoor-outdoor-00532739/",
+      "requiredClearance": {
+        "front": 0.5,
+        "side": 0.2
+      },
+      "renderCapability": "VARIANT_JSON",
+      "variantPath": "variants/partition-shelf-slim.json"
+    },
+    {
+      "productId": "partition-shelf-storage-01",
+      "variantId": "partition-shelf-storage",
+      "furnitureType": "partition_shelf",
+      "furnitureTypeCode": "PARTITION_SHELF",
+      "label": "수납 결합 양면 선반",
+      "dimensions": {
+        "width": 0.77,
+        "depth": 0.39,
+        "height": 1.49
+      },
+      "styleTags": [
+        "modern",
+        "minimal"
+      ],
+      "lifestyleTags": [
+        "STORAGE",
+        "WORK_STUDY"
+      ],
+      "materials": [
+        "paintedWhite"
+      ],
+      "purchaseUrl": "https://www.ikea.com/kr/ko/p/kallax-shelving-unit-white-20351884/",
+      "requiredClearance": {
+        "front": 0.5,
+        "side": 0.2
+      },
+      "renderCapability": "VARIANT_JSON",
+      "variantPath": "variants/partition-shelf-storage.json"
+    },
+    {
+      "productId": "partition-shelf-translucent-01",
+      "variantId": "partition-shelf-translucent",
+      "furnitureType": "partition_shelf",
+      "furnitureTypeCode": "PARTITION_SHELF",
+      "label": "반투명 파티션",
+      "dimensions": {
+        "width": 1.52,
+        "depth": 0.3,
+        "height": 1.52
+      },
+      "styleTags": [
+        "modern",
+        "minimal"
+      ],
+      "lifestyleTags": [
+        "STORAGE",
+        "WORK_STUDY"
+      ],
+      "materials": [
+        "paintedWhite",
+        "screenFrame"
+      ],
+      "purchaseUrl": "https://www.ikea.com/kr/ko/p/risoer-room-divider-white-black-50370782/",
+      "requiredClearance": {
+        "front": 0.5,
+        "side": 0.2
+      },
+      "renderCapability": "VARIANT_JSON",
+      "variantPath": "variants/partition-shelf-translucent.json"
+    },
+    {
+      "productId": "plant-corner-01",
+      "variantId": "plant-corner",
+      "furnitureType": "plant",
+      "furnitureTypeCode": "PLANT",
+      "label": "대형 코너 화분",
+      "dimensions": {
+        "width": 0.6005779884792202,
+        "depth": 0.6231243531863027,
+        "height": 0.8999999922374311
+      },
+      "styleTags": [
+        "natural",
+        "minimal"
+      ],
+      "lifestyleTags": [
+        "REST"
+      ],
+      "materials": [
+        "ceramic",
+        "soil",
+        "plantStem",
+        "plant",
+        "plantLight"
+      ],
+      "purchaseUrl": "https://www.ikea.com/kr/ko/p/fejka-artificial-potted-plant-in-outdoor-monstera-60615246/",
+      "requiredClearance": {
+        "front": 0.2,
+        "side": 0.1
+      },
+      "renderCapability": "VARIANT_JSON",
+      "variantPath": "variants/plant-corner.json"
+    },
+    {
+      "productId": "plant-floor-01",
+      "variantId": "plant-floor",
+      "furnitureType": "plant",
+      "furnitureTypeCode": "PLANT",
+      "label": "중형 바닥 화분",
+      "dimensions": {
+        "width": 0.32917215269250133,
+        "depth": 0.33407750271294784,
+        "height": 0.3999999965988789
+      },
+      "styleTags": [
+        "natural",
+        "minimal"
+      ],
+      "lifestyleTags": [
+        "REST"
+      ],
+      "materials": [
+        "terracotta",
+        "soil",
+        "plantStem",
+        "plant",
+        "plantLight"
+      ],
+      "purchaseUrl": "https://www.ikea.com/kr/ko/p/fejka-artificial-potted-plant-with-pot-in-outdoor-grass-90508457/",
+      "requiredClearance": {
+        "front": 0.2,
+        "side": 0.1
+      },
+      "renderCapability": "VARIANT_JSON",
+      "variantPath": "variants/plant-floor.json"
+    },
+    {
+      "productId": "plant-midcentury-01",
+      "variantId": "plant-midcentury",
+      "furnitureType": "plant",
+      "furnitureTypeCode": "PLANT",
+      "label": "미드센추리 레드 화분",
+      "dimensions": {
+        "width": 0.3418371500697426,
+        "depth": 0.3570907760380737,
+        "height": 0.6499999931191831
+      },
+      "styleTags": [
+        "midcentury",
+        "modern"
+      ],
+      "lifestyleTags": [
+        "REST",
+        "HOBBY_LEISURE"
+      ],
+      "materials": [
+        "redPlastic",
+        "soil",
+        "plantStem",
+        "plant",
+        "plantLight"
+      ],
+      "purchaseUrl": "https://www.ikea.com/kr/en/p/klotloenn-plant-pot-with-saucer-in-outdoor-red-brown-light-beige-50598266/",
+      "requiredClearance": {
+        "front": 0.2,
+        "side": 0.1
+      },
+      "renderCapability": "VARIANT_JSON",
+      "variantPath": "variants/plant-midcentury.json"
+    },
+    {
+      "productId": "plant-tabletop-01",
+      "variantId": "plant-tabletop",
+      "furnitureType": "plant",
+      "furnitureTypeCode": "PLANT",
+      "label": "소형 테이블 화분",
+      "dimensions": {
+        "width": 0.09667013873202057,
+        "depth": 0.10344419281736927,
+        "height": 0.1400000007522717
+      },
+      "styleTags": [
+        "natural",
+        "minimal"
+      ],
+      "lifestyleTags": [
+        "REST"
+      ],
+      "materials": [
+        "ceramic",
+        "soil",
+        "plantStem",
+        "plant",
+        "plantLight"
+      ],
+      "purchaseUrl": "https://www.ikea.com/kr/ko/p/fejka-artificial-potted-plant-with-pot-in-outdoor-monstera-40593207/",
+      "requiredClearance": {
+        "front": 0.2,
+        "side": 0.1
+      },
+      "renderCapability": "VARIANT_JSON",
+      "variantPath": "variants/plant-tabletop.json"
+    },
+    {
+      "productId": "rug-geometric-01",
+      "variantId": "rug-geometric",
+      "furnitureType": "rug",
+      "furnitureTypeCode": "RUG",
+      "label": "미드센추리 기하학 러그",
+      "dimensions": {
+        "width": 1.3,
+        "depth": 1.6,
+        "height": 0.009
+      },
+      "styleTags": [
+        "midcentury",
+        "modern"
+      ],
+      "lifestyleTags": [
+        "REST",
+        "HOBBY_LEISURE"
+      ],
+      "materials": [
+        "fabricLight",
+        "fabricDark",
+        "tealFabric",
+        "orangeFabric",
+        "orangeFabricDark"
+      ],
+      "purchaseUrl": "https://www.ikea.com/de/en/p/busenkel-rug-harlequin-pattern-multicolour-60520427/",
+      "requiredClearance": {
+        "front": 0.1,
+        "side": 0.1
+      },
+      "renderCapability": "VARIANT_JSON",
+      "variantPath": "variants/rug-geometric.json"
+    },
+    {
+      "productId": "rug-rectangular-01",
+      "variantId": "rug-rectangular",
+      "furnitureType": "rug",
+      "furnitureTypeCode": "RUG",
+      "label": "직사각형 러그",
+      "dimensions": {
+        "width": 1.2,
+        "depth": 1.8,
+        "height": 0.002
+      },
+      "styleTags": [
+        "natural",
+        "minimal"
+      ],
+      "lifestyleTags": [
+        "REST"
+      ],
+      "materials": [
+        "fabricLight",
+        "fabricDark"
+      ],
+      "purchaseUrl": "https://www.ikea.com/kr/ko/p/tiphede-rug-flatwoven-natural-black-00456759/",
+      "requiredClearance": {
+        "front": 0.1,
+        "side": 0.1
+      },
+      "renderCapability": "VARIANT_JSON",
+      "variantPath": "variants/rug-rectangular.json"
+    },
+    {
+      "productId": "rug-round-01",
+      "variantId": "rug-round",
+      "furnitureType": "rug",
+      "furnitureTypeCode": "RUG",
+      "label": "원형 러그",
+      "dimensions": {
+        "width": 1.3,
+        "depth": 1.3,
+        "height": 0.018
+      },
+      "styleTags": [
+        "natural",
+        "minimal"
+      ],
+      "lifestyleTags": [
+        "REST"
+      ],
+      "materials": [
+        "fabric",
+        "fabricDark"
+      ],
+      "purchaseUrl": "https://www.ikea.com/kr/ko/p/stoense-rug-low-pile-off-white-80426805/",
+      "requiredClearance": {
+        "front": 0.1,
+        "side": 0.1
+      },
+      "renderCapability": "VARIANT_JSON",
+      "variantPath": "variants/rug-round.json"
+    },
+    {
+      "productId": "rug-runner-01",
+      "variantId": "rug-runner",
+      "furnitureType": "rug",
+      "furnitureTypeCode": "RUG",
+      "label": "러너형 러그",
+      "dimensions": {
+        "width": 0.7,
+        "depth": 1.8,
+        "height": 0.006
+      },
+      "styleTags": [
+        "natural",
+        "minimal"
+      ],
+      "lifestyleTags": [
+        "REST"
+      ],
+      "materials": [
+        "fabric",
+        "fabricLight",
+        "fabricDark"
+      ],
+      "purchaseUrl": "https://www.ikea.com/kr/ko/p/ridstig-rug-flatwoven-grey-off-white-00600969/",
+      "requiredClearance": {
+        "front": 0.1,
+        "side": 0.1
+      },
+      "renderCapability": "VARIANT_JSON",
+      "variantPath": "variants/rug-runner.json"
+    },
+    {
+      "productId": "side-table-coffee-01",
+      "variantId": "side-table-coffee",
+      "furnitureType": "side_table",
+      "furnitureTypeCode": "SIDE_TABLE",
+      "label": "낮은 커피 테이블",
+      "dimensions": {
+        "width": 0.9,
+        "depth": 0.55,
+        "height": 0.45
+      },
+      "styleTags": [
+        "minimal",
+        "natural"
+      ],
+      "lifestyleTags": [
+        "REST",
+        "HOBBY_LEISURE"
+      ],
+      "materials": [
+        "wood",
+        "woodLight",
+        "woodDark"
+      ],
+      "purchaseUrl": "https://www.ikea.com/kr/ko/p/lack-coffee-table-black-brown-20352987/",
+      "requiredClearance": {
+        "front": 0.3,
+        "side": 0.1
+      },
+      "renderCapability": "VARIANT_JSON",
+      "variantPath": "variants/side-table-coffee.json"
+    },
+    {
+      "productId": "side-table-midcentury-stockholm-01",
+      "variantId": "side-table-midcentury-stockholm",
+      "furnitureType": "side_table",
+      "furnitureTypeCode": "SIDE_TABLE",
+      "label": "미드센추리 투명 플라스틱 테이블",
+      "dimensions": {
+        "width": 0.48,
+        "depth": 0.48,
+        "height": 0.51
+      },
+      "styleTags": [
+        "midcentury",
+        "modern"
+      ],
+      "lifestyleTags": [
+        "REST",
+        "HOBBY_LEISURE"
+      ],
+      "materials": [
+        "transparentAmberPlastic",
+        "redPlastic"
+      ],
+      "purchaseUrl": "https://www.kartell.com/mk/en/kter/shop/product/tip-top/kar08600b4",
+      "requiredClearance": {
+        "front": 0.3,
+        "side": 0.1
+      },
+      "renderCapability": "VARIANT_JSON",
+      "variantPath": "variants/side-table-midcentury-stockholm.json"
+    },
+    {
+      "productId": "side-table-round-01",
+      "variantId": "side-table-round",
+      "furnitureType": "side_table",
+      "furnitureTypeCode": "SIDE_TABLE",
+      "label": "원형 사이드 테이블",
+      "dimensions": {
+        "width": 0.49,
+        "depth": 0.49,
+        "height": 0.51
+      },
+      "styleTags": [
+        "minimal",
+        "natural"
+      ],
+      "lifestyleTags": [
+        "REST",
+        "HOBBY_LEISURE"
+      ],
+      "materials": [
+        "wood",
+        "woodLight",
+        "woodDark"
+      ],
+      "purchaseUrl": "https://www.ikea.com/kr/ko/p/gladom-tray-table-dark-grey-green-50578452/",
+      "requiredClearance": {
+        "front": 0.3,
+        "side": 0.1
+      },
+      "renderCapability": "VARIANT_JSON",
+      "variantPath": "variants/side-table-round.json"
+    },
+    {
+      "productId": "side-table-storage-01",
+      "variantId": "side-table-storage",
+      "furnitureType": "side_table",
+      "furnitureTypeCode": "SIDE_TABLE",
+      "label": "수납형 사이드 테이블",
+      "dimensions": {
+        "width": 0.8,
+        "depth": 0.31,
+        "height": 0.52
+      },
+      "styleTags": [
+        "minimal",
+        "natural"
+      ],
+      "lifestyleTags": [
+        "REST",
+        "STORAGE"
+      ],
+      "materials": [
+        "wood",
+        "woodLight",
+        "woodDark"
+      ],
+      "purchaseUrl": "https://www.ikea.com/kr/ko/p/holmerud-side-table-oak-effect-00541423/",
+      "requiredClearance": {
+        "front": 0.3,
+        "side": 0.1
+      },
+      "renderCapability": "VARIANT_JSON",
+      "variantPath": "variants/side-table-storage.json"
+    },
+    {
+      "productId": "sofa-bed-classic-storage-01",
+      "variantId": "sofa-bed-classic-storage",
+      "furnitureType": "sofa_bed",
+      "furnitureTypeCode": "SOFA_BED",
+      "label": "클래식 3서랍 소파베드",
+      "dimensions": {
+        "width": 2.09,
+        "depth": 0.89,
+        "height": 0.83
+      },
+      "styleTags": [
+        "classic",
+        "natural"
+      ],
+      "lifestyleTags": [
+        "REST",
+        "STORAGE",
+        "HOBBY_LEISURE"
+      ],
+      "materials": [
+        "paintedWhite",
+        "woodLight",
+        "fabric",
+        "fabricLight",
+        "metalLight"
+      ],
+      "purchaseUrl": "https://www.ikea.com/kr/en/p/hemnes-day-bed-w-3-drawers-2-mattresses-white-vannareid-extra-firm-s19390947/",
+      "requiredClearance": {
+        "front": 0.5,
+        "side": 0.2
+      },
+      "renderCapability": "VARIANT_JSON",
+      "variantPath": "variants/sofa-bed-classic-storage.json"
+    },
+    {
+      "productId": "sofa-bed-compact-01",
+      "variantId": "sofa-bed-compact",
+      "furnitureType": "sofa_bed",
+      "furnitureTypeCode": "SOFA_BED",
+      "label": "컴팩트 소파베드",
+      "dimensions": {
+        "width": 1.42,
+        "depth": 1,
+        "height": 0.87
+      },
+      "styleTags": [
+        "modern",
+        "minimal"
+      ],
+      "lifestyleTags": [
+        "REST"
+      ],
+      "materials": [
+        "fabric",
+        "fabricLight",
+        "fabricDark",
+        "metal"
+      ],
+      "purchaseUrl": "https://www.ikea.com/kr/ko/p/lycksele-murbo-2-seat-sofa-bed-ransta-natural-s69387018/",
+      "requiredClearance": {
+        "front": 0.5,
+        "side": 0.2
+      },
+      "renderCapability": "VARIANT_JSON",
+      "variantPath": "variants/sofa-bed-compact.json"
+    },
+    {
+      "productId": "sofa-bed-daybed-01",
+      "variantId": "sofa-bed-daybed",
+      "furnitureType": "sofa_bed",
+      "furnitureTypeCode": "SOFA_BED",
+      "label": "데이베드형 소파베드",
+      "dimensions": {
+        "width": 2.05,
+        "depth": 0.87,
+        "height": 0.63
+      },
+      "styleTags": [
+        "modern",
+        "minimal"
+      ],
+      "lifestyleTags": [
+        "REST"
+      ],
+      "materials": [
+        "paintedWhite",
+        "fabric",
+        "fabricLight",
+        "fabricDark",
+        "metalLight"
+      ],
+      "purchaseUrl": "https://www.ikea.com/kr/ko/p/brimnes-day-bed-w-2-drawers-2-mattresses-white-agotnes-firm-s29427064/",
+      "requiredClearance": {
+        "front": 0.5,
+        "side": 0.2
+      },
+      "renderCapability": "VARIANT_JSON",
+      "variantPath": "variants/sofa-bed-daybed.json"
+    },
+    {
+      "productId": "sofa-bed-folding-01",
+      "variantId": "sofa-bed-folding",
+      "furnitureType": "sofa_bed",
+      "furnitureTypeCode": "SOFA_BED",
+      "label": "접이식 소파베드",
+      "dimensions": {
+        "width": 2,
+        "depth": 0.97,
+        "height": 0.9
+      },
+      "styleTags": [
+        "modern",
+        "minimal"
+      ],
+      "lifestyleTags": [
+        "REST"
+      ],
+      "materials": [
+        "fabric",
+        "fabricLight",
+        "metal",
+        "metalLight"
+      ],
+      "purchaseUrl": "https://www.ikea.com/kr/ko/p/nyhamn-3-seat-sofa-bed-with-pocket-spring-mattress-knisa-grey-beige-s69306362/",
+      "requiredClearance": {
+        "front": 0.5,
+        "side": 0.2
+      },
+      "renderCapability": "VARIANT_JSON",
+      "variantPath": "variants/sofa-bed-folding.json"
+    },
+    {
+      "productId": "sofa-bed-midcentury-orange-01",
+      "variantId": "sofa-bed-midcentury-orange",
+      "furnitureType": "sofa_bed",
+      "furnitureTypeCode": "SOFA_BED",
+      "label": "미드센추리 오렌지 소파베드",
+      "dimensions": {
+        "width": 1.89,
+        "depth": 1.02,
+        "height": 0.88
+      },
+      "styleTags": [
+        "midcentury",
+        "modern"
+      ],
+      "lifestyleTags": [
+        "REST",
+        "HOBBY_LEISURE"
+      ],
+      "materials": [
+        "woodDark",
+        "orangeFabric",
+        "orangeFabricDark",
+        "brass"
+      ],
+      "purchaseUrl": "https://www.habitat.co.uk/product/7571745",
+      "requiredClearance": {
+        "front": 0.5,
+        "side": 0.2
+      },
+      "renderCapability": "VARIANT_JSON",
+      "variantPath": "variants/sofa-bed-midcentury-orange.json"
+    },
+    {
+      "productId": "sofa-classic-ektorp-01",
+      "variantId": "sofa-classic-ektorp",
+      "furnitureType": "sofa",
+      "furnitureTypeCode": "SOFA",
+      "label": "클래식 쿠션 소파",
+      "dimensions": {
+        "width": 2.18,
+        "depth": 0.88,
+        "height": 0.88
+      },
+      "styleTags": [
+        "classic",
+        "natural"
+      ],
+      "lifestyleTags": [
+        "REST",
+        "HOBBY_LEISURE"
+      ],
+      "materials": [
+        "fabric",
+        "fabricLight",
+        "fabricDark"
+      ],
+      "purchaseUrl": "https://www.ikea.com/kr/en/p/ektorp-3-seat-sofa-kilanda-light-beige-s49509011/",
+      "requiredClearance": {
+        "front": 0.5,
+        "side": 0.2
+      },
+      "renderCapability": "VARIANT_JSON",
+      "variantPath": "variants/sofa-classic-ektorp.json"
+    },
+    {
+      "productId": "sofa-midcentury-stockholm-01",
+      "variantId": "sofa-midcentury-stockholm",
+      "furnitureType": "sofa",
+      "furnitureTypeCode": "SOFA",
+      "label": "미드센추리 마시멜로 소파",
+      "dimensions": {
+        "width": 1.32,
+        "depth": 0.74,
+        "height": 0.79
+      },
+      "styleTags": [
+        "midcentury",
+        "modern"
+      ],
+      "lifestyleTags": [
+        "REST",
+        "HOBBY_LEISURE"
+      ],
+      "materials": [
+        "chrome",
+        "metal",
+        "redVinyl",
+        "yellowVinyl",
+        "tealFabric",
+        "blueVinyl",
+        "orangeFabric"
+      ],
+      "purchaseUrl": "https://hermanmiller.co.jp/collections/furniture-living-room/products/nelson-marshmallow-sofa",
+      "requiredClearance": {
+        "front": 0.5,
+        "side": 0.2
+      },
+      "renderCapability": "VARIANT_JSON",
+      "variantPath": "variants/sofa-midcentury-stockholm.json"
+    },
+    {
+      "productId": "sofa-modular-01",
+      "variantId": "sofa-modular",
+      "furnitureType": "sofa",
+      "furnitureTypeCode": "SOFA",
+      "label": "모듈형 소파",
+      "dimensions": {
+        "width": 1.4,
+        "depth": 0.95,
+        "height": 0.71
+      },
+      "styleTags": [
+        "modern",
+        "natural"
+      ],
+      "lifestyleTags": [
+        "REST",
+        "HOBBY_LEISURE"
+      ],
+      "materials": [
+        "fabric",
+        "fabricLight",
+        "fabricDark"
+      ],
+      "purchaseUrl": "https://www.ikea.com/kr/ko/p/jaettebo-1-5-seat-module-with-storage-samsala-grey-beige-s69471465/",
+      "requiredClearance": {
+        "front": 0.5,
+        "side": 0.2
+      },
+      "renderCapability": "VARIANT_JSON",
+      "variantPath": "variants/sofa-modular.json"
+    },
+    {
+      "productId": "sofa-single-01",
+      "variantId": "sofa-single",
+      "furnitureType": "sofa",
+      "furnitureTypeCode": "SOFA",
+      "label": "1인용 소파",
+      "dimensions": {
+        "width": 0.93,
+        "depth": 0.99,
+        "height": 0.83
+      },
+      "styleTags": [
+        "modern",
+        "natural"
+      ],
+      "lifestyleTags": [
+        "REST",
+        "HOBBY_LEISURE"
+      ],
+      "materials": [
+        "metal",
+        "fabric",
+        "fabricLight",
+        "fabricDark"
+      ],
+      "purchaseUrl": "https://www.ikea.com/kr/ko/p/soederhamn-1-seat-section-kelinge-rust-s19514561/",
+      "requiredClearance": {
+        "front": 0.5,
+        "side": 0.2
+      },
+      "renderCapability": "VARIANT_JSON",
+      "variantPath": "variants/sofa-single.json"
+    },
+    {
+      "productId": "sofa-two-seat-01",
+      "variantId": "sofa-two-seat",
+      "furnitureType": "sofa",
+      "furnitureTypeCode": "SOFA",
+      "label": "2인용 소파",
+      "dimensions": {
+        "width": 1.21,
+        "depth": 0.78,
+        "height": 0.68
+      },
+      "styleTags": [
+        "modern",
+        "natural"
+      ],
+      "lifestyleTags": [
+        "REST",
+        "HOBBY_LEISURE"
+      ],
+      "materials": [
+        "woodDark",
+        "fabric",
+        "fabricLight",
+        "fabricDark"
+      ],
+      "purchaseUrl": "https://www.ikea.com/kr/ko/p/glostad-2-seat-sofa-knisa-medium-blue-00488821/",
+      "requiredClearance": {
+        "front": 0.5,
+        "side": 0.2
+      },
+      "renderCapability": "VARIANT_JSON",
+      "variantPath": "variants/sofa-two-seat.json"
+    },
+    {
+      "productId": "tv-medium-01",
+      "variantId": "tv-medium",
+      "furnitureType": "tv",
+      "furnitureTypeCode": "TV",
+      "label": "중형 TV",
+      "dimensions": {
+        "width": 0.9675,
+        "depth": 0.191,
+        "height": 0.6097
+      },
+      "styleTags": [
+        "modern",
+        "minimal"
+      ],
+      "lifestyleTags": [
+        "HOBBY_LEISURE"
+      ],
+      "materials": [
+        "metal",
+        "metalLight",
+        "screenFrame",
+        "screen"
+      ],
+      "purchaseUrl": "https://www.samsung.com/sec/tvs/fhd-f6310f-d2c/KU43F6310FFXKR/",
+      "requiredClearance": {
+        "front": 0.2,
+        "side": 0.1
+      },
+      "renderCapability": "VARIANT_JSON",
+      "variantPath": "variants/tv-medium.json"
+    },
+    {
+      "productId": "tv-natural-frame-01",
+      "variantId": "tv-natural-frame",
+      "furnitureType": "tv",
+      "furnitureTypeCode": "TV",
+      "label": "내추럴 우드 프레임 TV",
+      "dimensions": {
+        "width": 0.9695,
+        "depth": 0.1968,
+        "height": 0.5919
+      },
+      "styleTags": [
+        "modern",
+        "natural"
+      ],
+      "lifestyleTags": [
+        "HOBBY_LEISURE"
+      ],
+      "materials": [
+        "metal",
+        "woodLight",
+        "screenFrame",
+        "screen"
+      ],
+      "purchaseUrl": "https://www.samsung.com/sec/tvs/packge-kq43lsf03-tk-d2c/KQ43LSF03-TK/",
+      "requiredClearance": {
+        "front": 0.2,
+        "side": 0.1
+      },
+      "renderCapability": "VARIANT_JSON",
+      "variantPath": "variants/tv-natural-frame.json"
+    },
+    {
+      "productId": "tv-small-01",
+      "variantId": "tv-small",
+      "furnitureType": "tv",
+      "furnitureTypeCode": "TV",
+      "label": "소형 TV",
+      "dimensions": {
+        "width": 0.7374,
+        "depth": 0.1505,
+        "height": 0.4654
+      },
+      "styleTags": [
+        "modern",
+        "minimal"
+      ],
+      "lifestyleTags": [
+        "HOBBY_LEISURE"
+      ],
+      "materials": [
+        "metal",
+        "metalLight",
+        "screenFrame",
+        "screen"
+      ],
+      "purchaseUrl": "https://www.lge.co.kr/tvs/32lq635bena",
+      "requiredClearance": {
+        "front": 0.2,
+        "side": 0.1
+      },
+      "renderCapability": "VARIANT_JSON",
+      "variantPath": "variants/tv-small.json"
+    },
+    {
+      "productId": "tv-wide-01",
+      "variantId": "tv-wide",
+      "furnitureType": "tv",
+      "furnitureTypeCode": "TV",
+      "label": "와이드형 TV",
+      "dimensions": {
+        "width": 1.2341,
+        "depth": 0.237,
+        "height": 0.758
+      },
+      "styleTags": [
+        "modern",
+        "minimal"
+      ],
+      "lifestyleTags": [
+        "HOBBY_LEISURE"
+      ],
+      "materials": [
+        "metal",
+        "metalLight",
+        "screenFrame",
+        "screen"
+      ],
+      "purchaseUrl": "https://www.samsung.com/sec/tvs/qled-qf7a-d2c/KQ55QF7AAFXKR/",
+      "requiredClearance": {
+        "front": 0.2,
+        "side": 0.1
+      },
+      "renderCapability": "VARIANT_JSON",
+      "variantPath": "variants/tv-wide.json"
+    },
+    {
+      "productId": "wardrobe-classic-gullaberg-01",
+      "variantId": "wardrobe-classic-gullaberg",
+      "furnitureType": "wardrobe",
+      "furnitureTypeCode": "WARDROBE",
+      "label": "클래식 미러 옷장",
+      "dimensions": {
+        "width": 1.28,
+        "depth": 0.64,
+        "height": 2.01
+      },
+      "styleTags": [
+        "classic",
+        "natural"
+      ],
+      "lifestyleTags": [
+        "STORAGE"
+      ],
+      "materials": [
+        "paintedWhite",
+        "wood",
+        "mirror"
+      ],
+      "purchaseUrl": "https://www.ikea.com/kr/en/p/gullaberg-wardrobe-white-90573952/",
+      "requiredClearance": {
+        "front": 0.5,
+        "side": 0.2
+      },
+      "renderCapability": "VARIANT_JSON",
+      "variantPath": "variants/wardrobe-classic-gullaberg.json"
+    },
+    {
+      "productId": "wardrobe-hinged-01",
+      "variantId": "wardrobe-hinged",
+      "furnitureType": "wardrobe",
+      "furnitureTypeCode": "WARDROBE",
+      "label": "여닫이형 옷장",
+      "dimensions": {
+        "width": 0.79,
+        "depth": 0.55,
+        "height": 1.76
+      },
+      "styleTags": [
+        "minimal",
+        "modern"
+      ],
+      "lifestyleTags": [
+        "STORAGE"
+      ],
+      "materials": [
+        "wood",
+        "woodLight",
+        "woodDark",
+        "metal"
+      ],
+      "purchaseUrl": "https://www.ikea.com/kr/ko/p/kleppstad-wardrobe-with-2-doors-white-10437237/",
+      "requiredClearance": {
+        "front": 0.5,
+        "side": 0.2
+      },
+      "renderCapability": "VARIANT_JSON",
+      "variantPath": "variants/wardrobe-hinged.json"
+    },
+    {
+      "productId": "wardrobe-natural-nordkisa-01",
+      "variantId": "wardrobe-natural-nordkisa",
+      "furnitureType": "wardrobe",
+      "furnitureTypeCode": "WARDROBE",
+      "label": "내추럴 슬라이딩 오픈 옷장",
+      "dimensions": {
+        "width": 1.2,
+        "depth": 0.47,
+        "height": 1.86
+      },
+      "styleTags": [
+        "natural",
+        "minimal"
+      ],
+      "lifestyleTags": [
+        "STORAGE"
+      ],
+      "materials": [
+        "wood",
+        "woodLight",
+        "woodDark",
+        "metalLight"
+      ],
+      "purchaseUrl": "https://www.ikea.com/kr/en/p/nordkisa-open-wardrobe-with-sliding-door-bamboo-80439469/",
+      "requiredClearance": {
+        "front": 0.5,
+        "side": 0.2
+      },
+      "renderCapability": "VARIANT_JSON",
+      "variantPath": "variants/wardrobe-natural-nordkisa.json"
+    },
+    {
+      "productId": "wardrobe-open-01",
+      "variantId": "wardrobe-open",
+      "furnitureType": "wardrobe",
+      "furnitureTypeCode": "WARDROBE",
+      "label": "오픈형 옷장",
+      "dimensions": {
+        "width": 0.99,
+        "depth": 0.51,
+        "height": 1.73
+      },
+      "styleTags": [
+        "minimal",
+        "modern"
+      ],
+      "lifestyleTags": [
+        "STORAGE"
+      ],
+      "materials": [
+        "woodLight",
+        "metal",
+        "metalLight"
+      ],
+      "purchaseUrl": "https://www.ikea.com/kr/ko/p/jonaxel-wardrobe-combination-white-s89297658/",
+      "requiredClearance": {
+        "front": 0.5,
+        "side": 0.2
+      },
+      "renderCapability": "VARIANT_JSON",
+      "variantPath": "variants/wardrobe-open.json"
+    },
+    {
+      "productId": "wardrobe-sliding-01",
+      "variantId": "wardrobe-sliding",
+      "furnitureType": "wardrobe",
+      "furnitureTypeCode": "WARDROBE",
+      "label": "슬라이딩형 옷장",
+      "dimensions": {
+        "width": 1.17,
+        "depth": 0.55,
+        "height": 1.76
+      },
+      "styleTags": [
+        "minimal",
+        "modern"
+      ],
+      "lifestyleTags": [
+        "STORAGE"
+      ],
+      "materials": [
+        "wood",
+        "woodLight",
+        "woodDark",
+        "metal",
+        "metalLight"
+      ],
+      "purchaseUrl": "https://www.ikea.com/kr/ko/p/kleppstad-wardrobe-with-sliding-doors-white-30437241/",
+      "requiredClearance": {
+        "front": 0.5,
+        "side": 0.2
+      },
+      "renderCapability": "VARIANT_JSON",
+      "variantPath": "variants/wardrobe-sliding.json"
+    }
+  ]
+}

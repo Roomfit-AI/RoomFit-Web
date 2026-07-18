@@ -9,6 +9,7 @@
     "lint": "eslint .",
     "test": "vitest",
     "test:run": "vitest run",
+    "catalog:generate": "node scripts/generateFurnitureCatalog.mjs --backend-root ../RoomFit-Backend",
     "preview": "vite preview"
   },
   "dependencies": {

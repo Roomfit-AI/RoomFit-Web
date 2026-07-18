@@ -1,0 +1,390 @@
+{
+  "schemaVersion": "1.0",
+  "name": "미드센추리 터쿼이즈 침대",
+  "furnitureType": "침대",
+  "variant": "미드센추리 터쿼이즈형",
+  "units": "meter",
+  "coordinateSystem": {
+    "origin": "floor-center",
+    "axes": {
+      "x": "right",
+      "y": "up",
+      "z": "front"
+    }
+  },
+  "rotationUnit": "radian",
+  "dimensions": {
+    "width": 1.8,
+    "depth": 2.31,
+    "height": 1.19
+  },
+  "materials": [
+    "wood",
+    "woodDark",
+    "fabric",
+    "fabricLight",
+    "tealFabric",
+    "orangeFabric",
+    "brass"
+  ],
+  "parts": [
+    {
+      "id": "leg-left-head",
+      "geometry": "cylinder",
+      "size": [
+        0.045,
+        0.07,
+        0.2
+      ],
+      "position": [
+        -0.78,
+        0.1,
+        -0.95
+      ],
+      "material": "woodDark"
+    },
+    {
+      "id": "leg-right-head",
+      "geometry": "cylinder",
+      "size": [
+        0.045,
+        0.07,
+        0.2
+      ],
+      "position": [
+        0.78,
+        0.1,
+        -0.95
+      ],
+      "material": "woodDark"
+    },
+    {
+      "id": "leg-left-foot",
+      "geometry": "cylinder",
+      "size": [
+        0.045,
+        0.07,
+        0.2
+      ],
+      "position": [
+        -0.78,
+        0.1,
+        0.95
+      ],
+      "material": "woodDark"
+    },
+    {
+      "id": "leg-right-foot",
+      "geometry": "cylinder",
+      "size": [
+        0.045,
+        0.07,
+        0.2
+      ],
+      "position": [
+        0.78,
+        0.1,
+        0.95
+      ],
+      "material": "woodDark"
+    },
+    {
+      "id": "side-rail-left",
+      "geometry": "roundedBox",
+      "size": [
+        0.09,
+        0.24,
+        2.15
+      ],
+      "radius": 0.025,
+      "smoothness": 4,
+      "position": [
+        -0.855,
+        0.28,
+        0.05
+      ],
+      "material": "woodDark"
+    },
+    {
+      "id": "side-rail-right",
+      "geometry": "roundedBox",
+      "size": [
+        0.09,
+        0.24,
+        2.15
+      ],
+      "radius": 0.025,
+      "smoothness": 4,
+      "position": [
+        0.855,
+        0.28,
+        0.05
+      ],
+      "material": "woodDark"
+    },
+    {
+      "id": "head-rail",
+      "geometry": "roundedBox",
+      "size": [
+        1.71,
+        0.24,
+        0.1
+      ],
+      "radius": 0.025,
+      "smoothness": 4,
+      "position": [
+        0,
+        0.28,
+        -1.075
+      ],
+      "material": "woodDark"
+    },
+    {
+      "id": "foot-rail",
+      "geometry": "roundedBox",
+      "size": [
+        1.71,
+        0.24,
+        0.1
+      ],
+      "radius": 0.025,
+      "smoothness": 4,
+      "position": [
+        0,
+        0.28,
+        1.105
+      ],
+      "material": "woodDark"
+    },
+    {
+      "id": "mattress-support",
+      "geometry": "box",
+      "size": [
+        1.62,
+        0.08,
+        2.06
+      ],
+      "position": [
+        0,
+        0.36,
+        0.04
+      ],
+      "material": "wood"
+    },
+    {
+      "id": "mattress",
+      "geometry": "roundedBox",
+      "size": [
+        1.64,
+        0.22,
+        2.04
+      ],
+      "radius": 0.075,
+      "smoothness": 5,
+      "position": [
+        0,
+        0.51,
+        0.04
+      ],
+      "material": "fabricLight"
+    },
+    {
+      "id": "teal-headboard",
+      "geometry": "roundedBox",
+      "size": [
+        1.8,
+        0.85,
+        0.12
+      ],
+      "radius": 0.055,
+      "smoothness": 5,
+      "position": [
+        0,
+        0.765,
+        -1.095
+      ],
+      "material": "tealFabric"
+    },
+    {
+      "id": "tuft-left-upper",
+      "geometry": "cylinder",
+      "size": [
+        0.018,
+        0.018,
+        0.015
+      ],
+      "position": [
+        -0.48,
+        0.93,
+        -1.0275
+      ],
+      "rotation": [
+        1.5707963267948966,
+        0,
+        0
+      ],
+      "material": "brass"
+    },
+    {
+      "id": "tuft-center-upper",
+      "geometry": "cylinder",
+      "size": [
+        0.018,
+        0.018,
+        0.015
+      ],
+      "position": [
+        0,
+        0.93,
+        -1.0275
+      ],
+      "rotation": [
+        1.5707963267948966,
+        0,
+        0
+      ],
+      "material": "brass"
+    },
+    {
+      "id": "tuft-right-upper",
+      "geometry": "cylinder",
+      "size": [
+        0.018,
+        0.018,
+        0.015
+      ],
+      "position": [
+        0.48,
+        0.93,
+        -1.0275
+      ],
+      "rotation": [
+        1.5707963267948966,
+        0,
+        0
+      ],
+      "material": "brass"
+    },
+    {
+      "id": "tuft-left-lower",
+      "geometry": "cylinder",
+      "size": [
+        0.018,
+        0.018,
+        0.015
+      ],
+      "position": [
+        -0.48,
+        0.68,
+        -1.0275
+      ],
+      "rotation": [
+        1.5707963267948966,
+        0,
+        0
+      ],
+      "material": "brass"
+    },
+    {
+      "id": "tuft-center-lower",
+      "geometry": "cylinder",
+      "size": [
+        0.018,
+        0.018,
+        0.015
+      ],
+      "position": [
+        0,
+        0.68,
+        -1.0275
+      ],
+      "rotation": [
+        1.5707963267948966,
+        0,
+        0
+      ],
+      "material": "brass"
+    },
+    {
+      "id": "tuft-right-lower",
+      "geometry": "cylinder",
+      "size": [
+        0.018,
+        0.018,
+        0.015
+      ],
+      "position": [
+        0.48,
+        0.68,
+        -1.0275
+      ],
+      "rotation": [
+        1.5707963267948966,
+        0,
+        0
+      ],
+      "material": "brass"
+    },
+    {
+      "id": "pillow-left",
+      "geometry": "roundedBox",
+      "size": [
+        0.58,
+        0.12,
+        0.34
+      ],
+      "radius": 0.05,
+      "smoothness": 5,
+      "position": [
+        -0.34,
+        0.66,
+        -0.62
+      ],
+      "material": "orangeFabric"
+    },
+    {
+      "id": "pillow-right",
+      "geometry": "roundedBox",
+      "size": [
+        0.58,
+        0.12,
+        0.34
+      ],
+      "radius": 0.05,
+      "smoothness": 5,
+      "position": [
+        0.34,
+        0.66,
+        -0.62
+      ],
+      "material": "fabric"
+    },
+    {
+      "id": "teal-runner",
+      "geometry": "roundedBox",
+      "size": [
+        1.54,
+        0.035,
+        0.48
+      ],
+      "radius": 0.016,
+      "smoothness": 4,
+      "position": [
+        0,
+        0.6375,
+        0.64
+      ],
+      "material": "tealFabric"
+    }
+  ],
+  "variantId": "bed-midcentury-teal",
+  "furnitureTypeCode": "BED",
+  "styleTags": [
+    "midcentury",
+    "modern"
+  ],
+  "lifestyleTags": [
+    "REST"
+  ],
+  "purchaseUrl": "https://midinmod.com/products/ashley-platform-queen-bed-dark-teal-velvet"
+}

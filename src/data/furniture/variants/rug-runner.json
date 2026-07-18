@@ -1,0 +1,98 @@
+{
+  "schemaVersion": "1.0",
+  "name": "러너형 러그",
+  "furnitureType": "러그",
+  "variant": "러너형",
+  "units": "meter",
+  "coordinateSystem": {
+    "origin": "floor-center",
+    "axes": {
+      "x": "right",
+      "y": "up",
+      "z": "front"
+    }
+  },
+  "rotationUnit": "radian",
+  "dimensions": {
+    "width": 0.7,
+    "depth": 1.8,
+    "height": 0.006
+  },
+  "materials": [
+    "fabric",
+    "fabricLight",
+    "fabricDark"
+  ],
+  "parts": [
+    {
+      "id": "runner-base",
+      "geometry": "box",
+      "size": [
+        0.7,
+        0.004,
+        1.8
+      ],
+      "position": [
+        0,
+        0.002,
+        0
+      ],
+      "material": "fabric"
+    },
+    {
+      "id": "runner-inset",
+      "geometry": "box",
+      "size": [
+        0.62,
+        0.002,
+        1.72
+      ],
+      "position": [
+        0,
+        0.005,
+        0
+      ],
+      "material": "fabricDark"
+    },
+    {
+      "id": "stripe-front",
+      "geometry": "box",
+      "size": [
+        0.62,
+        0.002,
+        0.08
+      ],
+      "position": [
+        0,
+        0.005,
+        0.68
+      ],
+      "material": "fabricLight"
+    },
+    {
+      "id": "stripe-back",
+      "geometry": "box",
+      "size": [
+        0.62,
+        0.002,
+        0.08
+      ],
+      "position": [
+        0,
+        0.005,
+        -0.68
+      ],
+      "material": "fabricLight"
+    }
+  ],
+  "variantId": "rug-runner",
+  "furnitureTypeCode": "RUG",
+  "styleTags": [
+    "natural",
+    "minimal"
+  ],
+  "lifestyleTags": [
+    "REST"
+  ],
+  "purchaseUrl": "https://www.ikea.com/kr/ko/p/ridstig-rug-flatwoven-grey-off-white-00600969/"
+}

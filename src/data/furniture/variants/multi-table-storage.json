@@ -1,0 +1,305 @@
+{
+  "schemaVersion": "1.0",
+  "name": "수납 결합 다용도 테이블",
+  "furnitureType": "다용도 테이블",
+  "variant": "수납 결합형",
+  "units": "meter",
+  "coordinateSystem": {
+    "origin": "floor-center",
+    "axes": {
+      "x": "right",
+      "y": "up",
+      "z": "front"
+    }
+  },
+  "rotationUnit": "radian",
+  "dimensions": {
+    "width": 1.26,
+    "depth": 0.79,
+    "height": 0.9
+  },
+  "materials": [
+    "woodDark",
+    "metal",
+    "metalLight"
+  ],
+  "parts": [
+    {
+      "id": "cabinet-plinth",
+      "geometry": "box",
+      "size": [
+        1.16,
+        0.05,
+        0.69
+      ],
+      "position": [
+        0,
+        0.025,
+        0
+      ],
+      "material": "metal"
+    },
+    {
+      "id": "side-left",
+      "geometry": "box",
+      "size": [
+        0.05,
+        0.84,
+        0.05
+      ],
+      "position": [
+        -0.555,
+        0.445,
+        0.31
+      ],
+      "material": "metal"
+    },
+    {
+      "id": "divider-left",
+      "geometry": "box",
+      "size": [
+        0.05,
+        0.84,
+        0.05
+      ],
+      "position": [
+        -0.555,
+        0.445,
+        -0.31
+      ],
+      "material": "metal"
+    },
+    {
+      "id": "divider-right",
+      "geometry": "box",
+      "size": [
+        0.05,
+        0.84,
+        0.05
+      ],
+      "position": [
+        0.555,
+        0.445,
+        0.31
+      ],
+      "material": "metal"
+    },
+    {
+      "id": "side-right",
+      "geometry": "box",
+      "size": [
+        0.05,
+        0.84,
+        0.05
+      ],
+      "position": [
+        0.555,
+        0.445,
+        -0.31
+      ],
+      "material": "metal"
+    },
+    {
+      "id": "back-panel",
+      "geometry": "box",
+      "size": [
+        1.11,
+        0.05,
+        0.05
+      ],
+      "position": [
+        0,
+        0.8,
+        -0.31
+      ],
+      "material": "metal"
+    },
+    {
+      "id": "left-shelf",
+      "geometry": "roundedBox",
+      "size": [
+        1.11,
+        0.035,
+        0.62
+      ],
+      "radius": 0.012,
+      "smoothness": 3,
+      "position": [
+        0,
+        0.22,
+        0
+      ],
+      "material": "woodDark"
+    },
+    {
+      "id": "appliance-shelf",
+      "geometry": "roundedBox",
+      "size": [
+        1.11,
+        0.035,
+        0.62
+      ],
+      "radius": 0.012,
+      "smoothness": 3,
+      "position": [
+        0,
+        0.52,
+        0
+      ],
+      "material": "woodDark"
+    },
+    {
+      "id": "right-shelf",
+      "geometry": "box",
+      "size": [
+        1.11,
+        0.04,
+        0.04
+      ],
+      "position": [
+        0,
+        0.7,
+        0.31
+      ],
+      "material": "metal"
+    },
+    {
+      "id": "left-door-open",
+      "geometry": "cylinder",
+      "size": [
+        0.018,
+        0.018,
+        1.1
+      ],
+      "position": [
+        0,
+        0.6,
+        0.31
+      ],
+      "rotation": [
+        0,
+        0,
+        1.5707963267948966
+      ],
+      "material": "metalLight"
+    },
+    {
+      "id": "left-door-handle",
+      "geometry": "cylinder",
+      "size": [
+        0.018,
+        0.018,
+        0.62
+      ],
+      "position": [
+        -0.555,
+        0.6,
+        0
+      ],
+      "rotation": [
+        1.5707963267948966,
+        0,
+        0
+      ],
+      "material": "metalLight"
+    },
+    {
+      "id": "drawer-center",
+      "geometry": "box",
+      "size": [
+        0.04,
+        0.2,
+        0.04
+      ],
+      "position": [
+        -0.555,
+        0.2,
+        0.31
+      ],
+      "material": "metal"
+    },
+    {
+      "id": "drawer-right",
+      "geometry": "box",
+      "size": [
+        0.04,
+        0.2,
+        0.04
+      ],
+      "position": [
+        0.555,
+        0.2,
+        0.31
+      ],
+      "material": "metal"
+    },
+    {
+      "id": "pull-center",
+      "geometry": "cylinder",
+      "size": [
+        0.014,
+        0.014,
+        0.94
+      ],
+      "position": [
+        0,
+        0.1885,
+        0.22
+      ],
+      "rotation": [
+        0,
+        0,
+        1.5707963267948966
+      ],
+      "material": "metal"
+    },
+    {
+      "id": "pull-right",
+      "geometry": "cylinder",
+      "size": [
+        0.014,
+        0.014,
+        0.94
+      ],
+      "position": [
+        0,
+        0.1885,
+        -0.22
+      ],
+      "rotation": [
+        0,
+        0,
+        1.5707963267948966
+      ],
+      "material": "metal"
+    },
+    {
+      "id": "countertop",
+      "geometry": "roundedBox",
+      "size": [
+        1.26,
+        0.055,
+        0.79
+      ],
+      "radius": 0.018,
+      "smoothness": 4,
+      "position": [
+        0,
+        0.8725,
+        0
+      ],
+      "material": "woodDark"
+    }
+  ],
+  "variantId": "multi-table-storage",
+  "furnitureTypeCode": "MULTI_TABLE",
+  "styleTags": [
+    "minimal",
+    "modern"
+  ],
+  "lifestyleTags": [
+    "WORK_STUDY",
+    "STORAGE"
+  ],
+  "purchaseUrl": "https://www.ikea.com/kr/ko/p/vadholma-kitchen-island-black-oak-80359189/"
+}

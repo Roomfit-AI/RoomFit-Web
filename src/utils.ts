@@ -72,6 +72,15 @@ const recommendedCatalog: Record<FurnitureCategory, Omit<Furniture, "id" | "stat
     color: "#111827",
     material: "metal",
   },
+  unsupported: {
+    name: "지원되지 않는 가구",
+    category: "unsupported",
+    dimensions: { width: 0.5, depth: 0.5, height: 0.5 },
+    position: { x: 0, z: 0 },
+    rotationY: 0,
+    color: "#8b8b86",
+    material: "white",
+  },
 };
 
 export function buildAgentContext(context: AgentContext): AgentContext {

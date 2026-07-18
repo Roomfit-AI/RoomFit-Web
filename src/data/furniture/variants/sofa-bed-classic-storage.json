@@ -1,0 +1,394 @@
+{
+  "schemaVersion": "1.0",
+  "name": "클래식 3서랍 소파베드",
+  "furnitureType": "소파베드",
+  "variant": "클래식 3서랍형",
+  "units": "meter",
+  "coordinateSystem": {
+    "origin": "floor-center",
+    "axes": {
+      "x": "right",
+      "y": "up",
+      "z": "front"
+    }
+  },
+  "rotationUnit": "radian",
+  "dimensions": {
+    "width": 2.09,
+    "depth": 0.89,
+    "height": 0.83
+  },
+  "materials": [
+    "paintedWhite",
+    "woodLight",
+    "fabric",
+    "fabricLight",
+    "metalLight"
+  ],
+  "parts": [
+    {
+      "id": "floor-plinth",
+      "geometry": "roundedBox",
+      "size": [
+        2.09,
+        0.08,
+        0.89
+      ],
+      "radius": 0.018,
+      "smoothness": 4,
+      "position": [
+        0,
+        0.04,
+        0
+      ],
+      "material": "paintedWhite"
+    },
+    {
+      "id": "storage-body",
+      "geometry": "box",
+      "size": [
+        1.95,
+        0.3,
+        0.8
+      ],
+      "position": [
+        0,
+        0.23,
+        0
+      ],
+      "material": "paintedWhite"
+    },
+    {
+      "id": "drawer-left",
+      "geometry": "roundedBox",
+      "size": [
+        0.6,
+        0.22,
+        0.025
+      ],
+      "radius": 0.012,
+      "smoothness": 4,
+      "position": [
+        -0.64,
+        0.23,
+        0.4125
+      ],
+      "material": "paintedWhite"
+    },
+    {
+      "id": "drawer-center",
+      "geometry": "roundedBox",
+      "size": [
+        0.6,
+        0.22,
+        0.025
+      ],
+      "radius": 0.012,
+      "smoothness": 4,
+      "position": [
+        0,
+        0.23,
+        0.4125
+      ],
+      "material": "paintedWhite"
+    },
+    {
+      "id": "drawer-right",
+      "geometry": "roundedBox",
+      "size": [
+        0.6,
+        0.22,
+        0.025
+      ],
+      "radius": 0.012,
+      "smoothness": 4,
+      "position": [
+        0.64,
+        0.23,
+        0.4125
+      ],
+      "material": "paintedWhite"
+    },
+    {
+      "id": "handle-left",
+      "geometry": "cylinder",
+      "size": [
+        0.018,
+        0.018,
+        0.025
+      ],
+      "position": [
+        -0.64,
+        0.23,
+        0.4325
+      ],
+      "rotation": [
+        1.5707963267948966,
+        0,
+        0
+      ],
+      "material": "metalLight"
+    },
+    {
+      "id": "handle-center",
+      "geometry": "cylinder",
+      "size": [
+        0.018,
+        0.018,
+        0.025
+      ],
+      "position": [
+        0,
+        0.23,
+        0.4325
+      ],
+      "rotation": [
+        1.5707963267948966,
+        0,
+        0
+      ],
+      "material": "metalLight"
+    },
+    {
+      "id": "handle-right",
+      "geometry": "cylinder",
+      "size": [
+        0.018,
+        0.018,
+        0.025
+      ],
+      "position": [
+        0.64,
+        0.23,
+        0.4325
+      ],
+      "rotation": [
+        1.5707963267948966,
+        0,
+        0
+      ],
+      "material": "metalLight"
+    },
+    {
+      "id": "mattress-support",
+      "geometry": "box",
+      "size": [
+        1.93,
+        0.06,
+        0.78
+      ],
+      "position": [
+        0,
+        0.41,
+        0
+      ],
+      "material": "woodLight"
+    },
+    {
+      "id": "mattress",
+      "geometry": "roundedBox",
+      "size": [
+        1.91,
+        0.18,
+        0.75
+      ],
+      "radius": 0.075,
+      "smoothness": 6,
+      "position": [
+        0,
+        0.53,
+        0.02
+      ],
+      "material": "fabricLight"
+    },
+    {
+      "id": "end-left",
+      "geometry": "roundedBox",
+      "size": [
+        0.08,
+        0.69,
+        0.89
+      ],
+      "radius": 0.025,
+      "smoothness": 5,
+      "position": [
+        -1.005,
+        0.425,
+        0
+      ],
+      "material": "paintedWhite"
+    },
+    {
+      "id": "end-right",
+      "geometry": "roundedBox",
+      "size": [
+        0.08,
+        0.69,
+        0.89
+      ],
+      "radius": 0.025,
+      "smoothness": 5,
+      "position": [
+        1.005,
+        0.425,
+        0
+      ],
+      "material": "paintedWhite"
+    },
+    {
+      "id": "back-lower-rail",
+      "geometry": "roundedBox",
+      "size": [
+        1.93,
+        0.12,
+        0.08
+      ],
+      "radius": 0.02,
+      "smoothness": 4,
+      "position": [
+        0,
+        0.56,
+        -0.405
+      ],
+      "material": "paintedWhite"
+    },
+    {
+      "id": "back-top-rail",
+      "geometry": "roundedBox",
+      "size": [
+        1.93,
+        0.08,
+        0.08
+      ],
+      "radius": 0.02,
+      "smoothness": 4,
+      "position": [
+        0,
+        0.79,
+        -0.405
+      ],
+      "material": "paintedWhite"
+    },
+    {
+      "id": "back-slat-1",
+      "geometry": "box",
+      "size": [
+        0.055,
+        0.23,
+        0.055
+      ],
+      "position": [
+        -0.76,
+        0.675,
+        -0.405
+      ],
+      "material": "paintedWhite"
+    },
+    {
+      "id": "back-slat-2",
+      "geometry": "box",
+      "size": [
+        0.055,
+        0.23,
+        0.055
+      ],
+      "position": [
+        -0.38,
+        0.675,
+        -0.405
+      ],
+      "material": "paintedWhite"
+    },
+    {
+      "id": "back-slat-3",
+      "geometry": "box",
+      "size": [
+        0.055,
+        0.23,
+        0.055
+      ],
+      "position": [
+        0,
+        0.675,
+        -0.405
+      ],
+      "material": "paintedWhite"
+    },
+    {
+      "id": "back-slat-4",
+      "geometry": "box",
+      "size": [
+        0.055,
+        0.23,
+        0.055
+      ],
+      "position": [
+        0.38,
+        0.675,
+        -0.405
+      ],
+      "material": "paintedWhite"
+    },
+    {
+      "id": "back-slat-5",
+      "geometry": "box",
+      "size": [
+        0.055,
+        0.23,
+        0.055
+      ],
+      "position": [
+        0.76,
+        0.675,
+        -0.405
+      ],
+      "material": "paintedWhite"
+    },
+    {
+      "id": "back-cushion-left",
+      "geometry": "roundedBox",
+      "size": [
+        0.56,
+        0.26,
+        0.14
+      ],
+      "radius": 0.07,
+      "smoothness": 6,
+      "position": [
+        -0.31,
+        0.67,
+        -0.27
+      ],
+      "material": "fabric"
+    },
+    {
+      "id": "back-cushion-right",
+      "geometry": "roundedBox",
+      "size": [
+        0.56,
+        0.26,
+        0.14
+      ],
+      "radius": 0.07,
+      "smoothness": 6,
+      "position": [
+        0.31,
+        0.67,
+        -0.27
+      ],
+      "material": "fabric"
+    }
+  ],
+  "variantId": "sofa-bed-classic-storage",
+  "furnitureTypeCode": "SOFA_BED",
+  "styleTags": [
+    "classic",
+    "natural"
+  ],
+  "lifestyleTags": [
+    "REST",
+    "STORAGE",
+    "HOBBY_LEISURE"
+  ],
+  "purchaseUrl": "https://www.ikea.com/kr/en/p/hemnes-day-bed-w-3-drawers-2-mattresses-white-vannareid-extra-firm-s19390947/"
+}

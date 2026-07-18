@@ -1,0 +1,279 @@
+{
+  "schemaVersion": "1.0",
+  "name": "우드 블라인드",
+  "furnitureType": "커튼·블라인드",
+  "variant": "우드 블라인드",
+  "units": "meter",
+  "coordinateSystem": {
+    "origin": "floor-center",
+    "axes": {
+      "x": "right",
+      "y": "up",
+      "z": "front"
+    }
+  },
+  "rotationUnit": "radian",
+  "dimensions": {
+    "width": 1.25,
+    "depth": 0.1,
+    "height": 1.8
+  },
+  "materials": [
+    "wood",
+    "woodLight",
+    "woodDark",
+    "fabricDark"
+  ],
+  "parts": [
+    {
+      "id": "wood-bottom-rail",
+      "geometry": "box",
+      "size": [
+        1.22,
+        0.08,
+        0.08
+      ],
+      "position": [
+        0,
+        0.04,
+        0
+      ],
+      "material": "woodDark"
+    },
+    {
+      "id": "wood-slat-1",
+      "geometry": "box",
+      "size": [
+        1.2,
+        0.08,
+        0.055
+      ],
+      "position": [
+        0,
+        0.18,
+        0
+      ],
+      "rotation": [
+        0.1,
+        0,
+        0
+      ],
+      "material": "woodLight"
+    },
+    {
+      "id": "wood-slat-2",
+      "geometry": "box",
+      "size": [
+        1.2,
+        0.08,
+        0.055
+      ],
+      "position": [
+        0,
+        0.36,
+        0
+      ],
+      "rotation": [
+        0.05,
+        0,
+        0
+      ],
+      "material": "wood"
+    },
+    {
+      "id": "wood-slat-3",
+      "geometry": "box",
+      "size": [
+        1.2,
+        0.08,
+        0.055
+      ],
+      "position": [
+        0,
+        0.54,
+        0
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "material": "woodLight"
+    },
+    {
+      "id": "wood-slat-4",
+      "geometry": "box",
+      "size": [
+        1.2,
+        0.08,
+        0.055
+      ],
+      "position": [
+        0,
+        0.72,
+        0
+      ],
+      "rotation": [
+        0.1,
+        0,
+        0
+      ],
+      "material": "wood"
+    },
+    {
+      "id": "wood-slat-5",
+      "geometry": "box",
+      "size": [
+        1.2,
+        0.08,
+        0.055
+      ],
+      "position": [
+        0,
+        0.9,
+        0
+      ],
+      "rotation": [
+        0.05,
+        0,
+        0
+      ],
+      "material": "woodLight"
+    },
+    {
+      "id": "wood-slat-6",
+      "geometry": "box",
+      "size": [
+        1.2,
+        0.08,
+        0.055
+      ],
+      "position": [
+        0,
+        1.08,
+        0
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "material": "wood"
+    },
+    {
+      "id": "wood-slat-7",
+      "geometry": "box",
+      "size": [
+        1.2,
+        0.08,
+        0.055
+      ],
+      "position": [
+        0,
+        1.26,
+        0
+      ],
+      "rotation": [
+        0.1,
+        0,
+        0
+      ],
+      "material": "woodLight"
+    },
+    {
+      "id": "wood-slat-8",
+      "geometry": "box",
+      "size": [
+        1.2,
+        0.08,
+        0.055
+      ],
+      "position": [
+        0,
+        1.44,
+        0
+      ],
+      "rotation": [
+        0.05,
+        0,
+        0
+      ],
+      "material": "wood"
+    },
+    {
+      "id": "wood-slat-9",
+      "geometry": "box",
+      "size": [
+        1.2,
+        0.08,
+        0.055
+      ],
+      "position": [
+        0,
+        1.62,
+        0
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "material": "woodLight"
+    },
+    {
+      "id": "wood-headrail",
+      "geometry": "box",
+      "size": [
+        1.25,
+        0.1,
+        0.1
+      ],
+      "position": [
+        0,
+        1.75,
+        0
+      ],
+      "material": "woodDark"
+    },
+    {
+      "id": "wood-cord-left",
+      "geometry": "box",
+      "size": [
+        0.012,
+        1.7,
+        0.02
+      ],
+      "position": [
+        -0.42,
+        0.85,
+        0.035
+      ],
+      "material": "fabricDark"
+    },
+    {
+      "id": "wood-cord-right",
+      "geometry": "box",
+      "size": [
+        0.012,
+        1.7,
+        0.02
+      ],
+      "position": [
+        0.42,
+        0.85,
+        0.035
+      ],
+      "material": "fabricDark"
+    }
+  ],
+  "variantId": "blind-wood",
+  "furnitureTypeCode": "CURTAIN_BLIND",
+  "styleTags": [
+    "minimal",
+    "natural"
+  ],
+  "lifestyleTags": [
+    "REST"
+  ],
+  "purchaseUrl": "https://www.ikea.com/kr/ko/p/vecklarfly-venetian-blind-bamboo-80616301/"
+}

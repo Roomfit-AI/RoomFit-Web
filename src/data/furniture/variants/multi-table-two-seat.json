@@ -1,0 +1,174 @@
+{
+  "schemaVersion": "1.0",
+  "name": "2인용 다용도 테이블",
+  "furnitureType": "다용도 테이블",
+  "variant": "2인형",
+  "units": "meter",
+  "coordinateSystem": {
+    "origin": "floor-center",
+    "axes": {
+      "x": "right",
+      "y": "up",
+      "z": "front"
+    }
+  },
+  "rotationUnit": "radian",
+  "dimensions": {
+    "width": 0.8,
+    "depth": 0.6,
+    "height": 0.75
+  },
+  "materials": [
+    "wood",
+    "woodLight",
+    "woodDark"
+  ],
+  "parts": [
+    {
+      "id": "leg-left-back",
+      "geometry": "box",
+      "size": [
+        0.065,
+        0.7,
+        0.065
+      ],
+      "position": [
+        -0.345,
+        0.35,
+        -0.245
+      ],
+      "material": "woodDark"
+    },
+    {
+      "id": "leg-right-back",
+      "geometry": "box",
+      "size": [
+        0.065,
+        0.7,
+        0.065
+      ],
+      "position": [
+        0.345,
+        0.35,
+        -0.245
+      ],
+      "material": "woodDark"
+    },
+    {
+      "id": "leg-left-front",
+      "geometry": "box",
+      "size": [
+        0.065,
+        0.7,
+        0.065
+      ],
+      "position": [
+        -0.345,
+        0.35,
+        0.245
+      ],
+      "material": "woodDark"
+    },
+    {
+      "id": "leg-right-front",
+      "geometry": "box",
+      "size": [
+        0.065,
+        0.7,
+        0.065
+      ],
+      "position": [
+        0.345,
+        0.35,
+        0.245
+      ],
+      "material": "woodDark"
+    },
+    {
+      "id": "apron-back",
+      "geometry": "box",
+      "size": [
+        0.69,
+        0.09,
+        0.04
+      ],
+      "position": [
+        0,
+        0.655,
+        -0.245
+      ],
+      "material": "wood"
+    },
+    {
+      "id": "apron-front",
+      "geometry": "box",
+      "size": [
+        0.69,
+        0.09,
+        0.04
+      ],
+      "position": [
+        0,
+        0.655,
+        0.245
+      ],
+      "material": "wood"
+    },
+    {
+      "id": "apron-left",
+      "geometry": "box",
+      "size": [
+        0.04,
+        0.09,
+        0.49
+      ],
+      "position": [
+        -0.345,
+        0.655,
+        0
+      ],
+      "material": "wood"
+    },
+    {
+      "id": "apron-right",
+      "geometry": "box",
+      "size": [
+        0.04,
+        0.09,
+        0.49
+      ],
+      "position": [
+        0.345,
+        0.655,
+        0
+      ],
+      "material": "wood"
+    },
+    {
+      "id": "tabletop",
+      "geometry": "box",
+      "size": [
+        0.8,
+        0.05,
+        0.6
+      ],
+      "position": [
+        0,
+        0.725,
+        0
+      ],
+      "material": "woodLight"
+    }
+  ],
+  "variantId": "multi-table-two-seat",
+  "furnitureTypeCode": "MULTI_TABLE",
+  "styleTags": [
+    "minimal",
+    "modern"
+  ],
+  "lifestyleTags": [
+    "WORK_STUDY",
+    "HOBBY_LEISURE"
+  ],
+  "purchaseUrl": "https://www.ikea.com/kr/ko/p/naesinge-naesinge-table-and-2-chairs-white-white-tibbleby-beige-grey-s69602329/"
+}

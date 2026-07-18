@@ -2,6 +2,7 @@ import { isAxiosError } from "axios";
 
 import { apiClient } from "./client";
 import type { Furniture, FurnitureCategory, FurnitureStatus, Opening, RoomLayout, WallSegment } from "../types";
+import { normalizeCanonicalFurnitureType } from "../config/canonicalFurnitureType";
 
 export interface SampleRoomApiItem {
   roomId: number;
@@ -633,7 +634,18 @@ function toFurnitureCategory(type: string): FurnitureCategory {
     return "cabinet";
   }
 
-  return "cabinet";
+  const canonicalType = normalizeCanonicalFurnitureType(type);
+  if (canonicalType === "bed" || canonicalType === "sofa_bed") return "bed";
+  if (["desk", "multi_table", "side_table", "nightstand"].includes(canonicalType ?? "")) return "desk";
+  if (canonicalType === "desk_chair" || canonicalType === "sofa") return "chair";
+  if (canonicalType === "rug") return "rug";
+  if (canonicalType === "mood_lamp") return "lighting";
+  if (canonicalType !== null) return "cabinet";
+
+  if (import.meta.env.DEV) {
+    console.warn(`Unsupported backend furniture type "${type}"; rendering a neutral placeholder.`);
+  }
+  return "unsupported";
 }
 
 function geometryByType(type: string, category: FurnitureCategory) {
@@ -687,6 +699,7 @@ function colorByCategory(category: FurnitureCategory): string {
     cabinet: "#8a6542",
     rug: "#d8c7ad",
     lighting: "#26211d",
+    unsupported: "#8b8b86",
   };
 
   return colors[category];

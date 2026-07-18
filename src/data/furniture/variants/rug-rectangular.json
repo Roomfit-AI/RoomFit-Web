@@ -1,0 +1,67 @@
+{
+  "schemaVersion": "1.0",
+  "name": "직사각형 러그",
+  "furnitureType": "러그",
+  "variant": "직사각형",
+  "units": "meter",
+  "coordinateSystem": {
+    "origin": "floor-center",
+    "axes": {
+      "x": "right",
+      "y": "up",
+      "z": "front"
+    }
+  },
+  "rotationUnit": "radian",
+  "dimensions": {
+    "width": 1.2,
+    "depth": 1.8,
+    "height": 0.002
+  },
+  "materials": [
+    "fabricLight",
+    "fabricDark"
+  ],
+  "parts": [
+    {
+      "id": "rect-base",
+      "geometry": "box",
+      "size": [
+        1.2,
+        0.001,
+        1.8
+      ],
+      "position": [
+        0,
+        0.0005,
+        0
+      ],
+      "material": "fabricDark"
+    },
+    {
+      "id": "rect-inset",
+      "geometry": "box",
+      "size": [
+        1.12,
+        0.001,
+        1.72
+      ],
+      "position": [
+        0,
+        0.0015,
+        0
+      ],
+      "material": "fabricLight"
+    }
+  ],
+  "variantId": "rug-rectangular",
+  "furnitureTypeCode": "RUG",
+  "styleTags": [
+    "natural",
+    "minimal"
+  ],
+  "lifestyleTags": [
+    "REST"
+  ],
+  "purchaseUrl": "https://www.ikea.com/kr/ko/p/tiphede-rug-flatwoven-natural-black-00456759/"
+}

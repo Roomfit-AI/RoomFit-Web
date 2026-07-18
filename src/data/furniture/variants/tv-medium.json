@@ -1,0 +1,116 @@
+{
+  "schemaVersion": "1.0",
+  "name": "중형 TV",
+  "furnitureType": "TV",
+  "variant": "중형형",
+  "units": "meter",
+  "coordinateSystem": {
+    "origin": "floor-center",
+    "axes": {
+      "x": "right",
+      "y": "up",
+      "z": "front"
+    }
+  },
+  "rotationUnit": "radian",
+  "dimensions": {
+    "width": 0.9675,
+    "depth": 0.191,
+    "height": 0.6097
+  },
+  "materials": [
+    "metal",
+    "metalLight",
+    "screenFrame",
+    "screen"
+  ],
+  "parts": [
+    {
+      "id": "foot-left",
+      "geometry": "box",
+      "size": [
+        0.12,
+        0.0483,
+        0.191
+      ],
+      "position": [
+        -0.27745,
+        0.02415,
+        0
+      ],
+      "material": "metal"
+    },
+    {
+      "id": "foot-right",
+      "geometry": "box",
+      "size": [
+        0.12,
+        0.0483,
+        0.191
+      ],
+      "position": [
+        0.27745,
+        0.02415,
+        0
+      ],
+      "material": "metal"
+    },
+    {
+      "id": "frame",
+      "geometry": "roundedBox",
+      "size": [
+        0.9675,
+        0.5614,
+        0.0597
+      ],
+      "radius": 0.018,
+      "smoothness": 4,
+      "position": [
+        0,
+        0.329,
+        0
+      ],
+      "material": "screenFrame"
+    },
+    {
+      "id": "display",
+      "geometry": "box",
+      "size": [
+        0.9355,
+        0.5184,
+        0.008
+      ],
+      "position": [
+        0,
+        0.3345,
+        0.03385
+      ],
+      "material": "screen"
+    },
+    {
+      "id": "brand-mark",
+      "geometry": "box",
+      "size": [
+        0.052,
+        0.008,
+        0.004
+      ],
+      "position": [
+        0,
+        0.0623,
+        0.03185
+      ],
+      "material": "metalLight"
+    }
+  ],
+  "variantId": "tv-medium",
+  "furnitureTypeCode": "TV",
+  "styleTags": [
+    "modern",
+    "minimal"
+  ],
+  "lifestyleTags": [
+    "HOBBY_LEISURE"
+  ],
+  "purchaseUrl": "https://www.samsung.com/sec/tvs/fhd-f6310f-d2c/KU43F6310FFXKR/"
+}

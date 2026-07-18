@@ -1,0 +1,517 @@
+{
+  "schemaVersion": "1.0",
+  "name": "미드센추리 골든 옐로 TV장",
+  "furnitureType": "TV장/미디어 콘솔",
+  "variant": "미드센추리 골든 옐로 메탈형",
+  "units": "meter",
+  "coordinateSystem": {
+    "origin": "floor-center",
+    "axes": {
+      "x": "right",
+      "y": "up",
+      "z": "front"
+    }
+  },
+  "rotationUnit": "radian",
+  "dimensions": {
+    "width": 1.27,
+    "depth": 0.381,
+    "height": 0.6604
+  },
+  "materials": [
+    "chrome",
+    "goldenYellowMetal"
+  ],
+  "parts": [
+    {
+      "id": "foot-left-front",
+      "geometry": "cylinder",
+      "size": [
+        0.012,
+        0.012,
+        0.02
+      ],
+      "position": [
+        -0.623,
+        0.01,
+        0.1785
+      ],
+      "material": "chrome"
+    },
+    {
+      "id": "foot-center-front",
+      "geometry": "cylinder",
+      "size": [
+        0.012,
+        0.012,
+        0.02
+      ],
+      "position": [
+        0,
+        0.01,
+        0.1785
+      ],
+      "material": "chrome"
+    },
+    {
+      "id": "foot-right-front",
+      "geometry": "cylinder",
+      "size": [
+        0.012,
+        0.012,
+        0.02
+      ],
+      "position": [
+        0.623,
+        0.01,
+        0.1785
+      ],
+      "material": "chrome"
+    },
+    {
+      "id": "foot-left-back",
+      "geometry": "cylinder",
+      "size": [
+        0.012,
+        0.012,
+        0.02
+      ],
+      "position": [
+        -0.623,
+        0.01,
+        -0.1785
+      ],
+      "material": "chrome"
+    },
+    {
+      "id": "foot-center-back",
+      "geometry": "cylinder",
+      "size": [
+        0.012,
+        0.012,
+        0.02
+      ],
+      "position": [
+        0,
+        0.01,
+        -0.1785
+      ],
+      "material": "chrome"
+    },
+    {
+      "id": "foot-right-back",
+      "geometry": "cylinder",
+      "size": [
+        0.012,
+        0.012,
+        0.02
+      ],
+      "position": [
+        0.623,
+        0.01,
+        -0.1785
+      ],
+      "material": "chrome"
+    },
+    {
+      "id": "post-left-front",
+      "geometry": "cylinder",
+      "size": [
+        0.012,
+        0.012,
+        0.6264
+      ],
+      "position": [
+        -0.623,
+        0.3332,
+        0.1785
+      ],
+      "material": "chrome"
+    },
+    {
+      "id": "post-center-front",
+      "geometry": "cylinder",
+      "size": [
+        0.012,
+        0.012,
+        0.6264
+      ],
+      "position": [
+        0,
+        0.3332,
+        0.1785
+      ],
+      "material": "chrome"
+    },
+    {
+      "id": "post-right-front",
+      "geometry": "cylinder",
+      "size": [
+        0.012,
+        0.012,
+        0.6264
+      ],
+      "position": [
+        0.623,
+        0.3332,
+        0.1785
+      ],
+      "material": "chrome"
+    },
+    {
+      "id": "post-left-back",
+      "geometry": "cylinder",
+      "size": [
+        0.012,
+        0.012,
+        0.6264
+      ],
+      "position": [
+        -0.623,
+        0.3332,
+        -0.1785
+      ],
+      "material": "chrome"
+    },
+    {
+      "id": "post-center-back",
+      "geometry": "cylinder",
+      "size": [
+        0.012,
+        0.012,
+        0.6264
+      ],
+      "position": [
+        0,
+        0.3332,
+        -0.1785
+      ],
+      "material": "chrome"
+    },
+    {
+      "id": "post-right-back",
+      "geometry": "cylinder",
+      "size": [
+        0.012,
+        0.012,
+        0.6264
+      ],
+      "position": [
+        0.623,
+        0.3332,
+        -0.1785
+      ],
+      "material": "chrome"
+    },
+    {
+      "id": "bottom-panel",
+      "geometry": "box",
+      "size": [
+        1.222,
+        0.014,
+        0.333
+      ],
+      "position": [
+        0,
+        0.142,
+        0
+      ],
+      "material": "goldenYellowMetal"
+    },
+    {
+      "id": "middle-shelf",
+      "geometry": "box",
+      "size": [
+        1.222,
+        0.014,
+        0.333
+      ],
+      "position": [
+        0,
+        0.39,
+        0
+      ],
+      "material": "goldenYellowMetal"
+    },
+    {
+      "id": "top-panel",
+      "geometry": "box",
+      "size": [
+        1.222,
+        0.014,
+        0.333
+      ],
+      "position": [
+        0,
+        0.6384,
+        0
+      ],
+      "material": "goldenYellowMetal"
+    },
+    {
+      "id": "side-left",
+      "geometry": "box",
+      "size": [
+        0.014,
+        0.4964,
+        0.333
+      ],
+      "position": [
+        -0.605,
+        0.39,
+        0
+      ],
+      "material": "goldenYellowMetal"
+    },
+    {
+      "id": "side-right",
+      "geometry": "box",
+      "size": [
+        0.014,
+        0.4964,
+        0.333
+      ],
+      "position": [
+        0.605,
+        0.39,
+        0
+      ],
+      "material": "goldenYellowMetal"
+    },
+    {
+      "id": "center-divider",
+      "geometry": "box",
+      "size": [
+        0.014,
+        0.4964,
+        0.333
+      ],
+      "position": [
+        0,
+        0.39,
+        0
+      ],
+      "material": "goldenYellowMetal"
+    },
+    {
+      "id": "back-panel",
+      "geometry": "box",
+      "size": [
+        1.198,
+        0.4964,
+        0.014
+      ],
+      "position": [
+        0,
+        0.39,
+        -0.1595
+      ],
+      "material": "goldenYellowMetal"
+    },
+    {
+      "id": "drop-door-top-right",
+      "geometry": "roundedBox",
+      "size": [
+        0.584,
+        0.222,
+        0.012
+      ],
+      "radius": 0.008,
+      "smoothness": 4,
+      "position": [
+        0.302,
+        0.5205,
+        0.169
+      ],
+      "material": "goldenYellowMetal"
+    },
+    {
+      "id": "drop-door-bottom-left",
+      "geometry": "roundedBox",
+      "size": [
+        0.584,
+        0.222,
+        0.012
+      ],
+      "radius": 0.008,
+      "smoothness": 4,
+      "position": [
+        -0.302,
+        0.272,
+        0.169
+      ],
+      "material": "goldenYellowMetal"
+    },
+    {
+      "id": "door-handle-top-right",
+      "geometry": "cylinder",
+      "size": [
+        0.018,
+        0.018,
+        0.012
+      ],
+      "rotation": [
+        1.5707963267948966,
+        0,
+        0
+      ],
+      "position": [
+        0.302,
+        0.5205,
+        0.181
+      ],
+      "material": "chrome"
+    },
+    {
+      "id": "door-handle-bottom-left",
+      "geometry": "cylinder",
+      "size": [
+        0.018,
+        0.018,
+        0.012
+      ],
+      "rotation": [
+        1.5707963267948966,
+        0,
+        0
+      ],
+      "position": [
+        -0.302,
+        0.272,
+        0.181
+      ],
+      "material": "chrome"
+    },
+    {
+      "id": "front-rail-bottom",
+      "geometry": "cylinder",
+      "size": [
+        0.012,
+        0.012,
+        1.246
+      ],
+      "rotation": [
+        0,
+        0,
+        1.5707963267948966
+      ],
+      "position": [
+        0,
+        0.132,
+        0.1785
+      ],
+      "material": "chrome"
+    },
+    {
+      "id": "front-rail-middle",
+      "geometry": "cylinder",
+      "size": [
+        0.012,
+        0.012,
+        1.246
+      ],
+      "rotation": [
+        0,
+        0,
+        1.5707963267948966
+      ],
+      "position": [
+        0,
+        0.39,
+        0.1785
+      ],
+      "material": "chrome"
+    },
+    {
+      "id": "front-rail-top",
+      "geometry": "cylinder",
+      "size": [
+        0.012,
+        0.012,
+        1.246
+      ],
+      "rotation": [
+        0,
+        0,
+        1.5707963267948966
+      ],
+      "position": [
+        0,
+        0.6484,
+        0.1785
+      ],
+      "material": "chrome"
+    },
+    {
+      "id": "back-rail-bottom",
+      "geometry": "cylinder",
+      "size": [
+        0.012,
+        0.012,
+        1.246
+      ],
+      "rotation": [
+        0,
+        0,
+        1.5707963267948966
+      ],
+      "position": [
+        0,
+        0.132,
+        -0.1785
+      ],
+      "material": "chrome"
+    },
+    {
+      "id": "back-rail-middle",
+      "geometry": "cylinder",
+      "size": [
+        0.012,
+        0.012,
+        1.246
+      ],
+      "rotation": [
+        0,
+        0,
+        1.5707963267948966
+      ],
+      "position": [
+        0,
+        0.39,
+        -0.1785
+      ],
+      "material": "chrome"
+    },
+    {
+      "id": "back-rail-top",
+      "geometry": "cylinder",
+      "size": [
+        0.012,
+        0.012,
+        1.246
+      ],
+      "rotation": [
+        0,
+        0,
+        1.5707963267948966
+      ],
+      "position": [
+        0,
+        0.6484,
+        -0.1785
+      ],
+      "material": "chrome"
+    }
+  ],
+  "variantId": "media-console-midcentury-stockholm",
+  "furnitureTypeCode": "MEDIA_CONSOLE",
+  "styleTags": [
+    "midcentury",
+    "modern"
+  ],
+  "lifestyleTags": [
+    "STORAGE",
+    "HOBBY_LEISURE"
+  ],
+  "purchaseUrl": "https://us.usm.com/products/usm-haller-media-o3"
+}

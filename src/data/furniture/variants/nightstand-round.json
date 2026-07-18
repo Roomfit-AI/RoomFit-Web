@@ -1,0 +1,158 @@
+{
+  "schemaVersion": "1.0",
+  "name": "원형 테이블 협탁",
+  "furnitureType": "협탁",
+  "variant": "원형 테이블형",
+  "units": "meter",
+  "coordinateSystem": {
+    "origin": "floor-center",
+    "axes": {
+      "x": "right",
+      "y": "up",
+      "z": "front"
+    }
+  },
+  "rotationUnit": "radian",
+  "dimensions": {
+    "width": 0.45,
+    "depth": 0.45,
+    "height": 0.53
+  },
+  "materials": [
+    "metal",
+    "metalLight"
+  ],
+  "parts": [
+    {
+      "id": "foot-left",
+      "geometry": "box",
+      "size": [
+        0.025,
+        0.02,
+        0.38
+      ],
+      "position": [
+        -0.17,
+        0.01,
+        0
+      ],
+      "material": "metal"
+    },
+    {
+      "id": "foot-right",
+      "geometry": "box",
+      "size": [
+        0.025,
+        0.02,
+        0.38
+      ],
+      "position": [
+        0.17,
+        0.01,
+        0
+      ],
+      "material": "metal"
+    },
+    {
+      "id": "leg-left-front",
+      "geometry": "box",
+      "size": [
+        0.025,
+        0.49,
+        0.025
+      ],
+      "position": [
+        -0.17,
+        0.265,
+        0.1775
+      ],
+      "material": "metal"
+    },
+    {
+      "id": "leg-left-back",
+      "geometry": "box",
+      "size": [
+        0.025,
+        0.49,
+        0.025
+      ],
+      "position": [
+        -0.17,
+        0.265,
+        -0.1775
+      ],
+      "material": "metal"
+    },
+    {
+      "id": "leg-right-front",
+      "geometry": "box",
+      "size": [
+        0.025,
+        0.49,
+        0.025
+      ],
+      "position": [
+        0.17,
+        0.265,
+        0.1775
+      ],
+      "material": "metal"
+    },
+    {
+      "id": "leg-right-back",
+      "geometry": "box",
+      "size": [
+        0.025,
+        0.49,
+        0.025
+      ],
+      "position": [
+        0.17,
+        0.265,
+        -0.1775
+      ],
+      "material": "metal"
+    },
+    {
+      "id": "tray-top",
+      "geometry": "cylinder",
+      "size": [
+        0.225,
+        0.225,
+        0.025
+      ],
+      "position": [
+        0,
+        0.5175,
+        0
+      ],
+      "material": "metalLight"
+    },
+    {
+      "id": "tray-surface",
+      "geometry": "cylinder",
+      "size": [
+        0.205,
+        0.205,
+        0.01
+      ],
+      "position": [
+        0,
+        0.505,
+        0
+      ],
+      "material": "metal"
+    }
+  ],
+  "variantId": "nightstand-round",
+  "furnitureTypeCode": "NIGHTSTAND",
+  "styleTags": [
+    "minimal",
+    "natural"
+  ],
+  "lifestyleTags": [
+    "REST",
+    "STORAGE"
+  ],
+  "purchaseUrl": "https://www.ikea.com/kr/ko/p/gladom-tray-table-dark-grey-green-50578452/"
+}

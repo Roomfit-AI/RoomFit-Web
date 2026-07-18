@@ -1,0 +1,173 @@
+{
+  "schemaVersion": "1.0",
+  "name": "오픈 수납 파티션 선반",
+  "furnitureType": "파티션·양면 선반",
+  "variant": "오픈 수납 취미형",
+  "units": "meter",
+  "coordinateSystem": {
+    "origin": "floor-center",
+    "axes": {
+      "x": "right",
+      "y": "up",
+      "z": "front"
+    }
+  },
+  "rotationUnit": "radian",
+  "dimensions": {
+    "width": 1.47,
+    "depth": 0.39,
+    "height": 0.77
+  },
+  "materials": [
+    "paintedWhite"
+  ],
+  "parts": [
+    {
+      "id": "top-panel",
+      "geometry": "roundedBox",
+      "size": [
+        1.47,
+        0.04,
+        0.39
+      ],
+      "radius": 0.012,
+      "smoothness": 3,
+      "position": [
+        0,
+        0.75,
+        0
+      ],
+      "material": "paintedWhite"
+    },
+    {
+      "id": "bottom-panel",
+      "geometry": "roundedBox",
+      "size": [
+        1.47,
+        0.04,
+        0.39
+      ],
+      "radius": 0.012,
+      "smoothness": 3,
+      "position": [
+        0,
+        0.02,
+        0
+      ],
+      "material": "paintedWhite"
+    },
+    {
+      "id": "side-left",
+      "geometry": "roundedBox",
+      "size": [
+        0.04,
+        0.69,
+        0.39
+      ],
+      "radius": 0.008,
+      "smoothness": 3,
+      "position": [
+        -0.715,
+        0.385,
+        0
+      ],
+      "material": "paintedWhite"
+    },
+    {
+      "id": "side-right",
+      "geometry": "roundedBox",
+      "size": [
+        0.04,
+        0.69,
+        0.39
+      ],
+      "radius": 0.008,
+      "smoothness": 3,
+      "position": [
+        0.715,
+        0.385,
+        0
+      ],
+      "material": "paintedWhite"
+    },
+    {
+      "id": "vertical-divider-left",
+      "geometry": "roundedBox",
+      "size": [
+        0.035,
+        0.69,
+        0.39
+      ],
+      "radius": 0.007,
+      "smoothness": 3,
+      "position": [
+        -0.35,
+        0.385,
+        0
+      ],
+      "material": "paintedWhite"
+    },
+    {
+      "id": "vertical-divider-center",
+      "geometry": "roundedBox",
+      "size": [
+        0.035,
+        0.69,
+        0.39
+      ],
+      "radius": 0.007,
+      "smoothness": 3,
+      "position": [
+        0,
+        0.385,
+        0
+      ],
+      "material": "paintedWhite"
+    },
+    {
+      "id": "vertical-divider-right",
+      "geometry": "roundedBox",
+      "size": [
+        0.035,
+        0.69,
+        0.39
+      ],
+      "radius": 0.007,
+      "smoothness": 3,
+      "position": [
+        0.35,
+        0.385,
+        0
+      ],
+      "material": "paintedWhite"
+    },
+    {
+      "id": "horizontal-divider",
+      "geometry": "roundedBox",
+      "size": [
+        1.32,
+        0.035,
+        0.39
+      ],
+      "radius": 0.007,
+      "smoothness": 3,
+      "position": [
+        0,
+        0.385,
+        0
+      ],
+      "material": "paintedWhite"
+    }
+  ],
+  "variantId": "partition-shelf-kallax",
+  "furnitureTypeCode": "PARTITION_SHELF",
+  "styleTags": [
+    "minimal",
+    "natural"
+  ],
+  "lifestyleTags": [
+    "STORAGE",
+    "HOBBY_LEISURE"
+  ],
+  "purchaseUrl": "https://www.ikea.com/kr/ko/p/kallax-shelving-unit-white-20351884/"
+}

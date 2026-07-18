@@ -1,0 +1,220 @@
+{
+  "schemaVersion": "1.0",
+  "name": "오픈 선반형 미디어 콘솔",
+  "furnitureType": "TV장/미디어 콘솔",
+  "variant": "오픈 선반형",
+  "units": "meter",
+  "coordinateSystem": {
+    "origin": "floor-center",
+    "axes": {
+      "x": "right",
+      "y": "up",
+      "z": "front"
+    }
+  },
+  "rotationUnit": "radian",
+  "dimensions": {
+    "width": 1.2,
+    "depth": 0.4,
+    "height": 0.64
+  },
+  "materials": [
+    "wood",
+    "woodLight",
+    "woodDark",
+    "metal"
+  ],
+  "parts": [
+    {
+      "id": "foot-left-back",
+      "geometry": "box",
+      "size": [
+        0.08,
+        0.06,
+        0.08
+      ],
+      "position": [
+        -0.54,
+        0.03,
+        -0.14
+      ],
+      "material": "metal"
+    },
+    {
+      "id": "foot-right-back",
+      "geometry": "box",
+      "size": [
+        0.08,
+        0.06,
+        0.08
+      ],
+      "position": [
+        0.54,
+        0.03,
+        -0.14
+      ],
+      "material": "metal"
+    },
+    {
+      "id": "foot-left-front",
+      "geometry": "box",
+      "size": [
+        0.08,
+        0.06,
+        0.08
+      ],
+      "position": [
+        -0.54,
+        0.03,
+        0.14
+      ],
+      "material": "metal"
+    },
+    {
+      "id": "foot-right-front",
+      "geometry": "box",
+      "size": [
+        0.08,
+        0.06,
+        0.08
+      ],
+      "position": [
+        0.54,
+        0.03,
+        0.14
+      ],
+      "material": "metal"
+    },
+    {
+      "id": "bottom-panel",
+      "geometry": "box",
+      "size": [
+        1.2,
+        0.04,
+        0.4
+      ],
+      "position": [
+        0,
+        0.08,
+        0
+      ],
+      "material": "woodDark"
+    },
+    {
+      "id": "side-left",
+      "geometry": "box",
+      "size": [
+        0.06,
+        0.52,
+        0.4
+      ],
+      "position": [
+        -0.57,
+        0.36,
+        0
+      ],
+      "material": "wood"
+    },
+    {
+      "id": "side-right",
+      "geometry": "box",
+      "size": [
+        0.06,
+        0.52,
+        0.4
+      ],
+      "position": [
+        0.57,
+        0.36,
+        0
+      ],
+      "material": "wood"
+    },
+    {
+      "id": "center-divider",
+      "geometry": "box",
+      "size": [
+        0.04,
+        0.5,
+        0.36
+      ],
+      "position": [
+        0,
+        0.35,
+        0
+      ],
+      "material": "wood"
+    },
+    {
+      "id": "back-panel",
+      "geometry": "box",
+      "size": [
+        1.08,
+        0.5,
+        0.02
+      ],
+      "position": [
+        0,
+        0.35,
+        -0.19
+      ],
+      "material": "woodDark"
+    },
+    {
+      "id": "shelf-left",
+      "geometry": "box",
+      "size": [
+        0.54,
+        0.04,
+        0.36
+      ],
+      "position": [
+        -0.29,
+        0.36,
+        0
+      ],
+      "material": "woodLight"
+    },
+    {
+      "id": "shelf-right",
+      "geometry": "box",
+      "size": [
+        0.54,
+        0.04,
+        0.36
+      ],
+      "position": [
+        0.29,
+        0.36,
+        0
+      ],
+      "material": "woodLight"
+    },
+    {
+      "id": "top-panel",
+      "geometry": "box",
+      "size": [
+        1.2,
+        0.04,
+        0.4
+      ],
+      "position": [
+        0,
+        0.62,
+        0
+      ],
+      "material": "woodDark"
+    }
+  ],
+  "variantId": "media-console-open",
+  "furnitureTypeCode": "MEDIA_CONSOLE",
+  "styleTags": [
+    "minimal",
+    "modern"
+  ],
+  "lifestyleTags": [
+    "STORAGE",
+    "HOBBY_LEISURE"
+  ],
+  "purchaseUrl": "https://www.ikea.com/kr/ko/p/besta-frame-white-90245847/"
+}

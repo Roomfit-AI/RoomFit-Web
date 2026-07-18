@@ -1,0 +1,239 @@
+{
+  "schemaVersion": "1.0",
+  "name": "모듈형 소파",
+  "furnitureType": "소파",
+  "variant": "모듈형",
+  "units": "meter",
+  "coordinateSystem": {
+    "origin": "floor-center",
+    "axes": {
+      "x": "right",
+      "y": "up",
+      "z": "front"
+    }
+  },
+  "rotationUnit": "radian",
+  "dimensions": {
+    "width": 1.4,
+    "depth": 0.95,
+    "height": 0.71
+  },
+  "materials": [
+    "fabric",
+    "fabricLight",
+    "fabricDark"
+  ],
+  "parts": [
+    {
+      "id": "base-left",
+      "geometry": "roundedBox",
+      "size": [
+        0.7,
+        0.36,
+        0.95
+      ],
+      "radius": 0.06,
+      "smoothness": 5,
+      "position": [
+        -0.35,
+        0.18,
+        0
+      ],
+      "material": "fabricDark"
+    },
+    {
+      "id": "base-right",
+      "geometry": "roundedBox",
+      "size": [
+        0.7,
+        0.36,
+        0.95
+      ],
+      "radius": 0.06,
+      "smoothness": 5,
+      "position": [
+        0.35,
+        0.18,
+        0
+      ],
+      "material": "fabricDark"
+    },
+    {
+      "id": "storage-front-left",
+      "geometry": "box",
+      "size": [
+        0.62,
+        0.22,
+        0.02
+      ],
+      "position": [
+        -0.35,
+        0.17,
+        0.465
+      ],
+      "material": "fabric"
+    },
+    {
+      "id": "storage-front-right",
+      "geometry": "box",
+      "size": [
+        0.62,
+        0.22,
+        0.02
+      ],
+      "position": [
+        0.35,
+        0.17,
+        0.465
+      ],
+      "material": "fabric"
+    },
+    {
+      "id": "seat-cushion-left",
+      "geometry": "roundedBox",
+      "size": [
+        0.66,
+        0.1,
+        0.69
+      ],
+      "radius": 0.045,
+      "smoothness": 5,
+      "position": [
+        -0.35,
+        0.41,
+        0.11
+      ],
+      "material": "fabricLight"
+    },
+    {
+      "id": "seat-cushion-right",
+      "geometry": "roundedBox",
+      "size": [
+        0.66,
+        0.1,
+        0.69
+      ],
+      "radius": 0.045,
+      "smoothness": 5,
+      "position": [
+        0.35,
+        0.41,
+        0.11
+      ],
+      "material": "fabric"
+    },
+    {
+      "id": "back-support-left",
+      "geometry": "roundedBox",
+      "size": [
+        0.055,
+        0.36,
+        0.08
+      ],
+      "radius": 0.018,
+      "smoothness": 4,
+      "position": [
+        -0.35,
+        0.34,
+        -0.43
+      ],
+      "material": "fabricDark"
+    },
+    {
+      "id": "back-support-right",
+      "geometry": "roundedBox",
+      "size": [
+        0.055,
+        0.36,
+        0.08
+      ],
+      "radius": 0.018,
+      "smoothness": 4,
+      "position": [
+        0.35,
+        0.34,
+        -0.43
+      ],
+      "material": "fabricDark"
+    },
+    {
+      "id": "back-frame-left",
+      "geometry": "roundedBox",
+      "size": [
+        0.7,
+        0.3,
+        0.14
+      ],
+      "radius": 0.05,
+      "smoothness": 5,
+      "position": [
+        -0.35,
+        0.51,
+        -0.405
+      ],
+      "material": "fabricDark"
+    },
+    {
+      "id": "back-frame-right",
+      "geometry": "roundedBox",
+      "size": [
+        0.7,
+        0.3,
+        0.14
+      ],
+      "radius": 0.05,
+      "smoothness": 5,
+      "position": [
+        0.35,
+        0.51,
+        -0.405
+      ],
+      "material": "fabricDark"
+    },
+    {
+      "id": "back-cushion-left",
+      "geometry": "roundedBox",
+      "size": [
+        0.66,
+        0.27,
+        0.14
+      ],
+      "radius": 0.055,
+      "smoothness": 5,
+      "position": [
+        -0.35,
+        0.575,
+        -0.33
+      ],
+      "material": "fabricLight"
+    },
+    {
+      "id": "back-cushion-right",
+      "geometry": "roundedBox",
+      "size": [
+        0.66,
+        0.27,
+        0.14
+      ],
+      "radius": 0.055,
+      "smoothness": 5,
+      "position": [
+        0.35,
+        0.575,
+        -0.33
+      ],
+      "material": "fabric"
+    }
+  ],
+  "variantId": "sofa-modular",
+  "furnitureTypeCode": "SOFA",
+  "styleTags": [
+    "modern",
+    "natural"
+  ],
+  "lifestyleTags": [
+    "REST",
+    "HOBBY_LEISURE"
+  ],
+  "purchaseUrl": "https://www.ikea.com/kr/ko/p/jaettebo-1-5-seat-module-with-storage-samsala-grey-beige-s69471465/"
+}

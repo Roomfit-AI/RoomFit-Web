@@ -1,0 +1,116 @@
+{
+  "schemaVersion": "1.0",
+  "name": "와이드형 TV",
+  "furnitureType": "TV",
+  "variant": "와이드형",
+  "units": "meter",
+  "coordinateSystem": {
+    "origin": "floor-center",
+    "axes": {
+      "x": "right",
+      "y": "up",
+      "z": "front"
+    }
+  },
+  "rotationUnit": "radian",
+  "dimensions": {
+    "width": 1.2341,
+    "depth": 0.237,
+    "height": 0.758
+  },
+  "materials": [
+    "metal",
+    "metalLight",
+    "screenFrame",
+    "screen"
+  ],
+  "parts": [
+    {
+      "id": "foot-left",
+      "geometry": "box",
+      "size": [
+        0.15,
+        0.0472,
+        0.237
+      ],
+      "position": [
+        -0.3373,
+        0.0236,
+        0
+      ],
+      "material": "metal"
+    },
+    {
+      "id": "foot-right",
+      "geometry": "box",
+      "size": [
+        0.15,
+        0.0472,
+        0.237
+      ],
+      "position": [
+        0.3373,
+        0.0236,
+        0
+      ],
+      "material": "metal"
+    },
+    {
+      "id": "frame",
+      "geometry": "roundedBox",
+      "size": [
+        1.2341,
+        0.7108,
+        0.0603
+      ],
+      "radius": 0.02,
+      "smoothness": 4,
+      "position": [
+        0,
+        0.4026,
+        0
+      ],
+      "material": "screenFrame"
+    },
+    {
+      "id": "display",
+      "geometry": "box",
+      "size": [
+        1.1981,
+        0.6628,
+        0.008
+      ],
+      "position": [
+        0,
+        0.4096,
+        0.03415
+      ],
+      "material": "screen"
+    },
+    {
+      "id": "brand-mark",
+      "geometry": "box",
+      "size": [
+        0.06,
+        0.009,
+        0.004
+      ],
+      "position": [
+        0,
+        0.0612,
+        0.03215
+      ],
+      "material": "metalLight"
+    }
+  ],
+  "variantId": "tv-wide",
+  "furnitureTypeCode": "TV",
+  "styleTags": [
+    "modern",
+    "minimal"
+  ],
+  "lifestyleTags": [
+    "HOBBY_LEISURE"
+  ],
+  "purchaseUrl": "https://www.samsung.com/sec/tvs/qled-qf7a-d2c/KQ55QF7AAFXKR/"
+}

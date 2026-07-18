@@ -78,6 +78,22 @@ describe("applyBackendFurnitureToLayout", () => {
     expect(result.furniture[0].variantId).toBe("future-desk-variant");
   });
 
+  it("normalizes catalog lighting aliases without using the cabinet fallback", () => {
+    const result = applyBackendFurnitureToLayout(baseLayout, [
+      createBackendFurniture({ type: "mood_lamp", variantId: "lamp-floor" }),
+    ]);
+
+    expect(result.furniture[0].category).toBe("lighting");
+  });
+
+  it("marks an unknown furniture type as unsupported instead of cabinet", () => {
+    const result = applyBackendFurnitureToLayout(baseLayout, [
+      createBackendFurniture({ type: "future_unknown", variantId: "future-variant" }),
+    ]);
+
+    expect(result.furniture[0].category).toBe("unsupported");
+  });
+
   it("preserves a midcentury desk product and variant for the registered renderer", () => {
     const result = applyBackendFurnitureToLayout(baseLayout, [
       createBackendFurniture({

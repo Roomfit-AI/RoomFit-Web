@@ -1,0 +1,415 @@
+{
+  "schemaVersion": "1.0",
+  "name": "클래식 미러 옷장",
+  "furnitureType": "옷장",
+  "variant": "클래식 3도어 미러형",
+  "units": "meter",
+  "coordinateSystem": {
+    "origin": "floor-center",
+    "axes": {
+      "x": "right",
+      "y": "up",
+      "z": "front"
+    }
+  },
+  "rotationUnit": "radian",
+  "dimensions": {
+    "width": 1.28,
+    "depth": 0.64,
+    "height": 2.01
+  },
+  "materials": [
+    "paintedWhite",
+    "wood",
+    "mirror"
+  ],
+  "parts": [
+    {
+      "id": "leg-left-front",
+      "geometry": "roundedBox",
+      "size": [
+        0.09,
+        0.18,
+        0.09
+      ],
+      "radius": 0.018,
+      "smoothness": 4,
+      "position": [
+        -0.54,
+        0.09,
+        0.25
+      ],
+      "material": "paintedWhite"
+    },
+    {
+      "id": "leg-left-back",
+      "geometry": "roundedBox",
+      "size": [
+        0.09,
+        0.18,
+        0.09
+      ],
+      "radius": 0.018,
+      "smoothness": 4,
+      "position": [
+        -0.54,
+        0.09,
+        -0.25
+      ],
+      "material": "paintedWhite"
+    },
+    {
+      "id": "leg-right-front",
+      "geometry": "roundedBox",
+      "size": [
+        0.09,
+        0.18,
+        0.09
+      ],
+      "radius": 0.018,
+      "smoothness": 4,
+      "position": [
+        0.54,
+        0.09,
+        0.25
+      ],
+      "material": "paintedWhite"
+    },
+    {
+      "id": "leg-right-back",
+      "geometry": "roundedBox",
+      "size": [
+        0.09,
+        0.18,
+        0.09
+      ],
+      "radius": 0.018,
+      "smoothness": 4,
+      "position": [
+        0.54,
+        0.09,
+        -0.25
+      ],
+      "material": "paintedWhite"
+    },
+    {
+      "id": "bottom-panel",
+      "geometry": "box",
+      "size": [
+        1.18,
+        0.06,
+        0.6
+      ],
+      "position": [
+        0,
+        0.21,
+        0
+      ],
+      "material": "paintedWhite"
+    },
+    {
+      "id": "side-left",
+      "geometry": "box",
+      "size": [
+        0.06,
+        1.72,
+        0.6
+      ],
+      "position": [
+        -0.56,
+        1.07,
+        0
+      ],
+      "material": "paintedWhite"
+    },
+    {
+      "id": "side-right",
+      "geometry": "box",
+      "size": [
+        0.06,
+        1.72,
+        0.6
+      ],
+      "position": [
+        0.56,
+        1.07,
+        0
+      ],
+      "material": "paintedWhite"
+    },
+    {
+      "id": "center-divider-left",
+      "geometry": "box",
+      "size": [
+        0.035,
+        1.69,
+        0.6
+      ],
+      "position": [
+        -0.19,
+        1.085,
+        0
+      ],
+      "material": "paintedWhite"
+    },
+    {
+      "id": "center-divider-right",
+      "geometry": "box",
+      "size": [
+        0.035,
+        1.69,
+        0.6
+      ],
+      "position": [
+        0.19,
+        1.085,
+        0
+      ],
+      "material": "paintedWhite"
+    },
+    {
+      "id": "back-panel",
+      "geometry": "box",
+      "size": [
+        1.12,
+        1.72,
+        0.02
+      ],
+      "position": [
+        0,
+        1.07,
+        -0.31
+      ],
+      "material": "paintedWhite"
+    },
+    {
+      "id": "top-moulding",
+      "geometry": "roundedBox",
+      "size": [
+        1.28,
+        0.08,
+        0.64
+      ],
+      "radius": 0.018,
+      "smoothness": 4,
+      "position": [
+        0,
+        1.97,
+        0
+      ],
+      "material": "paintedWhite"
+    },
+    {
+      "id": "door-left",
+      "geometry": "roundedBox",
+      "size": [
+        0.35,
+        1.48,
+        0.025
+      ],
+      "radius": 0.012,
+      "smoothness": 4,
+      "position": [
+        -0.37,
+        1.18,
+        0.3075
+      ],
+      "material": "paintedWhite"
+    },
+    {
+      "id": "door-center-frame",
+      "geometry": "roundedBox",
+      "size": [
+        0.35,
+        1.48,
+        0.025
+      ],
+      "radius": 0.012,
+      "smoothness": 4,
+      "position": [
+        0,
+        1.18,
+        0.3075
+      ],
+      "material": "paintedWhite"
+    },
+    {
+      "id": "door-center-mirror",
+      "geometry": "roundedBox",
+      "size": [
+        0.29,
+        1.36,
+        0.008
+      ],
+      "radius": 0.008,
+      "smoothness": 4,
+      "position": [
+        0,
+        1.2,
+        0.316
+      ],
+      "material": "mirror"
+    },
+    {
+      "id": "door-right",
+      "geometry": "roundedBox",
+      "size": [
+        0.35,
+        1.48,
+        0.025
+      ],
+      "radius": 0.012,
+      "smoothness": 4,
+      "position": [
+        0.37,
+        1.18,
+        0.3075
+      ],
+      "material": "paintedWhite"
+    },
+    {
+      "id": "drawer-left",
+      "geometry": "roundedBox",
+      "size": [
+        0.53,
+        0.22,
+        0.025
+      ],
+      "radius": 0.01,
+      "smoothness": 4,
+      "position": [
+        -0.28,
+        0.36,
+        0.3075
+      ],
+      "material": "paintedWhite"
+    },
+    {
+      "id": "drawer-right",
+      "geometry": "roundedBox",
+      "size": [
+        0.53,
+        0.22,
+        0.025
+      ],
+      "radius": 0.01,
+      "smoothness": 4,
+      "position": [
+        0.28,
+        0.36,
+        0.3075
+      ],
+      "material": "paintedWhite"
+    },
+    {
+      "id": "door-knob-left",
+      "geometry": "cylinder",
+      "size": [
+        0.018,
+        0.018,
+        0.035
+      ],
+      "position": [
+        -0.23,
+        1.12,
+        0.3025
+      ],
+      "rotation": [
+        1.5707963267948966,
+        0,
+        0
+      ],
+      "material": "wood"
+    },
+    {
+      "id": "door-knob-center",
+      "geometry": "cylinder",
+      "size": [
+        0.018,
+        0.018,
+        0.035
+      ],
+      "position": [
+        0.14,
+        1.12,
+        0.3025
+      ],
+      "rotation": [
+        1.5707963267948966,
+        0,
+        0
+      ],
+      "material": "wood"
+    },
+    {
+      "id": "door-knob-right",
+      "geometry": "cylinder",
+      "size": [
+        0.018,
+        0.018,
+        0.035
+      ],
+      "position": [
+        0.51,
+        1.12,
+        0.3025
+      ],
+      "rotation": [
+        1.5707963267948966,
+        0,
+        0
+      ],
+      "material": "wood"
+    },
+    {
+      "id": "drawer-knob-left",
+      "geometry": "cylinder",
+      "size": [
+        0.018,
+        0.018,
+        0.035
+      ],
+      "position": [
+        -0.28,
+        0.36,
+        0.3025
+      ],
+      "rotation": [
+        1.5707963267948966,
+        0,
+        0
+      ],
+      "material": "wood"
+    },
+    {
+      "id": "drawer-knob-right",
+      "geometry": "cylinder",
+      "size": [
+        0.018,
+        0.018,
+        0.035
+      ],
+      "position": [
+        0.28,
+        0.36,
+        0.3025
+      ],
+      "rotation": [
+        1.5707963267948966,
+        0,
+        0
+      ],
+      "material": "wood"
+    }
+  ],
+  "variantId": "wardrobe-classic-gullaberg",
+  "furnitureTypeCode": "WARDROBE",
+  "styleTags": [
+    "classic",
+    "natural"
+  ],
+  "lifestyleTags": [
+    "STORAGE"
+  ],
+  "purchaseUrl": "https://www.ikea.com/kr/en/p/gullaberg-wardrobe-white-90573952/"
+}

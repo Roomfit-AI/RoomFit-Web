@@ -1,0 +1,116 @@
+{
+  "schemaVersion": "1.0",
+  "name": "소형 TV",
+  "furnitureType": "TV",
+  "variant": "소형형",
+  "units": "meter",
+  "coordinateSystem": {
+    "origin": "floor-center",
+    "axes": {
+      "x": "right",
+      "y": "up",
+      "z": "front"
+    }
+  },
+  "rotationUnit": "radian",
+  "dimensions": {
+    "width": 0.7374,
+    "depth": 0.1505,
+    "height": 0.4654
+  },
+  "materials": [
+    "metal",
+    "metalLight",
+    "screenFrame",
+    "screen"
+  ],
+  "parts": [
+    {
+      "id": "foot-left",
+      "geometry": "box",
+      "size": [
+        0.12,
+        0.0274,
+        0.1505
+      ],
+      "position": [
+        -0.30625,
+        0.0137,
+        0
+      ],
+      "material": "metal"
+    },
+    {
+      "id": "foot-right",
+      "geometry": "box",
+      "size": [
+        0.12,
+        0.0274,
+        0.1505
+      ],
+      "position": [
+        0.30625,
+        0.0137,
+        0
+      ],
+      "material": "metal"
+    },
+    {
+      "id": "frame",
+      "geometry": "roundedBox",
+      "size": [
+        0.7374,
+        0.438,
+        0.0741
+      ],
+      "radius": 0.018,
+      "smoothness": 4,
+      "position": [
+        0,
+        0.2464,
+        0
+      ],
+      "material": "screenFrame"
+    },
+    {
+      "id": "display",
+      "geometry": "box",
+      "size": [
+        0.7094,
+        0.399,
+        0.008
+      ],
+      "position": [
+        0,
+        0.2519,
+        0.04105
+      ],
+      "material": "screen"
+    },
+    {
+      "id": "brand-mark",
+      "geometry": "box",
+      "size": [
+        0.045,
+        0.008,
+        0.004
+      ],
+      "position": [
+        0,
+        0.0424,
+        0.03905
+      ],
+      "material": "metalLight"
+    }
+  ],
+  "variantId": "tv-small",
+  "furnitureTypeCode": "TV",
+  "styleTags": [
+    "modern",
+    "minimal"
+  ],
+  "lifestyleTags": [
+    "HOBBY_LEISURE"
+  ],
+  "purchaseUrl": "https://www.lge.co.kr/tvs/32lq635bena"
+}

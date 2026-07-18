@@ -1,4 +1,5 @@
 import { useEffect, useMemo } from "react";
+import { DoubleSide, FrontSide } from "three";
 import { createFurniturePartGeometry } from "./geometryFactory";
 import { resolveMaterialPreset } from "./materialResolver";
 import type { MaterialPresetCatalog } from "./materialResolver";
@@ -23,6 +24,7 @@ export function FurniturePartRenderer({
   );
 
   useEffect(() => () => geometry.dispose(), [geometry]);
+  const doubleSided = part.geometry === "leaf" || part.geometry === "curtain";
 
   return (
     <mesh
@@ -32,7 +34,7 @@ export function FurniturePartRenderer({
       castShadow
       receiveShadow
     >
-      <meshStandardMaterial {...material} />
+      <meshStandardMaterial {...material} side={doubleSided ? DoubleSide : FrontSide} />
     </mesh>
   );
 }

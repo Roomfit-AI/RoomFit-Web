@@ -12,6 +12,15 @@ describe("furnitureVariantRouting", () => {
     "desk-storage",
     "desk-corner",
     "desk-midcentury-glass",
+    "bed-low-platform",
+    "chair-basic",
+    "bookshelf-high",
+    "hanger-basic",
+    "nightstand-open",
+    "side-table-round",
+    "sofa-single",
+    "rug-round",
+    "lamp-floor",
   ])("resolves registered production variant %s", (variantId) => {
     expect(resolveFurnitureVariant(variantId)?.variantId).toBe(variantId);
   });

@@ -1,0 +1,253 @@
+{
+  "schemaVersion": "1.0",
+  "name": "오픈형 옷장",
+  "furnitureType": "옷장",
+  "variant": "오픈형",
+  "units": "meter",
+  "coordinateSystem": {
+    "origin": "floor-center",
+    "axes": {
+      "x": "right",
+      "y": "up",
+      "z": "front"
+    }
+  },
+  "rotationUnit": "radian",
+  "dimensions": {
+    "width": 0.99,
+    "depth": 0.51,
+    "height": 1.73
+  },
+  "materials": [
+    "woodLight",
+    "metal",
+    "metalLight"
+  ],
+  "parts": [
+    {
+      "id": "base-frame",
+      "geometry": "box",
+      "size": [
+        0.99,
+        0.04,
+        0.51
+      ],
+      "position": [
+        0,
+        0.02,
+        0
+      ],
+      "material": "metal"
+    },
+    {
+      "id": "post-left-front",
+      "geometry": "box",
+      "size": [
+        0.04,
+        1.65,
+        0.04
+      ],
+      "position": [
+        -0.46,
+        0.845,
+        0.22
+      ],
+      "material": "metal"
+    },
+    {
+      "id": "post-left-back",
+      "geometry": "box",
+      "size": [
+        0.04,
+        1.65,
+        0.04
+      ],
+      "position": [
+        -0.46,
+        0.845,
+        -0.22
+      ],
+      "material": "metal"
+    },
+    {
+      "id": "post-right-front",
+      "geometry": "box",
+      "size": [
+        0.04,
+        1.65,
+        0.04
+      ],
+      "position": [
+        0.46,
+        0.845,
+        0.22
+      ],
+      "material": "metal"
+    },
+    {
+      "id": "post-right-back",
+      "geometry": "box",
+      "size": [
+        0.04,
+        1.65,
+        0.04
+      ],
+      "position": [
+        0.46,
+        0.845,
+        -0.22
+      ],
+      "material": "metal"
+    },
+    {
+      "id": "top-frame",
+      "geometry": "box",
+      "size": [
+        0.99,
+        0.06,
+        0.51
+      ],
+      "position": [
+        0,
+        1.7,
+        0
+      ],
+      "material": "metal"
+    },
+    {
+      "id": "top-shelf",
+      "geometry": "box",
+      "size": [
+        0.91,
+        0.04,
+        0.47
+      ],
+      "position": [
+        0,
+        1.62,
+        0
+      ],
+      "material": "woodLight"
+    },
+    {
+      "id": "center-divider",
+      "geometry": "box",
+      "size": [
+        0.04,
+        1.15,
+        0.47
+      ],
+      "position": [
+        0.15,
+        0.595,
+        0
+      ],
+      "material": "metalLight"
+    },
+    {
+      "id": "shelf-lower",
+      "geometry": "box",
+      "size": [
+        0.34,
+        0.04,
+        0.47
+      ],
+      "position": [
+        0.32,
+        0.4,
+        0
+      ],
+      "material": "woodLight"
+    },
+    {
+      "id": "shelf-middle",
+      "geometry": "box",
+      "size": [
+        0.34,
+        0.04,
+        0.47
+      ],
+      "position": [
+        0.32,
+        0.75,
+        0
+      ],
+      "material": "woodLight"
+    },
+    {
+      "id": "shelf-upper",
+      "geometry": "box",
+      "size": [
+        0.34,
+        0.04,
+        0.47
+      ],
+      "position": [
+        0.32,
+        1.1,
+        0
+      ],
+      "material": "woodLight"
+    },
+    {
+      "id": "rail-bracket-left",
+      "geometry": "box",
+      "size": [
+        0.105,
+        0.04,
+        0.18
+      ],
+      "position": [
+        -0.4075,
+        1.42,
+        -0.15
+      ],
+      "material": "metalLight"
+    },
+    {
+      "id": "rail-bracket-right",
+      "geometry": "box",
+      "size": [
+        0.105,
+        0.04,
+        0.18
+      ],
+      "position": [
+        0.4075,
+        1.42,
+        -0.15
+      ],
+      "material": "metalLight"
+    },
+    {
+      "id": "hanging-rail",
+      "geometry": "cylinder",
+      "size": [
+        0.025,
+        0.025,
+        0.75
+      ],
+      "position": [
+        0,
+        1.42,
+        -0.15
+      ],
+      "rotation": [
+        0,
+        0,
+        1.5707963267948966
+      ],
+      "material": "metalLight"
+    }
+  ],
+  "variantId": "wardrobe-open",
+  "furnitureTypeCode": "WARDROBE",
+  "styleTags": [
+    "minimal",
+    "modern"
+  ],
+  "lifestyleTags": [
+    "STORAGE"
+  ],
+  "purchaseUrl": "https://www.ikea.com/kr/ko/p/jonaxel-wardrobe-combination-white-s89297658/"
+}

@@ -1,0 +1,294 @@
+{
+  "schemaVersion": "1.0",
+  "name": "게이밍 책상 의자",
+  "furnitureType": "책상 의자",
+  "variant": "게이밍 인체공학형",
+  "units": "meter",
+  "coordinateSystem": {
+    "origin": "floor-center",
+    "axes": {
+      "x": "right",
+      "y": "up",
+      "z": "front"
+    }
+  },
+  "rotationUnit": "radian",
+  "dimensions": {
+    "width": 0.66,
+    "depth": 0.66,
+    "height": 1.32
+  },
+  "materials": [
+    "metal",
+    "metalLight",
+    "fabric",
+    "fabricLight",
+    "fabricDark"
+  ],
+  "parts": [
+    {
+      "id": "base-cross-x",
+      "geometry": "roundedBox",
+      "size": [
+        0.66,
+        0.04,
+        0.07
+      ],
+      "radius": 0.018,
+      "smoothness": 4,
+      "position": [
+        0,
+        0.02,
+        0
+      ],
+      "material": "metal"
+    },
+    {
+      "id": "base-cross-z",
+      "geometry": "roundedBox",
+      "size": [
+        0.07,
+        0.04,
+        0.66
+      ],
+      "radius": 0.018,
+      "smoothness": 4,
+      "position": [
+        0,
+        0.02,
+        0
+      ],
+      "material": "metal"
+    },
+    {
+      "id": "gas-column",
+      "geometry": "cylinder",
+      "size": [
+        0.038,
+        0.05,
+        0.48
+      ],
+      "position": [
+        0,
+        0.28,
+        0
+      ],
+      "material": "metalLight"
+    },
+    {
+      "id": "seat-base",
+      "geometry": "roundedBox",
+      "size": [
+        0.54,
+        0.12,
+        0.48
+      ],
+      "radius": 0.045,
+      "smoothness": 6,
+      "position": [
+        0,
+        0.58,
+        0.03
+      ],
+      "material": "fabricDark"
+    },
+    {
+      "id": "seat-pad",
+      "geometry": "roundedBox",
+      "size": [
+        0.5,
+        0.07,
+        0.43
+      ],
+      "radius": 0.04,
+      "smoothness": 6,
+      "position": [
+        0,
+        0.665,
+        0.04
+      ],
+      "material": "fabric"
+    },
+    {
+      "id": "back-support-link",
+      "geometry": "roundedBox",
+      "size": [
+        0.38,
+        0.07,
+        0.16
+      ],
+      "radius": 0.02,
+      "smoothness": 4,
+      "position": [
+        0,
+        0.62,
+        -0.22
+      ],
+      "material": "metal"
+    },
+    {
+      "id": "back-frame",
+      "geometry": "roundedBox",
+      "size": [
+        0.52,
+        0.5,
+        0.08
+      ],
+      "radius": 0.035,
+      "smoothness": 6,
+      "position": [
+        0,
+        0.87,
+        -0.24
+      ],
+      "material": "metal"
+    },
+    {
+      "id": "mesh-back",
+      "geometry": "roundedBox",
+      "size": [
+        0.45,
+        0.43,
+        0.035
+      ],
+      "radius": 0.03,
+      "smoothness": 6,
+      "position": [
+        0,
+        0.88,
+        -0.193
+      ],
+      "material": "fabricLight"
+    },
+    {
+      "id": "lumbar-support",
+      "geometry": "roundedBox",
+      "size": [
+        0.36,
+        0.12,
+        0.045
+      ],
+      "radius": 0.03,
+      "smoothness": 6,
+      "position": [
+        0,
+        0.77,
+        -0.165
+      ],
+      "material": "fabricDark"
+    },
+    {
+      "id": "arm-support-left",
+      "geometry": "roundedBox",
+      "size": [
+        0.055,
+        0.3,
+        0.055
+      ],
+      "radius": 0.016,
+      "smoothness": 4,
+      "position": [
+        -0.285,
+        0.76,
+        0.03
+      ],
+      "material": "metalLight"
+    },
+    {
+      "id": "arm-support-right",
+      "geometry": "roundedBox",
+      "size": [
+        0.055,
+        0.3,
+        0.055
+      ],
+      "radius": 0.016,
+      "smoothness": 4,
+      "position": [
+        0.285,
+        0.76,
+        0.03
+      ],
+      "material": "metalLight"
+    },
+    {
+      "id": "arm-pad-left",
+      "geometry": "roundedBox",
+      "size": [
+        0.08,
+        0.045,
+        0.32
+      ],
+      "radius": 0.018,
+      "smoothness": 5,
+      "position": [
+        -0.29,
+        0.925,
+        0.03
+      ],
+      "material": "fabricDark"
+    },
+    {
+      "id": "arm-pad-right",
+      "geometry": "roundedBox",
+      "size": [
+        0.08,
+        0.045,
+        0.32
+      ],
+      "radius": 0.018,
+      "smoothness": 5,
+      "position": [
+        0.29,
+        0.925,
+        0.03
+      ],
+      "material": "fabricDark"
+    },
+    {
+      "id": "headrest-support",
+      "geometry": "roundedBox",
+      "size": [
+        0.08,
+        0.2,
+        0.05
+      ],
+      "radius": 0.015,
+      "smoothness": 4,
+      "position": [
+        0,
+        1.18,
+        -0.24
+      ],
+      "material": "metalLight"
+    },
+    {
+      "id": "headrest",
+      "geometry": "roundedBox",
+      "size": [
+        0.34,
+        0.16,
+        0.08
+      ],
+      "radius": 0.035,
+      "smoothness": 6,
+      "position": [
+        0,
+        1.24,
+        -0.24
+      ],
+      "material": "fabricDark"
+    }
+  ],
+  "variantId": "chair-gaming-matchspel",
+  "furnitureTypeCode": "DESK_CHAIR",
+  "styleTags": [
+    "modern",
+    "minimal"
+  ],
+  "lifestyleTags": [
+    "WORK_STUDY",
+    "HOBBY_LEISURE"
+  ],
+  "purchaseUrl": "https://www.ikea.com/kr/en/p/matchspel-gaming-chair-gunnared-beige-30574285/"
+}

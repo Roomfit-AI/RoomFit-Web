@@ -1,0 +1,144 @@
+{
+  "schemaVersion": "1.0",
+  "name": "낮은 책장",
+  "furnitureType": "책장/오픈 선반",
+  "variant": "낮은 책장",
+  "units": "meter",
+  "coordinateSystem": {
+    "origin": "floor-center",
+    "axes": {
+      "x": "right",
+      "y": "up",
+      "z": "front"
+    }
+  },
+  "rotationUnit": "radian",
+  "dimensions": {
+    "width": 0.8,
+    "depth": 0.28,
+    "height": 1.06
+  },
+  "materials": [
+    "wood",
+    "woodLight",
+    "woodDark"
+  ],
+  "parts": [
+    {
+      "id": "plinth",
+      "geometry": "box",
+      "size": [
+        0.8,
+        0.06,
+        0.28
+      ],
+      "position": [
+        0,
+        0.03,
+        0
+      ],
+      "material": "woodDark"
+    },
+    {
+      "id": "side-left",
+      "geometry": "box",
+      "size": [
+        0.04,
+        1,
+        0.28
+      ],
+      "position": [
+        -0.38,
+        0.56,
+        0
+      ],
+      "material": "wood"
+    },
+    {
+      "id": "side-right",
+      "geometry": "box",
+      "size": [
+        0.04,
+        1,
+        0.28
+      ],
+      "position": [
+        0.38,
+        0.56,
+        0
+      ],
+      "material": "wood"
+    },
+    {
+      "id": "top",
+      "geometry": "box",
+      "size": [
+        0.72,
+        0.04,
+        0.28
+      ],
+      "position": [
+        0,
+        1.04,
+        0
+      ],
+      "material": "woodLight"
+    },
+    {
+      "id": "shelf-lower",
+      "geometry": "box",
+      "size": [
+        0.72,
+        0.03,
+        0.25
+      ],
+      "position": [
+        0,
+        0.35,
+        0.015
+      ],
+      "material": "woodLight"
+    },
+    {
+      "id": "shelf-upper",
+      "geometry": "box",
+      "size": [
+        0.72,
+        0.03,
+        0.25
+      ],
+      "position": [
+        0,
+        0.68,
+        0.015
+      ],
+      "material": "woodLight"
+    },
+    {
+      "id": "back-panel",
+      "geometry": "box",
+      "size": [
+        0.72,
+        0.98,
+        0.02
+      ],
+      "position": [
+        0,
+        0.55,
+        -0.13
+      ],
+      "material": "woodDark"
+    }
+  ],
+  "variantId": "bookshelf-low",
+  "furnitureTypeCode": "BOOKSHELF",
+  "styleTags": [
+    "minimal",
+    "modern"
+  ],
+  "lifestyleTags": [
+    "STORAGE",
+    "WORK_STUDY"
+  ],
+  "purchaseUrl": "https://www.ikea.com/kr/ko/p/billy-bookcase-white-70522044/"
+}

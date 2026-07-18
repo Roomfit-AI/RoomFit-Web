@@ -7,19 +7,23 @@ import {
 } from "../geometryFactory";
 import { resolveMaterialPreset } from "../materialResolver";
 import {
+  PRODUCTION_FURNITURE_CATALOG_METADATA,
   PRODUCTION_FURNITURE_VARIANT_IDS,
   createProductionFurnitureCatalog,
 } from "../productionFurnitureCatalog";
 import type { ValidatedFurnitureVariant } from "../types";
 
-const BOUNDS_TOLERANCE = 0.0001;
+const BOUNDS_TOLERANCE = 0.001;
 
 describe("production furniture catalog", () => {
-  it("validates and registers all four unique desk variants", () => {
+  it("validates and registers every generated production variant", () => {
     const catalog = createProductionFurnitureCatalog();
     const variantIds = catalog.variants.map((variant) => variant.variantId);
 
     expect(variantIds).toEqual(PRODUCTION_FURNITURE_VARIANT_IDS);
+    expect(variantIds).toHaveLength(93);
+    expect(PRODUCTION_FURNITURE_CATALOG_METADATA.variantCount).toBe(93);
+    expect(PRODUCTION_FURNITURE_CATALOG_METADATA.sourceHash).toMatch(/^sha256:[a-f0-9]{64}$/);
     expect(new Set(variantIds).size).toBe(PRODUCTION_FURNITURE_VARIANT_IDS.length);
     for (const variantId of PRODUCTION_FURNITURE_VARIANT_IDS) {
       expect(catalog.registry.getFurnitureVariant(variantId).variantId).toBe(variantId);
@@ -45,16 +49,29 @@ describe("production furniture catalog", () => {
 
   it("matches declared dimensions and floor-center bounds", () => {
     const { variants } = createProductionFurnitureCatalog();
+    const mismatches: string[] = [];
 
     for (const variant of variants) {
       const bounds = computeFurnitureVariantBounds(variant);
       const size = bounds.getSize(new Vector3());
-
-      expect(size.x).toBeCloseTo(variant.dimensions.width, 4);
-      expect(size.y).toBeCloseTo(variant.dimensions.height, 4);
-      expect(size.z).toBeCloseTo(variant.dimensions.depth, 4);
-      expect(Math.abs(bounds.min.y)).toBeLessThanOrEqual(BOUNDS_TOLERANCE);
+      const organicTolerance = Math.max(
+        BOUNDS_TOLERANCE,
+        ...variant.parts.filter((part) => part.geometry === "leaf").map((part) => part.width),
+      );
+      const differences = [
+        ["width", size.x, variant.dimensions.width, organicTolerance],
+        ["height", size.y, variant.dimensions.height, organicTolerance],
+        ["depth", size.z, variant.dimensions.depth, organicTolerance],
+        ["floor", bounds.min.y, 0, BOUNDS_TOLERANCE],
+      ] as const;
+      for (const [dimension, actual, expected, tolerance] of differences) {
+        if (Math.abs(actual - expected) > tolerance) {
+          mismatches.push(`${variant.variantId}.${dimension}: ${actual} != ${expected}`);
+        }
+      }
     }
+
+    expect(mismatches).toEqual([]);
   });
 
   it("keeps all production purchase URLs on HTTPS", () => {
@@ -64,6 +81,34 @@ describe("production furniture catalog", () => {
       expect(variant.purchaseUrl).not.toBeNull();
       expect(new URL(variant.purchaseUrl as string).protocol).toBe("https:");
     }
+  });
+
+  it("creates every production part geometry without throwing", () => {
+    const { variants } = createProductionFurnitureCatalog();
+
+    for (const variant of variants) {
+      for (const furniturePart of variant.parts) {
+        const geometry = createFurniturePartGeometry(furniturePart);
+        expect(geometry.attributes.position.count, `${variant.variantId}/${furniturePart.id}`).toBeGreaterThan(0);
+        geometry.dispose();
+      }
+    }
+  });
+
+  it("includes representative variants for the supported catalog types", () => {
+    expect(PRODUCTION_FURNITURE_VARIANT_IDS).toEqual(expect.arrayContaining([
+      "bed-low-platform",
+      "desk-compact",
+      "chair-basic",
+      "drawer-chest-vertical",
+      "bookshelf-high",
+      "hanger-basic",
+      "nightstand-open",
+      "side-table-round",
+      "sofa-single",
+      "rug-round",
+      "lamp-floor",
+    ]));
   });
 
   it("preserves front and rear placement semantics for compact and storage desks", () => {

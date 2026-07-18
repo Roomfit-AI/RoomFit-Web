@@ -1,15 +1,56 @@
 {
   "schemaVersion": "1.0",
   "materials": {
-    "wood": { "color": "#A87852", "roughness": 0.72, "metalness": 0 },
-    "woodLight": { "color": "#C9A47E", "roughness": 0.68, "metalness": 0 },
-    "woodDark": { "color": "#6F4E3A", "roughness": 0.74, "metalness": 0 },
-    "paintedWhite": { "color": "#F4F3EF", "roughness": 0.58, "metalness": 0 },
-    "fabric": { "color": "#CFC2B3", "roughness": 0.94, "metalness": 0 },
-    "fabricLight": { "color": "#E9E1D7", "roughness": 0.92, "metalness": 0 },
-    "fabricDark": { "color": "#8E8277", "roughness": 0.9, "metalness": 0 },
-    "metal": { "color": "#4B4A47", "roughness": 0.36, "metalness": 0.72 },
-    "metalLight": { "color": "#AAA7A1", "roughness": 0.3, "metalness": 0.76 },
+    "wood": {
+      "color": "#A87852",
+      "roughness": 0.72,
+      "metalness": 0
+    },
+    "woodLight": {
+      "color": "#C9A47E",
+      "roughness": 0.68,
+      "metalness": 0
+    },
+    "woodDark": {
+      "color": "#6F4E3A",
+      "roughness": 0.74,
+      "metalness": 0
+    },
+    "paintedWhite": {
+      "color": "#F4F3EF",
+      "roughness": 0.58,
+      "metalness": 0
+    },
+    "mustardPaint": {
+      "color": "#D6A62A",
+      "roughness": 0.58,
+      "metalness": 0
+    },
+    "fabric": {
+      "color": "#CFC2B3",
+      "roughness": 0.94,
+      "metalness": 0
+    },
+    "fabricLight": {
+      "color": "#E9E1D7",
+      "roughness": 0.92,
+      "metalness": 0
+    },
+    "fabricDark": {
+      "color": "#8E8277",
+      "roughness": 0.9,
+      "metalness": 0
+    },
+    "metal": {
+      "color": "#4B4A47",
+      "roughness": 0.36,
+      "metalness": 0.72
+    },
+    "metalLight": {
+      "color": "#AAA7A1",
+      "roughness": 0.3,
+      "metalness": 0.76
+    },
     "glass": {
       "color": "#C7D5D3",
       "roughness": 0.12,
@@ -24,11 +65,31 @@
       "emissive": "#102B3B",
       "emissiveIntensity": 0.32
     },
-    "screenFrame": { "color": "#171A1C", "roughness": 0.24, "metalness": 0.42 },
-    "plantStem": { "color": "#40553A", "roughness": 0.9, "metalness": 0 },
-    "plant": { "color": "#617255", "roughness": 0.86, "metalness": 0 },
-    "plantLight": { "color": "#8A9B72", "roughness": 0.84, "metalness": 0 },
-    "soil": { "color": "#5A4335", "roughness": 1, "metalness": 0 },
+    "screenFrame": {
+      "color": "#171A1C",
+      "roughness": 0.24,
+      "metalness": 0.42
+    },
+    "plantStem": {
+      "color": "#40553A",
+      "roughness": 0.9,
+      "metalness": 0
+    },
+    "plant": {
+      "color": "#617255",
+      "roughness": 0.86,
+      "metalness": 0
+    },
+    "plantLight": {
+      "color": "#8A9B72",
+      "roughness": 0.84,
+      "metalness": 0
+    },
+    "soil": {
+      "color": "#5A4335",
+      "roughness": 1,
+      "metalness": 0
+    },
     "mirror": {
       "color": "#DDE9EA",
       "roughness": 0.06,
@@ -61,11 +122,77 @@
       "emissive": "#FFD582",
       "emissiveIntensity": 1.65
     },
-    "ceramic": { "color": "#D8D0C5", "roughness": 0.58, "metalness": 0.02 },
-    "terracotta": { "color": "#907052", "roughness": 0.78, "metalness": 0 },
-    "brass": { "color": "#C49A4A", "roughness": 0.28, "metalness": 0.82 },
-    "tealFabric": { "color": "#197C7A", "roughness": 0.9, "metalness": 0 },
-    "orangeFabric": { "color": "#C85F2D", "roughness": 0.9, "metalness": 0 },
-    "orangeFabricDark": { "color": "#9D3F24", "roughness": 0.94, "metalness": 0 }
+    "ceramic": {
+      "color": "#D8D0C5",
+      "roughness": 0.58,
+      "metalness": 0.02
+    },
+    "terracotta": {
+      "color": "#907052",
+      "roughness": 0.78,
+      "metalness": 0
+    },
+    "brass": {
+      "color": "#C49A4A",
+      "roughness": 0.28,
+      "metalness": 0.82
+    },
+    "tealFabric": {
+      "color": "#197C7A",
+      "roughness": 0.9,
+      "metalness": 0
+    },
+    "orangeFabric": {
+      "color": "#C85F2D",
+      "roughness": 0.9,
+      "metalness": 0
+    },
+    "orangeFabricDark": {
+      "color": "#9D3F24",
+      "roughness": 0.94,
+      "metalness": 0
+    },
+    "chrome": {
+      "color": "#D4D8DA",
+      "roughness": 0.16,
+      "metalness": 0.92
+    },
+    "redPlastic": {
+      "color": "#C63232",
+      "roughness": 0.3,
+      "metalness": 0.02
+    },
+    "goldenYellowMetal": {
+      "color": "#D8A719",
+      "roughness": 0.34,
+      "metalness": 0.48
+    },
+    "gentianBlueMetal": {
+      "color": "#28558A",
+      "roughness": 0.34,
+      "metalness": 0.48
+    },
+    "redVinyl": {
+      "color": "#C83A35",
+      "roughness": 0.5,
+      "metalness": 0
+    },
+    "blueVinyl": {
+      "color": "#2C5A93",
+      "roughness": 0.5,
+      "metalness": 0
+    },
+    "yellowVinyl": {
+      "color": "#D7A726",
+      "roughness": 0.5,
+      "metalness": 0
+    },
+    "transparentAmberPlastic": {
+      "color": "#E59A38",
+      "roughness": 0.15,
+      "metalness": 0,
+      "transparent": true,
+      "opacity": 0.58
+    }
   }
 }

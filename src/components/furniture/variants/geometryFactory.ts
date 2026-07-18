@@ -1,19 +1,27 @@
 import {
   Box3,
   BoxGeometry,
+  CatmullRomCurve3,
   CylinderGeometry,
   Euler,
   ExtrudeGeometry,
   Matrix4,
+  PlaneGeometry,
   Quaternion,
   Shape,
+  ShapeGeometry,
+  SphereGeometry,
+  TubeGeometry,
   Vector3,
 } from "three";
 import type { BufferGeometry } from "three";
 import { RoundedBoxGeometry } from "three/examples/jsm/geometries/RoundedBoxGeometry.js";
 import type {
+  CurtainFurniturePart,
   ExtrudedPolygonFurniturePart,
   FurniturePart,
+  LeafFurniturePart,
+  TubeFurniturePart,
   ValidatedFurniturePart,
   ValidatedFurnitureVariant,
 } from "./types";
@@ -52,7 +60,72 @@ export function createFurniturePartGeometry(
       );
     case "extrudedPolygon":
       return createExtrudedPolygonGeometry(definition);
+    case "curtain":
+      return createCurtainGeometry(definition);
+    case "ellipsoid": {
+      const geometry = new SphereGeometry(0.5, 32, 16);
+      geometry.scale(definition.size[0], definition.size[1], definition.size[2]);
+      return geometry;
+    }
+    case "leaf":
+      return createLeafGeometry(definition);
+    case "planter":
+      return new CylinderGeometry(
+        definition.size[0] / 2,
+        definition.size[1] / 2,
+        definition.size[2],
+        definition.segments,
+      );
+    case "tube":
+      return createTubeGeometry(definition);
   }
+}
+
+function createCurtainGeometry(definition: CurtainFurniturePart): PlaneGeometry {
+  const [width, height, depth] = definition.size;
+  const geometry = new PlaneGeometry(width, height, definition.segmentsX, definition.segmentsY);
+  const positions = geometry.attributes.position;
+  for (let index = 0; index < positions.count; index += 1) {
+    const normalizedX = positions.getX(index) / width + 0.5;
+    positions.setZ(index, Math.sin(normalizedX * definition.folds * Math.PI * 2) * depth / 2);
+  }
+  positions.needsUpdate = true;
+  geometry.computeVertexNormals();
+  return geometry;
+}
+
+function createLeafGeometry(definition: LeafFurniturePart): ShapeGeometry {
+  const controlX = definition.width * 2 / 3;
+  const shape = new Shape();
+  shape.moveTo(0, 0);
+  shape.bezierCurveTo(
+    controlX,
+    definition.height / 4,
+    controlX,
+    definition.height * 3 / 4,
+    0,
+    definition.height,
+  );
+  shape.bezierCurveTo(
+    -controlX,
+    definition.height * 3 / 4,
+    -controlX,
+    definition.height / 4,
+    0,
+    0,
+  );
+  return new ShapeGeometry(shape, definition.curveSegments);
+}
+
+function createTubeGeometry(definition: TubeFurniturePart): TubeGeometry {
+  const curve = new CatmullRomCurve3(definition.curvePoints.map((point) => new Vector3(...point)));
+  return new TubeGeometry(
+    curve,
+    definition.tubularSegments,
+    definition.radius,
+    definition.radialSegments,
+    false,
+  );
 }
 
 export function computeFurnitureVariantBounds(variant: ValidatedFurnitureVariant): Box3 {

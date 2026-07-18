@@ -1,0 +1,159 @@
+{
+  "schemaVersion": "1.0",
+  "name": "양면 오픈 선반",
+  "furnitureType": "책장/오픈 선반",
+  "variant": "양면 오픈형",
+  "units": "meter",
+  "coordinateSystem": {
+    "origin": "floor-center",
+    "axes": {
+      "x": "right",
+      "y": "up",
+      "z": "front"
+    }
+  },
+  "rotationUnit": "radian",
+  "dimensions": {
+    "width": 0.765,
+    "depth": 0.39,
+    "height": 1.465
+  },
+  "materials": [
+    "wood",
+    "woodLight",
+    "woodDark"
+  ],
+  "parts": [
+    {
+      "id": "base",
+      "geometry": "box",
+      "size": [
+        0.765,
+        0.055,
+        0.39
+      ],
+      "position": [
+        0,
+        0.0275,
+        0
+      ],
+      "material": "woodDark"
+    },
+    {
+      "id": "side-left",
+      "geometry": "box",
+      "size": [
+        0.055,
+        1.41,
+        0.39
+      ],
+      "position": [
+        -0.355,
+        0.76,
+        0
+      ],
+      "material": "woodLight"
+    },
+    {
+      "id": "side-right",
+      "geometry": "box",
+      "size": [
+        0.055,
+        1.41,
+        0.39
+      ],
+      "position": [
+        0.355,
+        0.76,
+        0
+      ],
+      "material": "woodLight"
+    },
+    {
+      "id": "top",
+      "geometry": "box",
+      "size": [
+        0.655,
+        0.055,
+        0.39
+      ],
+      "position": [
+        0,
+        1.4375,
+        0
+      ],
+      "material": "woodDark"
+    },
+    {
+      "id": "center-divider",
+      "geometry": "box",
+      "size": [
+        0.055,
+        1.355,
+        0.39
+      ],
+      "position": [
+        0,
+        0.7325,
+        0
+      ],
+      "material": "woodDark"
+    },
+    {
+      "id": "shelf-lower",
+      "geometry": "box",
+      "size": [
+        0.655,
+        0.055,
+        0.39
+      ],
+      "position": [
+        0,
+        0.39,
+        0
+      ],
+      "material": "wood"
+    },
+    {
+      "id": "shelf-middle",
+      "geometry": "box",
+      "size": [
+        0.655,
+        0.055,
+        0.39
+      ],
+      "position": [
+        0,
+        0.755,
+        0
+      ],
+      "material": "wood"
+    },
+    {
+      "id": "shelf-upper",
+      "geometry": "box",
+      "size": [
+        0.655,
+        0.055,
+        0.39
+      ],
+      "position": [
+        0,
+        1.12,
+        0
+      ],
+      "material": "wood"
+    }
+  ],
+  "variantId": "bookshelf-double-open",
+  "furnitureTypeCode": "BOOKSHELF",
+  "styleTags": [
+    "minimal",
+    "modern"
+  ],
+  "lifestyleTags": [
+    "STORAGE",
+    "WORK_STUDY"
+  ],
+  "purchaseUrl": "https://www.ikea.com/kr/ko/p/kallax-shelving-unit-white-20351884/"
+}
