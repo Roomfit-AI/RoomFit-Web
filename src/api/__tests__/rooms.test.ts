@@ -1,8 +1,11 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import {
   applyBackendFurnitureToLayout,
+  toRoomUploadRequest,
+  uploadRoomLayout,
   type BackendFurnitureApiItem,
 } from "../rooms";
+import { apiClient } from "../client";
 import type { RoomLayout } from "../../types";
 
 const baseLayout: RoomLayout = {
@@ -113,5 +116,47 @@ describe("applyBackendFurnitureToLayout", () => {
     });
     expect(feedback.furniture[0].position.x).toBeCloseTo(0.8);
     expect(feedback.furniture[0].position.z).toBeCloseTo(0.3);
+  });
+});
+
+describe("toRoomUploadRequest", () => {
+  it("converts a 6x6 center-origin empty room to the Backend upload contract", async () => {
+    const { createCustomRoom } = await import("../../config/customRoom");
+    const result = createCustomRoom({ name: "[TEST] LLM Feedback", width: "6", depth: "6" });
+    expect(result.success).toBe(true);
+    if (!result.success) return;
+
+    const request = toRoomUploadRequest(result.room.layout);
+
+    expect(request).toMatchObject({
+      name: "[TEST] LLM Feedback",
+      room: { width: 6, depth: 6, height: 2.4, unit: "meter" },
+      openings: [],
+      furniture: [],
+    });
+    expect(request.walls).toHaveLength(4);
+    expect(request.walls[0]).toMatchObject({
+      id: "north",
+      start: { x: 0, z: 0 },
+      end: { x: 6, z: 0 },
+    });
+    expect(request.walls[3]).toMatchObject({
+      id: "west",
+      start: { x: 0, z: 6 },
+      end: { x: 0, z: 0 },
+    });
+  });
+
+  it("posts the upload contract and returns the Backend roomId", async () => {
+    const post = vi.spyOn(apiClient, "post").mockResolvedValue({
+      data: { success: true, data: { roomId: 57 }, error: null },
+    });
+
+    try {
+      await expect(uploadRoomLayout(baseLayout)).resolves.toBe(57);
+      expect(post).toHaveBeenCalledWith("/api/rooms/upload", toRoomUploadRequest(baseLayout));
+    } finally {
+      post.mockRestore();
+    }
   });
 });

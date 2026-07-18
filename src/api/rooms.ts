@@ -82,6 +82,35 @@ export interface UploadedRoomCard extends SampleRoomCard {
   dimensions: string;
 }
 
+export interface RoomUploadApiRequest {
+  name: string;
+  room: {
+    width: number;
+    depth: number;
+    height: number;
+    unit: string;
+  };
+  walls: Array<{
+    id: string;
+    start: { x: number; z: number };
+    end: { x: number; z: number };
+    height: number;
+    thickness: number;
+  }>;
+  openings: [];
+  furniture: Array<{
+    id: string;
+    type: string;
+    label: string;
+    width: number;
+    depth: number;
+    height: number;
+    position: { x: number; z: number };
+    rotation: number;
+    status: "EXISTING" | "RECOMMENDED";
+  }>;
+}
+
 type CollectorAppearance = Pick<Furniture, "color" | "material" | "geometry">;
 
 // The backend deliberately keeps its generic furniture schema. These stable
@@ -138,6 +167,60 @@ export async function getRecentUploadedRooms(limit = 10): Promise<UploadedRoomCa
     const borrowed = previousVersion ?? anyOtherThumbnail;
     return borrowed ? { ...card, thumbnailUrl: borrowed.thumbnailUrl } : card;
   });
+}
+
+export async function uploadRoomLayout(room: RoomLayout): Promise<number> {
+  const response = await apiClient.post<ApiResponse<SampleRoomApiItem>>(
+    "/api/rooms/upload",
+    toRoomUploadRequest(room),
+  );
+
+  return response.data.data.roomId;
+}
+
+export function toRoomUploadRequest(room: RoomLayout): RoomUploadApiRequest {
+  const halfWidth = room.width / 2;
+  const halfDepth = room.depth / 2;
+
+  return {
+    name: room.name,
+    room: {
+      width: room.width,
+      depth: room.depth,
+      height: room.height ?? 2.4,
+      unit: room.unit ?? "meter",
+    },
+    // RoomViewer uses a center-origin coordinate system, while the upload
+    // contract uses a 0..width / 0..depth corner origin.
+    walls: room.walls.map((wall) => ({
+      id: wall.id,
+      start: { x: wall.start.x + halfWidth, z: wall.start.z + halfDepth },
+      end: { x: wall.end.x + halfWidth, z: wall.end.z + halfDepth },
+      height: wall.height ?? room.height ?? 2.4,
+      thickness: wall.thickness ?? 0.12,
+    })),
+    // Custom rooms currently have no opening editor. Do not invent door or
+    // window coordinates merely to satisfy the upload DTO.
+    openings: [],
+    furniture: room.furniture.map((item) => ({
+      id: item.id,
+      type: item.category,
+      label: item.name,
+      width: item.dimensions.width,
+      depth: item.dimensions.depth,
+      height: item.dimensions.height,
+      position: {
+        x: item.position.x + halfWidth,
+        z: item.position.z + halfDepth,
+      },
+      rotation: normalizeDegrees((-item.rotationY * 180) / Math.PI),
+      status: item.status === "recommended" ? "RECOMMENDED" : "EXISTING",
+    })),
+  };
+}
+
+function normalizeDegrees(value: number): number {
+  return ((value % 360) + 360) % 360;
 }
 
 export async function deleteUploadedRoom(roomId: number): Promise<void> {
@@ -197,7 +280,7 @@ function toRoomLayout(item: SampleRoomApiItem): RoomLayout {
   const walls =
     item.walls && item.walls.length > 0
       ? item.walls.map((wall) => toWallSegment(wall, width, depth))
-      : createWalls(width, depth);
+      : createRectangularWalls(width, depth);
 
   return {
     id: `api-room-${item.roomId}`,
@@ -238,7 +321,7 @@ function toRoomLayout(item: SampleRoomApiItem): RoomLayout {
   };
 }
 
-function createWalls(width: number, depth: number): WallSegment[] {
+export function createRectangularWalls(width: number, depth: number): WallSegment[] {
   const halfWidth = width / 2;
   const halfDepth = depth / 2;
 
