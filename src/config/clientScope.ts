@@ -116,6 +116,23 @@ export function activateBrowserClientScope(
   }, browserSession);
 }
 
+export function activateAppClientScope(
+  clientIdValue: unknown,
+  setupSessionId: string,
+  browserSession: ClientScopeStorage = sessionStorage,
+): ActiveClientScope {
+  const clientId = normalizeClientId(clientIdValue);
+  if (!clientId) throw new Error("유효하지 않은 App clientId입니다.");
+  return saveActiveClientScope({
+    version: CLIENT_SCOPE_VERSION,
+    mode: "APP_UUID",
+    clientId,
+    setupSessionId,
+    backendRoomId: null,
+    roomLayoutId: null,
+  }, browserSession);
+}
+
 export function activateLegacyClientScope(
   setupSessionId: string,
   backendRoomId: number,

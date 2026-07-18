@@ -15,6 +15,7 @@ import {
   toHandoffErrorMessage,
 } from "../roomHandoff";
 import { readRoomSetupSession } from "../roomSetupSession";
+import { PAIRED_APP_CLIENT_ID_KEY } from "../pairedAppClient";
 
 const BROWSER_ID = "11111111-1111-4111-8111-111111111111";
 const APP_ID = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
@@ -39,6 +40,7 @@ describe("Room App handoff bootstrap", () => {
     });
     expect(getActiveRequestClientId(local, session)).toBe(APP_ID);
     expect(new URL(replaced[0]).pathname).toBe("/rooms");
+    expect(new URL(replaced[0]).search).toBe("");
   });
 
   it("keeps a roomId-only handoff header-less despite an existing browser UUID", () => {
@@ -83,6 +85,7 @@ describe("Room App handoff bootstrap", () => {
     );
 
     expect(readPendingClientHandoff(session)).toBeNull();
+    expect(local.getItem(PAIRED_APP_CLIENT_ID_KEY)).toBeNull();
     expect(getActiveRequestClientId(local, session)).toBe(BROWSER_ID);
   });
 
@@ -107,6 +110,7 @@ describe("Room App handoff bootstrap", () => {
       setupSessionId: "setup-app",
       backendRoomId: 42,
     });
+    expect(local.getItem(PAIRED_APP_CLIENT_ID_KEY)).toBe(APP_ID);
     expect(readPendingClientHandoff(session)).toBeNull();
   });
 
@@ -137,6 +141,7 @@ describe("Room App handoff bootstrap", () => {
       backendRoomId: 7,
       roomLayoutId: "api-room-7",
     });
+    expect(local.getItem(PAIRED_APP_CLIENT_ID_KEY)).toBeNull();
   });
 
   it("distinguishes ownership 404, forbidden 403, and network failures", () => {

@@ -15,6 +15,7 @@ import {
   savePendingClientHandoff,
   type PendingClientHandoff,
 } from "./clientScope";
+import { savePairedAppClientId } from "./pairedAppClient";
 
 export function toHandoffErrorMessage(error: unknown): string {
   if (isAxiosError(error)) {
@@ -56,6 +57,7 @@ export function commitRoomHandoff(
 
   const setup = beginNewRoomSetup(storage, browserSession, setupSessionId);
   activatePendingHandoffScope(handoff, setup.sessionId, room.layoutId, browserSession);
+  if (handoff.mode === "APP_UUID") savePairedAppClientId(handoff.clientId, storage);
   persistRoomSelection(room, storage);
   bindRoomToSetupSession(room.layoutId, room.roomId, "NEW", storage, browserSession);
   restoreRoomPreferencesForSetup(room.layoutId, "NEW", storage);
@@ -82,8 +84,10 @@ export function initializeRoomHandoff(
     savePendingClientHandoff(handoff, browserSession);
     if (location.pathname === "/") {
       url.pathname = "/rooms";
-      history.replaceState(history.state, "", url);
     }
+    url.searchParams.delete("roomId");
+    url.searchParams.delete("clientId");
+    history.replaceState(history.state, "", url);
     return;
   }
 

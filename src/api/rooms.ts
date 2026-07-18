@@ -158,9 +158,16 @@ export async function getSampleRoomLayouts(): Promise<RoomLayout[]> {
   return response.data.data.map(toRoomLayout);
 }
 
-export async function getRecentUploadedRooms(limit = 10): Promise<UploadedRoomCard[]> {
+export async function getRecentUploadedRooms(
+  limit = 10,
+  clientId?: string,
+): Promise<UploadedRoomCard[]> {
   const response = await apiClient.get<ApiResponse<SampleRoomApiItem[]>>("/api/rooms/uploads/recent", {
     params: { limit },
+    ...(clientId ? {
+      roomfitClientScope: "EXPLICIT" as const,
+      roomfitClientIdOverride: clientId,
+    } : {}),
   });
   const cards = response.data.data.map(toUploadedRoomCard);
 
@@ -302,9 +309,12 @@ function normalizeDegrees(value: number): number {
   return ((value % 360) + 360) % 360;
 }
 
-export async function deleteUploadedRoom(roomId: number): Promise<void> {
+export async function deleteUploadedRoom(roomId: number, clientId?: string): Promise<void> {
   try {
-    await apiClient.delete<ApiResponse<null>>(`/api/rooms/uploads/${roomId}`);
+    await apiClient.delete<ApiResponse<null>>(`/api/rooms/uploads/${roomId}`, clientId ? {
+      roomfitClientScope: "EXPLICIT",
+      roomfitClientIdOverride: clientId,
+    } : undefined);
   } catch (error) {
     if (isAxiosError<{ error?: { message?: string } }>(error)) {
       throw new Error(error.response?.data.error?.message ?? "업로드 방을 삭제하지 못했습니다.", { cause: error });

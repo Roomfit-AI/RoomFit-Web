@@ -7,17 +7,17 @@ import {
 
 interface RoomsPageApi {
   getSamples(): Promise<SampleRoomCard[]>;
-  getRecent(): Promise<UploadedRoomCard[]>;
+  getRecent(clientId: string): Promise<UploadedRoomCard[]>;
 }
 
 export interface RoomsPageLoader {
   loadSamples(): Promise<SampleRoomCard[]>;
-  loadRecent(): Promise<UploadedRoomCard[]>;
+  loadRecent(clientId: string | null): Promise<UploadedRoomCard[]>;
 }
 
 export function createRoomsPageLoader(api: RoomsPageApi): RoomsPageLoader {
   let samplesInFlight: Promise<SampleRoomCard[]> | null = null;
-  let recentInFlight: Promise<UploadedRoomCard[]> | null = null;
+  const recentInFlight = new Map<string, Promise<UploadedRoomCard[]>>();
 
   return {
     loadSamples() {
@@ -31,21 +31,23 @@ export function createRoomsPageLoader(api: RoomsPageApi): RoomsPageLoader {
       }
       return samplesInFlight;
     },
-    loadRecent() {
-      if (!recentInFlight) {
-        const request = api.getRecent();
-        recentInFlight = request;
-        void request.then(
-          () => { if (recentInFlight === request) recentInFlight = null; },
-          () => { if (recentInFlight === request) recentInFlight = null; },
-        );
-      }
-      return recentInFlight;
+    loadRecent(clientId) {
+      if (!clientId) return Promise.resolve([]);
+      const existing = recentInFlight.get(clientId);
+      if (existing) return existing;
+
+      const request = api.getRecent(clientId);
+      recentInFlight.set(clientId, request);
+      void request.then(
+        () => { if (recentInFlight.get(clientId) === request) recentInFlight.delete(clientId); },
+        () => { if (recentInFlight.get(clientId) === request) recentInFlight.delete(clientId); },
+      );
+      return request;
     },
   };
 }
 
 export const roomsPageLoader = createRoomsPageLoader({
   getSamples: getSampleRooms,
-  getRecent: getRecentUploadedRooms,
+  getRecent: (clientId) => getRecentUploadedRooms(10, clientId),
 });
