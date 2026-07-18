@@ -60,6 +60,33 @@ export function getOrCreateBrowserClientId(
   return clientId;
 }
 
+/**
+ * 페어링 코드로 알아낸(다른 기기의) clientId를 이 브라우저의 영구 식별자로
+ * "입양"한다 — 기존에 이 브라우저 스스로 갖고 있던 임의의 UUID를 덮어쓰므로,
+ * 이후로는 handoff 없이 그냥 사이트를 열어도 계속 그 clientId로 인식된다.
+ * 현재 탭에 캐시된 활성 스코프(sessionStorage)도 같이 지워야 즉시 반영된다
+ * (그렇지 않으면 getActiveRequestClientId가 오래된 세션 캐시를 먼저 본다).
+ */
+export function adoptBrowserClientId(
+  clientId: string,
+  storage: ClientScopeStorage = localStorage,
+  browserSession: ClientScopeStorage = sessionStorage,
+): string {
+  const normalized = normalizeClientId(clientId);
+  if (!normalized) throw new Error("유효하지 않은 clientId입니다.");
+
+  storage.setItem(BROWSER_CLIENT_ID_KEY, normalized);
+  clearActiveClientScope(browserSession);
+  clearPendingClientHandoff(browserSession);
+  return normalized;
+}
+
+export function clearActiveClientScope(
+  browserSession: Pick<ClientScopeStorage, "removeItem"> = sessionStorage,
+): void {
+  browserSession.removeItem(ACTIVE_CLIENT_SCOPE_KEY);
+}
+
 export function resolveClientScopeForHandoff(input: {
   roomId: unknown;
   clientId: unknown;

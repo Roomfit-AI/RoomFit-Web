@@ -3,9 +3,12 @@ import { describe, expect, it } from "vitest";
 import {
   ACTIVE_CLIENT_SCOPE_KEY,
   BROWSER_CLIENT_ID_KEY,
+  PENDING_CLIENT_HANDOFF_KEY,
   activateBrowserClientScope,
   activatePendingHandoffScope,
+  adoptBrowserClientId,
   bindActiveClientScopeToRoom,
+  clearActiveClientScope,
   clearPendingClientHandoff,
   getActiveRequestClientId,
   getOrCreateBrowserClientId,
@@ -114,6 +117,51 @@ describe("client scope identity", () => {
       setupSessionId: "setup-browser",
       backendRoomId: null,
     });
+  });
+
+  it("adopts a redeemed pairing-code clientId as this browser's permanent id", () => {
+    const local = createMemoryStorage({ [BROWSER_CLIENT_ID_KEY]: BROWSER_ID });
+    const session = createMemoryStorage({
+      [ACTIVE_CLIENT_SCOPE_KEY]: JSON.stringify({
+        version: 1,
+        mode: "BROWSER_UUID",
+        clientId: BROWSER_ID,
+        setupSessionId: "setup-browser",
+        backendRoomId: null,
+        roomLayoutId: null,
+      }),
+    });
+
+    expect(adoptBrowserClientId(APP_ID, local, session)).toBe(APP_ID);
+
+    // localStorage now permanently reports the adopted (app's) id...
+    expect(local.getItem(BROWSER_CLIENT_ID_KEY)).toBe(APP_ID);
+    expect(getOrCreateBrowserClientId(local, () => BROWSER_ID)).toBe(APP_ID);
+    // ...and the stale session-scoped cache from before adoption is gone, so a
+    // fresh read falls through to the newly-adopted browser id immediately
+    // (no page navigation required for it to take effect).
+    expect(readActiveClientScope(session)).toBeNull();
+    expect(getActiveRequestClientId(local, session)).toBe(APP_ID);
+  });
+
+  it("rejects adopting a malformed clientId without touching storage", () => {
+    const local = createMemoryStorage({ [BROWSER_CLIENT_ID_KEY]: BROWSER_ID });
+    const session = createMemoryStorage();
+
+    expect(() => adoptBrowserClientId("not-a-uuid", local, session)).toThrow();
+    expect(local.getItem(BROWSER_CLIENT_ID_KEY)).toBe(BROWSER_ID);
+  });
+
+  it("clearActiveClientScope removes only the active-scope cache", () => {
+    const session = createMemoryStorage({
+      [ACTIVE_CLIENT_SCOPE_KEY]: "irrelevant",
+      [PENDING_CLIENT_HANDOFF_KEY]: "irrelevant",
+    });
+
+    clearActiveClientScope(session);
+
+    expect(session.getItem(ACTIVE_CLIENT_SCOPE_KEY)).toBeNull();
+    expect(session.getItem(PENDING_CLIENT_HANDOFF_KEY)).toBe("irrelevant");
   });
 });
 

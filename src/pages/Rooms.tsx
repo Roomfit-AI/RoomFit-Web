@@ -27,6 +27,7 @@ import {
 } from "../config/roomSetupSession";
 import { getRoomThumbnail } from "../config/roomThumbnails";
 import { roomsPageLoader } from "../config/roomsPageLoader";
+import PairingCodeLinkPanel from "../components/room/PairingCodeLinkPanel";
 import {
   clearPendingClientHandoff,
   readPendingClientHandoff,
@@ -353,6 +354,8 @@ export default function Rooms() {
 
               <FiSmartphone className="h-6 w-6 text-[#555555]" aria-hidden="true" />
             </div>
+
+            <PairingCodeLinkPanel />
 
             {uploadsError && (
               <div
