@@ -1,0 +1,234 @@
+import {
+  addFurnitureToDraft,
+  confirmLayout,
+  createDefaultAgentContext,
+  createLayoutDraft,
+  getLatestConfirmedLayout,
+  getLayout,
+  updateLayout,
+  type LayoutResponse,
+} from "../api/layouts";
+import { resolveRequiredFurnitureTypes } from "../api/agentContextRequest";
+import { applyBackendFurnitureToLayout } from "../api/rooms";
+import type { RoomLayout } from "../types";
+import {
+  clearActiveLayoutEditingSession,
+  createInitialSetupNavigationState,
+  createLayoutNavigationState,
+  isSessionForRoom,
+  readActiveLayoutEditingSession,
+  saveLayoutResponseSession,
+  type LayoutNavigationState,
+} from "./layoutEditingSession";
+
+type WorkflowStorage = Pick<Storage, "getItem" | "setItem" | "removeItem">;
+
+export interface LayoutWorkflowApi {
+  getLayout: typeof getLayout;
+  getLatestConfirmedLayout: typeof getLatestConfirmedLayout;
+  createLayoutDraft: typeof createLayoutDraft;
+  updateLayout: typeof updateLayout;
+  addFurnitureToDraft: typeof addFurnitureToDraft;
+  createDefaultAgentContext: typeof createDefaultAgentContext;
+  confirmLayout: typeof confirmLayout;
+}
+
+const defaultApi: LayoutWorkflowApi = {
+  getLayout,
+  getLatestConfirmedLayout,
+  createLayoutDraft,
+  updateLayout,
+  addFurnitureToDraft,
+  createDefaultAgentContext,
+  confirmLayout,
+};
+
+export async function loadManagedFurnitureLayout(
+  room: RoomLayout,
+  backendRoomId: number,
+  storage: WorkflowStorage = localStorage,
+  api: LayoutWorkflowApi = defaultApi,
+): Promise<RoomLayout | null> {
+  const session = readActiveLayoutEditingSession(storage);
+  const response = isSessionForRoom(session, room.id, backendRoomId) && !session.confirmed
+    ? await api.getLayout(session.activeLayoutId)
+    : await api.getLatestConfirmedLayout(backendRoomId);
+
+  if (!response) return null;
+  assertLayoutOwner(response, backendRoomId);
+  if (!response.confirmed) {
+    saveLayoutResponseSession(room.id, response, storage, session?.editingMode);
+  }
+  const restored = applyBackendFurnitureToLayout(room, response.recommendedFurniture);
+  if (!response.confirmed) {
+    persistActiveDraftMirror(restored, storage);
+  }
+  return restored;
+}
+
+export async function prepareManagedFurnitureDraft(
+  storage: WorkflowStorage = localStorage,
+  api: LayoutWorkflowApi = defaultApi,
+): Promise<LayoutNavigationState | null> {
+  const room = readSelectedRoomLayout(storage);
+  const backendRoomId = parseBackendRoomId(storage.getItem("roomfit:backendRoomId"));
+  if (!room || backendRoomId === null) return null;
+
+  const session = readActiveLayoutEditingSession(storage);
+  const active = isSessionForRoom(session, room.id, backendRoomId)
+    ? await api.getLayout(session.activeLayoutId)
+    : await api.getLatestConfirmedLayout(backendRoomId);
+
+  if (!active) {
+    return createInitialSetupNavigationState(room.id, backendRoomId, room);
+  }
+  assertLayoutOwner(active, backendRoomId);
+
+  const editable = active.confirmed
+    ? await api.createLayoutDraft(active.layoutId)
+    : active;
+  assertActiveDraftResponse(editable, editable.layoutId, backendRoomId);
+  saveLayoutResponseSession(room.id, editable, storage, "REEDIT_DRAFT");
+
+  const saved = await api.updateLayout(editable.layoutId, room);
+  assertActiveDraftResponse(saved, editable.layoutId, backendRoomId);
+  const savedRoom = applyBackendFurnitureToLayout(room, saved.recommendedFurniture);
+  persistActiveDraftMirror(savedRoom, storage);
+  const savedSession = saveLayoutResponseSession(room.id, saved, storage, "REEDIT_DRAFT");
+  return createLayoutNavigationState(savedSession, saved, savedRoom);
+}
+
+export async function refreshActiveDraftNavigationState(
+  storage: WorkflowStorage = localStorage,
+  api: LayoutWorkflowApi = defaultApi,
+): Promise<LayoutNavigationState | null> {
+  const room = readSelectedRoomLayout(storage);
+  const backendRoomId = parseBackendRoomId(storage.getItem("roomfit:backendRoomId"));
+  if (!room || backendRoomId === null) return null;
+
+  const session = readActiveLayoutEditingSession(storage);
+  if (!isSessionForRoom(session, room.id, backendRoomId) || session.confirmed) {
+    return createInitialSetupNavigationState(room.id, backendRoomId, room);
+  }
+
+  const response = await api.getLayout(session.activeLayoutId);
+  assertActiveDraftResponse(response, session.activeLayoutId, backendRoomId);
+  const restored = applyBackendFurnitureToLayout(room, response.recommendedFurniture);
+  persistActiveDraftMirror(restored, storage);
+  const savedSession = saveLayoutResponseSession(room.id, response, storage, session.editingMode);
+  return createLayoutNavigationState(savedSession, response, restored);
+}
+
+export async function prepareAdditionalFurnitureForEditor(
+  storage: WorkflowStorage = localStorage,
+  api: LayoutWorkflowApi = defaultApi,
+): Promise<LayoutNavigationState | null> {
+  const current = await refreshActiveDraftNavigationState(storage, api);
+  if (!current || current.editingMode !== "REEDIT_DRAFT" || current.activeLayoutId === null) {
+    return current;
+  }
+
+  const selectedIds = readStringArray(storage.getItem("roomfit:selectedAdditionalFurnitureIds"));
+  if (resolveRequiredFurnitureTypes(selectedIds).length === 0) {
+    return current;
+  }
+
+  const context = await api.createDefaultAgentContext(current.roomId);
+  const response = await api.addFurnitureToDraft(current.activeLayoutId, {
+    contextId: context.contextId,
+  });
+  assertActiveDraftResponse(response, current.activeLayoutId, current.roomId);
+
+  const baseline = current.roomLayout ?? readSelectedRoomLayout(storage);
+  if (!baseline) return current;
+  const restored = applyBackendFurnitureToLayout(baseline, response.recommendedFurniture);
+  persistActiveDraftMirror(restored, storage);
+  const session = saveLayoutResponseSession(current.roomLayoutId, response, storage, "REEDIT_DRAFT");
+  return createLayoutNavigationState(session, response, restored);
+}
+
+export async function persistActiveEditorLayout(
+  storage: WorkflowStorage = localStorage,
+  api: LayoutWorkflowApi = defaultApi,
+): Promise<LayoutNavigationState | null> {
+  const room = readSelectedRoomLayout(storage);
+  const backendRoomId = parseBackendRoomId(storage.getItem("roomfit:backendRoomId"));
+  if (!room || backendRoomId === null) return null;
+
+  const session = readActiveLayoutEditingSession(storage);
+  if (!isSessionForRoom(session, room.id, backendRoomId) || session.confirmed) return null;
+
+  const saved = await api.updateLayout(session.activeLayoutId, room);
+  assertActiveDraftResponse(saved, session.activeLayoutId, backendRoomId);
+  const savedRoom = applyBackendFurnitureToLayout(room, saved.recommendedFurniture);
+  persistActiveDraftMirror(savedRoom, storage);
+  const savedSession = saveLayoutResponseSession(room.id, saved, storage, session.editingMode);
+  return createLayoutNavigationState(savedSession, saved, savedRoom);
+}
+
+export async function confirmActiveLayout(
+  room: RoomLayout,
+  storage: WorkflowStorage = localStorage,
+  api: LayoutWorkflowApi = defaultApi,
+): Promise<RoomLayout> {
+  const persisted = await persistActiveEditorLayout(storage, api);
+  const layoutToConfirm = persisted?.roomLayout ?? room;
+  const backendRoomId = parseBackendRoomId(storage.getItem("roomfit:backendRoomId"));
+  const session = readActiveLayoutEditingSession(storage);
+
+  if (backendRoomId !== null && isSessionForRoom(session, room.id, backendRoomId)) {
+    const response = await api.confirmLayout(session.activeLayoutId);
+    if (!response.confirmed) {
+      throw new Error("Backend did not confirm the active Draft layout.");
+    }
+    clearActiveLayoutEditingSession(storage);
+  }
+
+  return layoutToConfirm;
+}
+
+function readSelectedRoomLayout(storage: WorkflowStorage): RoomLayout | null {
+  return parseRoomLayout(storage.getItem("roomfit:selectedRoomLayout"));
+}
+
+function parseRoomLayout(raw: string | null): RoomLayout | null {
+  if (!raw) return null;
+  try {
+    const parsed = JSON.parse(raw) as RoomLayout;
+    return parsed && typeof parsed.id === "string" && Array.isArray(parsed.furniture) ? parsed : null;
+  } catch {
+    return null;
+  }
+}
+
+function persistActiveDraftMirror(room: RoomLayout, storage: WorkflowStorage): void {
+  storage.setItem("roomfit:selectedRoomLayout", JSON.stringify(room));
+}
+
+function assertLayoutOwner(response: LayoutResponse, roomId: number): void {
+  if (response.roomId !== roomId) {
+    throw new Error("The Backend Layout belongs to a different Room.");
+  }
+}
+
+function assertActiveDraftResponse(response: LayoutResponse, layoutId: number, roomId: number): void {
+  if (response.layoutId !== layoutId || response.roomId !== roomId || response.confirmed) {
+    throw new Error("The Backend response does not match the active Draft session.");
+  }
+}
+
+function readStringArray(raw: string | null): string[] {
+  if (!raw) return [];
+  try {
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed.filter((item): item is string => typeof item === "string") : [];
+  } catch {
+    return [];
+  }
+}
+
+function parseBackendRoomId(raw: string | null): number | null {
+  if (!raw) return null;
+  const parsed = Number(raw);
+  return Number.isInteger(parsed) && parsed > 0 ? parsed : null;
+}

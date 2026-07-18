@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import { FiRotateCcw, FiTrash2 } from "react-icons/fi";
+import { useLocation } from "react-router-dom";
 
-import { applyLayoutFeedback, createDefaultAgentContext, recommendLayout, type InterpretedIntent, type LayoutValidationResult, type ScoreSummary } from "../api/layouts";
+import { applyLayoutFeedback, createDefaultAgentContext, getLayout, recommendLayout, type InterpretedIntent, type LayoutValidationResult, type ScoreSummary } from "../api/layouts";
 import {
   AgentContextRequestValidationError,
   normalizeBackendRoomId,
@@ -20,6 +21,13 @@ import {
 import { applyScenario, currentScenario } from "../config/scenarios";
 import { createHobbyCoralRecommendation, isHobbyCoralRecommendationSelected } from "../mock/hobbyCoralRecommendation";
 import { readPreferredColorTone } from "../config/preferredColorTone";
+import {
+  isSessionForRoom,
+  readActiveLayoutEditingSession,
+  readLayoutNavigationState,
+  resolveEditorInitialRoomLayout,
+  saveLayoutResponseSession,
+} from "../config/layoutEditingSession";
 import type { Furniture, RoomLayout, Vector2D } from "../types";
 
 const naturalWoodRestRoomExistingFurnitureIds = new Set(["bed-1", "desk-1", "chair-1"]);
@@ -227,45 +235,94 @@ function loadSelectedRoomLayout(): RoomLayout | null {
   }
 }
 
-// What the editor should actually open showing: the live mirror (every
-// edit made in /editor this session, whether formally confirmed or not) if
-// this room already has one, so navigating away (e.g. to /layout-confirm)
-// and back — via "이전 단계" or otherwise — doesn't appear to "reset" the
-// room back to its untouched baseline. Falls back to the true baseline only
-// the very first time a room is opened this session, so the AI 추천 mood
-// reveal still has something to visibly change *from*.
-function loadInitialRoomLayout(): RoomLayout | null {
-  return getLiveMirrorForSelectedRoom() ?? loadSelectedRoomLayout();
-}
-
 function loadBackendRoomId(): number | null {
   return normalizeBackendRoomId(localStorage.getItem("roomfit:backendRoomId"));
 }
 
 export default function EditorPlaceholder() {
-  const [roomLayout, setRoomLayout] = useState<RoomLayout | null>(() => loadInitialRoomLayout());
+  const location = useLocation();
+  const routeNavigationState = readLayoutNavigationState(location.state);
+  const selectedBaseline = loadSelectedRoomLayout();
+  const backendRoomId = loadBackendRoomId();
+  const storedSession = readActiveLayoutEditingSession();
+  const matchingSession = selectedBaseline && backendRoomId !== null
+    && isSessionForRoom(storedSession, selectedBaseline.id, backendRoomId)
+    ? storedSession
+    : null;
+  const ownedRouteNavigationState = routeNavigationState
+    && selectedBaseline
+    && backendRoomId === routeNavigationState.roomId
+    && selectedBaseline.id === routeNavigationState.roomLayoutId
+    ? routeNavigationState
+    : null;
+  const navigationState = matchingSession
+    && ownedRouteNavigationState?.activeLayoutId !== matchingSession.activeLayoutId
+    ? null
+    : ownedRouteNavigationState;
+  const matchingSessionLayoutId = matchingSession?.activeLayoutId ?? null;
+  const matchingSessionBackendRoomId = matchingSession?.backendRoomId ?? null;
+  const matchingSessionEditingMode = matchingSession?.editingMode;
+  const navigationHasSavedDraft = Boolean(navigationState?.roomLayout && navigationState.layoutResponse);
+  const [roomLayout, setRoomLayout] = useState<RoomLayout | null>(() =>
+    resolveEditorInitialRoomLayout({
+      navigationState,
+      activeSession: matchingSession,
+      selectedRoomLayout: selectedBaseline,
+      liveMirror: getLiveMirrorForSelectedRoom(),
+    }),
+  );
   const preferredColorTone = roomLayout
     ? resolveRoomLayoutPreferredColorTone(roomLayout)
     : null;
   const [selectedFurnitureId, setSelectedFurnitureId] = useState<string | null>(null);
-  const [layoutId, setLayoutId] = useState<number | null>(null);
+  const [layoutId, setLayoutId] = useState<number | null>(
+    navigationState?.activeLayoutId ?? matchingSession?.activeLayoutId ?? null,
+  );
   const [feedback, setFeedback] = useState("");
   const [hideEntranceWalls, setHideEntranceWalls] = useState(false);
   const [isRecommending, setIsRecommending] = useState(false);
   const [isApplyingFeedback, setIsApplyingFeedback] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
-  const [scoreSummary, setScoreSummary] = useState<ScoreSummary | null>(null);
-  const [validationResult, setValidationResult] = useState<LayoutValidationResult | null>(null);
+  const [scoreSummary, setScoreSummary] = useState<ScoreSummary | null>(navigationState?.layoutResponse?.scoreSummary ?? null);
+  const [validationResult, setValidationResult] = useState<LayoutValidationResult | null>(navigationState?.layoutResponse?.validationResult ?? null);
   const [interpretedIntent, setInterpretedIntent] = useState<InterpretedIntent | null>(null);
   const recommendationInFlightRef = useRef(false);
   const customRoomCreationRef = useRef<Promise<number> | null>(null);
+
+  useEffect(() => {
+    if (matchingSessionLayoutId === null || matchingSessionBackendRoomId === null || navigationHasSavedDraft) return;
+    let cancelled = false;
+
+    getLayout(matchingSessionLayoutId)
+      .then((response) => {
+        if (cancelled) return;
+        const baseline = loadSelectedRoomLayout();
+        if (!baseline || response.roomId !== matchingSessionBackendRoomId) return;
+        const restored = applyBackendFurnitureToLayout(baseline, response.recommendedFurniture);
+        setRoomLayout(restored);
+        setLayoutId(response.layoutId);
+        setScoreSummary(response.scoreSummary);
+        setValidationResult(response.validationResult);
+        saveLayoutResponseSession(baseline.id, response, localStorage, matchingSessionEditingMode);
+        localStorage.setItem("roomfit:selectedRoomLayout", JSON.stringify(restored));
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setErrorMessage("편집 중인 배치를 불러오지 못했습니다. 방을 다시 선택해 주세요.");
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [matchingSessionBackendRoomId, matchingSessionEditingMode, matchingSessionLayoutId, navigationHasSavedDraft]);
 
   useEffect(() => {
     if (!roomLayout) {
       return;
     }
 
-    localStorage.setItem("roomfit:confirmedRoomLayout", JSON.stringify(roomLayout));
+    localStorage.setItem("roomfit:selectedRoomLayout", JSON.stringify(roomLayout));
   }, [roomLayout]);
 
   const handleMoveFurniture = (id: string, position: Vector2D) => {
@@ -278,7 +335,7 @@ export default function EditorPlaceholder() {
         ...current,
         furniture: current.furniture.map((item) =>
           item.id === id
-            ? moveFurnitureInsideRoom(current, item, position)
+            ? markUserModified(moveFurnitureInsideRoom(current, item, position))
             : item,
         ),
       };
@@ -295,7 +352,7 @@ export default function EditorPlaceholder() {
         ...current,
         furniture: current.furniture.map((item) =>
           item.id === id
-            ? rotateFurnitureInsideRoom(current, item, item.rotationY + Math.PI / 2)
+            ? markUserModified(rotateFurnitureInsideRoom(current, item, item.rotationY + Math.PI / 2))
             : item,
         ),
       };
@@ -308,16 +365,18 @@ export default function EditorPlaceholder() {
         return current;
       }
 
-      return { ...current, furniture: current.furniture.filter((item) => item.id !== id) };
+      return {
+        ...current,
+        furniture: current.furniture.map((item) => (
+          item.id === id ? { ...item, status: "deleted" } : item
+        )),
+      };
     });
     setSelectedFurnitureId(null);
   };
 
-  // Resets to whatever is currently saved under roomfit:selectedRoomLayout
-  // (the furniture as last saved from /manage-furniture) rather than the
-  // room's original as-uploaded furniture — AI recommendations/feedback and
-  // manual drag/rotate edits made here never write back to that key, so
-  // re-reading it always gives the furniture-management baseline.
+  // Reset to the latest active Draft mirror. Backend persistence on the next
+  // route transition remains the source of truth.
   const handleResetFurniture = () => {
     const saved = loadSelectedRoomLayout();
 
@@ -446,6 +505,7 @@ export default function EditorPlaceholder() {
       const recommendedLayout = applyBackendFurnitureToLayout(roomLayout, result.recommendedFurniture);
       setRoomLayout(withAppliedPreferredColorTone(recommendedLayout, recommendationColorTone));
       setLayoutId(result.layoutId);
+      saveLayoutResponseSession(roomLayout.id, result);
       setScoreSummary(result.scoreSummary);
       setValidationResult(result.validationResult);
     } catch (error) {
@@ -507,6 +567,7 @@ export default function EditorPlaceholder() {
       const recommendedLayout = applyBackendFurnitureToLayout(roomLayout, result.recommendedFurniture);
       setRoomLayout(recommendedLayout);
       setLayoutId(result.layoutId);
+      saveLayoutResponseSession(roomLayout.id, result);
       setScoreSummary(result.scoreSummary);
       setValidationResult(result.validationResult);
       setInterpretedIntent(result.interpretedIntent ?? null);
@@ -540,7 +601,7 @@ export default function EditorPlaceholder() {
             <div className="flex min-w-0 flex-wrap items-center gap-3">
               <h1 className="min-w-0 truncate text-2xl font-extrabold ml-2">{roomLayout.name}</h1>
               <span className="rounded-full bg-[#eeeeee] px-3 py-1 text-xs font-bold text-[#777777]">
-                가구 {roomLayout.furniture.length}개
+                가구 {roomLayout.furniture.filter((item) => item.status !== "deleted").length}개
               </span>
               <span className="rounded-full bg-[#eeeeee] px-3 py-1 text-xs font-bold text-[#777777]">
                 {roomLayout.width}m × {roomLayout.depth}m
@@ -561,7 +622,7 @@ export default function EditorPlaceholder() {
           <div className="manage-room flex-1">
             <RoomViewer
               room={roomLayout}
-              furniture={roomLayout.furniture}
+              furniture={roomLayout.furniture.filter((item) => item.status !== "deleted")}
               selectedFurnitureId={selectedFurnitureId}
               onSelectFurniture={setSelectedFurnitureId}
               onMoveFurniture={handleMoveFurniture}
@@ -687,6 +748,10 @@ export default function EditorPlaceholder() {
       </section>
     </main>
   );
+}
+
+function markUserModified(item: Furniture): Furniture {
+  return item.status === "deleted" ? item : { ...item, status: "user_modified" };
 }
 
 function InfoItem({ label, value }: { label: string; value: string }) {

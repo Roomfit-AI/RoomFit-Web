@@ -2,11 +2,9 @@ import { applyScenario, currentScenario } from "./scenarios";
 import { sampleRoom } from "../mock/sampleRoom";
 import type { RoomLayout } from "../types";
 
-// Confirmed layouts persist locally only — there's no backend endpoint to
-// save a finalized layout back to a room (see api/rooms.ts), so "확정하기"
-// keeps the result on this device, keyed by the room's own layout id
-// (stable across sessions — see api/rooms.ts's `api-room-${roomId}`) so the
-// same physical room shows its confirmed result again next time it's opened.
+// Local confirmed snapshots are display/recovery caches keyed by the stable
+// UI room id. Backend Layout confirm remains the source of truth; reopening a
+// room resolves the latest confirmed Layout before editing begins.
 const CONFIRMED_LAYOUTS_KEY = "roomfit:confirmedLayoutsByRoomId";
 
 function readAll(): Record<string, RoomLayout> {
@@ -38,20 +36,9 @@ export function hasConfirmedLayout(roomLayoutId: string): boolean {
   return Boolean(readAll()[roomLayoutId]);
 }
 
-// roomfit:confirmedRoomLayout (see EditorPlaceholder.tsx's effect) mirrors
-// every manual edit made in /editor (drag, rotate, delete, feedback) — not
-// just formally-confirmed ones — the moment they happen, live, within the
-// current session. But it's a single global key, not scoped per room, and
-// only gets refreshed by actually visiting /editor. Switching to a different
-// room on /rooms and jumping straight past /editor (to /layout-confirm, or
-// back into /editor again for a room that was already edited earlier this
-// session) without an /editor visit in between leaves this holding
-// whichever room's data was mirrored last — showing that *other* room's
-// furniture/area "stuck" under the one actually selected now, or a
-// previously-edited room's changes appearing to "reset" back to its raw
-// as-uploaded state. Only trust it when its id still matches whichever room
-// is currently selected; null means there's nothing to trust yet (a brand
-// new room this session has never touched /editor for).
+// Legacy confirmed mirror, written only after Backend confirm. Editing pages
+// recover active work from the Backend Draft session and selectedRoomLayout,
+// so this cache is always a lower-priority display fallback.
 export function getLiveMirrorForSelectedRoom(): RoomLayout | null {
   const confirmed = localStorage.getItem("roomfit:confirmedRoomLayout");
   const selectedRoomId = localStorage.getItem("roomfit:selectedRoomId");

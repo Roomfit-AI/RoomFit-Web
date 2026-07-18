@@ -1,3 +1,5 @@
+import { isAxiosError } from "axios";
+
 import { apiClient } from "./client";
 import {
   buildAgentContextRequest,
@@ -7,6 +9,7 @@ import {
 } from "./agentContextRequest";
 import type { PreferredColorToneApiValue } from "../config/preferredColorTone";
 import type { BackendFurnitureApiItem } from "./rooms";
+import type { Furniture, RoomLayout } from "../types";
 
 export type {
   AgentContextRequest,
@@ -66,11 +69,25 @@ export interface InterpretedIntent {
 
 export interface LayoutResponse {
   layoutId: number;
+  roomId: number;
+  sourceLayoutId: number | null;
+  confirmed: boolean;
+  confirmedAt: string | null;
   status: string;
   recommendedFurniture: BackendFurnitureApiItem[];
   scoreSummary: ScoreSummary;
   validationResult: LayoutValidationResult;
   interpretedIntent?: InterpretedIntent;
+}
+
+export interface ConfirmResponse {
+  layoutId: number;
+  confirmed: boolean;
+  confirmedAt: string;
+}
+
+export interface DraftFurnitureAdditionRequest {
+  contextId: number;
 }
 
 function readStringArrayFromStorage(key: string): string[] {
@@ -114,6 +131,53 @@ export async function recommendLayout(roomId: number, contextId: number): Promis
   return response.data.data;
 }
 
+export async function getLayout(layoutId: number): Promise<LayoutResponse> {
+  const response = await apiClient.get<ApiResponse<LayoutResponse>>(`/api/layouts/${layoutId}`);
+  return response.data.data;
+}
+
+export async function getLatestConfirmedLayout(roomId: number): Promise<LayoutResponse | null> {
+  try {
+    const response = await apiClient.get<ApiResponse<LayoutResponse>>(
+      `/api/layouts/rooms/${roomId}/confirmed/latest`,
+    );
+    return response.data.data;
+  } catch (error) {
+    if (isAxiosError(error) && error.response?.status === 404) {
+      return null;
+    }
+    throw error;
+  }
+}
+
+export async function createLayoutDraft(layoutId: number): Promise<LayoutResponse> {
+  const response = await apiClient.post<ApiResponse<LayoutResponse>>(`/api/layouts/${layoutId}/draft`);
+  return response.data.data;
+}
+
+export async function updateLayout(layoutId: number, room: RoomLayout): Promise<LayoutResponse> {
+  const response = await apiClient.put<ApiResponse<LayoutResponse>>(`/api/layouts/${layoutId}`, {
+    furniture: room.furniture.map((item) => toFurniturePositionRequest(room, item)),
+  });
+  return response.data.data;
+}
+
+export async function addFurnitureToDraft(
+  layoutId: number,
+  request: DraftFurnitureAdditionRequest,
+): Promise<LayoutResponse> {
+  const response = await apiClient.post<ApiResponse<LayoutResponse>>(
+    `/api/layouts/${layoutId}/furniture-additions`,
+    request,
+  );
+  return response.data.data;
+}
+
+export async function confirmLayout(layoutId: number): Promise<ConfirmResponse> {
+  const response = await apiClient.post<ApiResponse<ConfirmResponse>>(`/api/layouts/${layoutId}/confirm`);
+  return response.data.data;
+}
+
 export async function applyLayoutFeedback(layoutId: number, feedback: string): Promise<LayoutResponse> {
   const response = await apiClient.post<ApiResponse<LayoutResponse>>("/api/layouts/feedback", {
     layoutId,
@@ -121,4 +185,30 @@ export async function applyLayoutFeedback(layoutId: number, feedback: string): P
   });
 
   return response.data.data;
+}
+
+export function toFurniturePositionRequest(room: RoomLayout, item: Furniture) {
+  return {
+    id: item.id,
+    position: {
+      x: item.position.x + room.width / 2,
+      z: item.position.z + room.depth / 2,
+    },
+    rotation: normalizeDegrees((-item.rotationY * 180) / Math.PI),
+    status: toFurnitureStatusApiValue(item.status),
+  };
+}
+
+function toFurnitureStatusApiValue(status: Furniture["status"]): string {
+  const values: Record<Furniture["status"], string> = {
+    existing: "EXISTING",
+    recommended: "RECOMMENDED",
+    user_modified: "USER_MODIFIED",
+    deleted: "DELETED",
+  };
+  return values[status];
+}
+
+function normalizeDegrees(value: number): number {
+  return ((value % 360) + 360) % 360;
 }

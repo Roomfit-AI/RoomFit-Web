@@ -1,19 +1,31 @@
+import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import Button from "./Button";
-import { resolveCurrentRoomLayout, saveConfirmedLayout } from "../../config/confirmedLayouts";
+import {
+  persistActiveEditorLayout,
+  prepareAdditionalFurnitureForEditor,
+  prepareManagedFurnitureDraft,
+  refreshActiveDraftNavigationState,
+} from "../../config/layoutEditingWorkflow";
 
-const navigationSteps = [
+interface NavigationStep {
+  path: string;
+  label: string;
+  beforeNext?: () => Promise<unknown> | unknown;
+}
+
+const navigationSteps: NavigationStep[] = [
   { path: "/", label: "홈" },
   {
     path: "/rooms",
     label: "샘플 선택",
     beforeNext: ensureSelectedRoom,
   },
-  { path: "/manage-furniture", label: "가구 관리" },
-  { path: "/preference", label: "취향 선택" },
-  { path: "/reference-image", label: "이미지 선택" },
-  { path: "/add-furniture", label: "가구 선택" },
-  { path: "/editor", label: "편집" },
+  { path: "/manage-furniture", label: "가구 관리", beforeNext: prepareManagedFurnitureDraft },
+  { path: "/preference", label: "취향 선택", beforeNext: refreshActiveDraftNavigationState },
+  { path: "/reference-image", label: "이미지 선택", beforeNext: refreshActiveDraftNavigationState },
+  { path: "/add-furniture", label: "가구 선택", beforeNext: prepareAdditionalFurnitureForEditor },
+  { path: "/editor", label: "편집", beforeNext: persistActiveEditorLayout },
   { path: "/layout-confirm", label: "결과 확인" },
 ];
 
@@ -26,29 +38,54 @@ export default function Navbar() {
   const isLastStep = safeStepIndex === navigationSteps.length - 1;
   const previousStep = navigationSteps[safeStepIndex - 1];
   const nextStep = navigationSteps[safeStepIndex + 1];
+  const [isNavigating, setIsNavigating] = useState(false);
+  const [navigationError, setNavigationError] = useState("");
 
-  const goPrevious = () => {
-    if (previousStep) {
-      navigate(previousStep.path);
-    }
-  };
-
-  const goNext = () => {
-    const currentStep = navigationSteps[safeStepIndex];
-    currentStep.beforeNext?.();
-
-    if (isLastStep) {
-      // Mirrors LayoutConfirm.tsx's own "확정하기" button — this navbar button
-      // relabels itself to "확정하기" on the last step (see the render below),
-      // so clicking it here needs to actually persist the result too, not
-      // just the in-page button.
-      const layout = resolveCurrentRoomLayout();
-      saveConfirmedLayout(layout.id, layout);
+  useEffect(() => {
+    if (!["/preference", "/reference-image", "/add-furniture"].includes(location.pathname)) {
       return;
     }
 
-    if (nextStep) {
-      navigate(nextStep.path);
+    let cancelled = false;
+    refreshActiveDraftNavigationState()
+      .then((state) => {
+        if (!cancelled && state) {
+          navigate(location.pathname, { replace: true, state });
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setNavigationError("편집 중인 배치를 불러오지 못했습니다. 이전 단계에서 다시 시도해 주세요.");
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [location.pathname, navigate]);
+
+  const goPrevious = () => {
+    if (previousStep) {
+      navigate(previousStep.path, { state: location.state });
+    }
+  };
+
+  const goNext = async () => {
+    if (isNavigating) return;
+    const currentStep = navigationSteps[safeStepIndex];
+    setIsNavigating(true);
+    setNavigationError("");
+
+    try {
+      const nextState = await currentStep.beforeNext?.();
+
+      if (nextStep) {
+        navigate(nextStep.path, { state: nextState ?? location.state });
+      }
+    } catch {
+      setNavigationError("배치를 저장하지 못했습니다. 현재 화면에서 다시 시도해 주세요.");
+    } finally {
+      setIsNavigating(false);
     }
   };
 
@@ -78,12 +115,17 @@ export default function Navbar() {
               요약 정보 aside, which also handles the thumbnail capture on
               confirm — keeping this navbar one too just doubled the button. */}
           {nextStep && !isLastStep && (
-            <Button onClick={goNext} className="hidden px-7 py-2.5 sm:inline-flex">
-              {isHome ? "시작하기" : "다음 단계"}
+            <Button onClick={goNext} disabled={isNavigating} className="hidden px-7 py-2.5 sm:inline-flex">
+              {isNavigating ? "저장 중..." : isHome ? "시작하기" : "다음 단계"}
             </Button>
           )}
         </div>
       </div>
+      {navigationError && (
+        <p role="alert" className="absolute right-10 top-[70px] rounded-lg bg-[#fff1f1] px-4 py-3 text-sm font-bold text-[#b42318] shadow">
+          {navigationError}
+        </p>
+      )}
     </nav>
   );
 }

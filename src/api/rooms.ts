@@ -661,7 +661,17 @@ function normalizeRotation(rotation: number): number {
 }
 
 function toFurnitureStatus(status: string): FurnitureStatus {
-  return status === "EXISTING" ? "existing" : "recommended";
+  const values: Record<string, FurnitureStatus> = {
+    EXISTING: "existing",
+    RECOMMENDED: "recommended",
+    USER_MODIFIED: "user_modified",
+    DELETED: "deleted",
+  };
+  const value = values[status];
+  if (!value) {
+    throw new Error(`Unsupported Backend furniture status: ${status}`);
+  }
+  return value;
 }
 
 function materialByCategory(category: FurnitureCategory) {

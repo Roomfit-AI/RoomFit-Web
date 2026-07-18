@@ -7,7 +7,7 @@ export type FurnitureCategory =
   | "lighting"
   | "unsupported";
 
-export type FurnitureStatus = "existing" | "recommended";
+export type FurnitureStatus = "existing" | "recommended" | "user_modified" | "deleted";
 export type FurnitureGeometry = "box" | "rounded-box" | "cylinder" | "plane" | "model";
 export type FurnitureMaterialType = "fabric" | "wood" | "white" | "metal" | "glass" | "accent";
 

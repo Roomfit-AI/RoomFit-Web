@@ -1,101 +1,19 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { FiChevronDown, FiChevronUp, FiMoreHorizontal, FiPlus, FiRotateCcw, FiTrash2, FiZoomIn } from "react-icons/fi";
+import { FiMoreHorizontal, FiRotateCcw, FiTrash2, FiZoomIn } from "react-icons/fi";
 
 import { getSampleRoomLayouts } from "../api/rooms";
 import { RoomViewer } from "../components/room/RoomViewer";
 import {
-  clampFurniturePositionToRoom,
   moveFurnitureInsideRoom,
-  resolveFurnitureLocalFootprint,
   rotateFurnitureInsideRoom,
 } from "../components/room/furnitureBoundary";
 import { resolveRoomLayoutPreferredColorTone } from "../config/appliedColorTone";
 import { getLiveMirrorForSelectedRoom } from "../config/confirmedLayouts";
+import { loadManagedFurnitureLayout } from "../config/layoutEditingWorkflow";
 import { captureCanvasThumbnail, saveRoomThumbnail } from "../config/roomThumbnails";
 import { sampleRoomLayouts } from "../mock/interiorPlacementMock";
 import { sampleRoom } from "../mock/sampleRoom";
 import type { Furniture, FurnitureCategory, RoomLayout, Vector2D } from "../types";
-
-const furnitureCatalog: Furniture[] = [
-  {
-    id: "catalog-sofa",
-    name: "소파",
-    category: "chair",
-    geometry: "rounded-box",
-    dimensions: { width: 1.65, depth: 0.82, height: 0.72 },
-    position: { x: -0.9, z: 0.85 },
-    rotationY: 0,
-    color: "#f2ebe2",
-    material: { type: "fabric", color: "#f2ebe2", roughness: 0.92, metalness: 0 },
-    status: "recommended",
-    removable: true,
-  },
-  {
-    id: "catalog-table",
-    name: "커피테이블",
-    category: "desk",
-    geometry: "cylinder",
-    dimensions: { width: 0.92, depth: 0.92, height: 0.35 },
-    position: { x: 0.15, z: 0.1 },
-    rotationY: 0,
-    color: "#a9794d",
-    material: { type: "wood", color: "#a9794d", roughness: 0.55, metalness: 0 },
-    status: "recommended",
-    removable: true,
-  },
-  {
-    id: "catalog-tv",
-    name: "TV 장식장",
-    category: "cabinet",
-    geometry: "rounded-box",
-    dimensions: { width: 1.7, depth: 0.38, height: 0.42 },
-    position: { x: -1.15, z: -1.86 },
-    rotationY: 0,
-    color: "#8a6542",
-    material: { type: "wood", color: "#8a6542", roughness: 0.56, metalness: 0 },
-    status: "recommended",
-    removable: true,
-  },
-  {
-    id: "catalog-shelf",
-    name: "책장",
-    category: "cabinet",
-    geometry: "box",
-    dimensions: { width: 0.55, depth: 0.34, height: 1.55 },
-    position: { x: 2.35, z: -1.35 },
-    rotationY: 0,
-    color: "#8b633d",
-    material: { type: "wood", color: "#8b633d", roughness: 0.56, metalness: 0 },
-    status: "recommended",
-    removable: true,
-  },
-  {
-    id: "catalog-rug",
-    name: "러그",
-    category: "rug",
-    geometry: "plane",
-    dimensions: { width: 1.65, depth: 1.2, height: 0.04 },
-    position: { x: 0.0, z: 0.18 },
-    rotationY: 0,
-    color: "#d8c7ad",
-    material: { type: "fabric", color: "#d8c7ad", roughness: 0.96, metalness: 0 },
-    status: "recommended",
-    removable: true,
-  },
-  {
-    id: "catalog-light",
-    name: "플로어 조명",
-    category: "lighting",
-    geometry: "cylinder",
-    dimensions: { width: 0.35, depth: 0.35, height: 1.55 },
-    position: { x: 1.95, z: -0.7 },
-    rotationY: 0,
-    color: "#26211d",
-    material: { type: "metal", color: "#26211d", roughness: 0.25, metalness: 0.8 },
-    status: "recommended",
-    removable: true,
-  },
-];
 
 const specs: Record<FurnitureCategory, string> = {
   bed: "W2000 D1250 H450",
@@ -120,9 +38,7 @@ export default function ManageFurniture() {
   // with the *current* (edited) furniture on every change, so that key can't
   // also serve as "what it looked like originally" once anything's been moved.
   const originalFurnitureRef = useRef<Furniture[]>(cloneFurniture(selectedRoom.furniture));
-  const addedFurnitureSequenceRef = useRef(0);
   const [selectedFurnitureId, setSelectedFurnitureId] = useState<string | null>(null);
-  const [isCatalogOpen, setIsCatalogOpen] = useState(false);
   // Starts true (not false) so the very first render already shows/captures
   // the interior view, without an initial exterior-view render needing to be
   // undone by an effect right after mount.
@@ -130,9 +46,9 @@ export default function ManageFurniture() {
   const viewerContainerRef = useRef<HTMLDivElement>(null);
   const [panelWidth, setPanelWidth] = useState(320);
   const [isResizing, setIsResizing] = useState(false);
+  const [layoutError, setLayoutError] = useState("");
 
-  const activeCatalogIds = new Set(furniture.map(getCatalogIdFromFurniture).filter(Boolean));
-  const availableFurniture = furnitureCatalog.filter((item) => !activeCatalogIds.has(item.id));
+  const visibleFurniture = furniture.filter((item) => item.status !== "deleted");
 
   useEffect(() => {
     if (localStorage.getItem("roomfit:selectedRoomLayout") || localStorage.getItem("roomfit:selectedRoomId")) {
@@ -164,6 +80,34 @@ export default function ManageFurniture() {
   }, []);
 
   useEffect(() => {
+    const rawRoomId = localStorage.getItem("roomfit:backendRoomId");
+    const backendRoomId = rawRoomId ? Number(rawRoomId) : Number.NaN;
+    if (!Number.isInteger(backendRoomId) || backendRoomId <= 0) return;
+
+    let cancelled = false;
+    loadManagedFurnitureLayout(selectedRoom, backendRoomId)
+      .then((restored) => {
+        if (cancelled || !restored) return;
+        setSelectedRoom(restored);
+        setFurniture(cloneFurniture(restored.furniture));
+        originalFurnitureRef.current = cloneFurniture(restored.furniture);
+        setLayoutError("");
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setLayoutError("저장된 배치를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.");
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+    // The selected room is fixed for this page mount. Including selectedRoom
+    // would refetch after applying the restored backend snapshot.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
     if (!isResizing) {
       return;
     }
@@ -190,37 +134,18 @@ export default function ManageFurniture() {
     };
   }, [isResizing]);
 
-  const addFurniture = (item: Furniture) => {
-    addedFurnitureSequenceRef.current += 1;
-    const proposedItem = {
-      ...item,
-      id: `added-${item.id}-${addedFurnitureSequenceRef.current}`,
-      position: findOpenPosition(furniture.length),
-    };
-    const position = clampFurniturePositionToRoom(
-      selectedRoom,
-      proposedItem.dimensions,
-      proposedItem.position,
-      proposedItem.rotationY,
-      resolveFurnitureLocalFootprint(proposedItem),
-    );
-    if (!position) {
-      return;
-    }
-    const nextItem = { ...proposedItem, position };
-
-    setFurniture((current) => [...current, nextItem]);
-    setSelectedFurnitureId(nextItem.id);
-  };
-
   const removeFurniture = (id: string) => {
-    setFurniture((current) => current.filter((item) => item.id !== id));
+    setFurniture((current) => current.map((item) => (
+      item.id === id ? { ...item, status: "deleted" } : item
+    )));
     setSelectedFurnitureId((current) => (current === id ? null : current));
   };
 
   const moveFurniture = (id: string, position: Vector2D) => {
     setFurniture((current) => current.map((item) => (
-      item.id === id ? moveFurnitureInsideRoom(selectedRoom, item, position) : item
+      item.id === id
+        ? markUserModified(moveFurnitureInsideRoom(selectedRoom, item, position))
+        : item
     )));
   };
 
@@ -233,7 +158,7 @@ export default function ManageFurniture() {
     setFurniture((current) =>
       current.map((item) => (
         item.id === id
-          ? rotateFurnitureInsideRoom(selectedRoom, item, item.rotationY + Math.PI / 2)
+          ? markUserModified(rotateFurnitureInsideRoom(selectedRoom, item, item.rotationY + Math.PI / 2))
           : item
       )),
     );
@@ -310,10 +235,16 @@ export default function ManageFurniture() {
             </label>
           </div>
 
+          {layoutError && (
+            <p role="alert" className="mb-4 rounded-lg bg-[#fff1f1] px-4 py-3 text-sm font-bold text-[#b42318]">
+              {layoutError}
+            </p>
+          )}
+
           <div className="manage-room flex-1" ref={viewerContainerRef}>
             <RoomViewer
               room={selectedRoom}
-              furniture={furniture}
+              furniture={visibleFurniture}
               selectedFurnitureId={selectedFurnitureId}
               onSelectFurniture={setSelectedFurnitureId}
               onMoveFurniture={moveFurniture}
@@ -355,7 +286,7 @@ export default function ManageFurniture() {
             </div>
 
             <div className="max-h-[calc(100vh-320px)] space-y-4 overflow-y-auto pr-1">
-              {furniture.map((item) => (
+              {visibleFurniture.map((item) => (
                 <FurnitureRow
                   key={item.id}
                   item={item}
@@ -366,46 +297,6 @@ export default function ManageFurniture() {
               ))}
             </div>
 
-            <button
-              type="button"
-              onClick={() => setIsCatalogOpen((current) => !current)}
-              className="mt-5 flex w-full items-center justify-center gap-2 rounded-lg border border-[#dfdfdf] py-3 text-sm font-extrabold transition-colors hover:bg-[#f6f6f6]"
-            >
-              <FiPlus />
-              가구 추가
-              {isCatalogOpen ? <FiChevronUp /> : <FiChevronDown />}
-            </button>
-
-            {isCatalogOpen && (
-              <div className="mt-4 border-t border-[#eeeeee] pt-4">
-                <h3 className="mb-3 text-sm font-extrabold text-[#555555]">추가 가능한 가구</h3>
-                <div className="max-h-80 space-y-3 overflow-y-auto pr-1">
-                  {availableFurniture.length > 0 ? (
-                    availableFurniture.map((item) => (
-                      <button
-                        key={item.id}
-                        type="button"
-                        onClick={() => addFurniture(item)}
-                        className="flex w-full items-center justify-between rounded-lg border border-[#eeeeee] px-4 py-3 text-sm font-bold transition-colors hover:bg-[#f7f7f7]"
-                      >
-                        <span className="flex min-w-0 items-center gap-3">
-                          <FurnitureThumb category={item.category} color={item.color} />
-                          <span className="min-w-0 text-left">
-                            <span className="block truncate">{item.name}</span>
-                            <span className="mt-1 block truncate text-xs font-medium text-[#777777]">{specs[item.category]}</span>
-                          </span>
-                        </span>
-                        <FiPlus className="shrink-0" />
-                      </button>
-                    ))
-                  ) : (
-                    <p className="rounded-lg bg-[#f7f7f7] px-4 py-3 text-sm font-semibold text-[#777777]">
-                      추가할 수 있는 가구를 모두 배치했어요.
-                    </p>
-                  )}
-                </div>
-              </div>
-            )}
           </div>
         </aside>
       </div>
@@ -527,19 +418,6 @@ function cloneFurniture(items: Furniture[]): Furniture[] {
   return items.map((item) => ({ ...item, position: { ...item.position }, dimensions: { ...item.dimensions } }));
 }
 
-function findOpenPosition(index: number): Vector2D {
-  const positions = [
-    { x: -0.35, z: 0.45 },
-    { x: 0.95, z: 0.35 },
-    { x: -1.35, z: 1.15 },
-    { x: 1.65, z: -0.65 },
-    { x: 0.0, z: -0.35 },
-    { x: 2.15, z: 0.75 },
-  ];
-  return positions[index % positions.length];
-}
-
-function getCatalogIdFromFurniture(item: Furniture) {
-  const matchedCatalog = furnitureCatalog.find((catalogItem) => item.id.startsWith(`added-${catalogItem.id}-`));
-  return matchedCatalog?.id ?? null;
+function markUserModified(item: Furniture): Furniture {
+  return item.status === "deleted" ? item : { ...item, status: "user_modified" };
 }

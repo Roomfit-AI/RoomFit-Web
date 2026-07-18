@@ -1,7 +1,7 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { FaRug } from "react-icons/fa6";
 import { FiCheck, FiChevronDown, FiChevronUp, FiExternalLink, FiHome, FiInfo, FiShoppingBag } from "react-icons/fi";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import {
   MdOutlineBed,
   MdOutlineDesk,
@@ -23,6 +23,12 @@ import {
 } from "../config/roomPreferences";
 import { captureCanvasThumbnail, saveRoomThumbnail } from "../config/roomThumbnails";
 import { currentScenario } from "../config/scenarios";
+import { confirmActiveLayout, refreshActiveDraftNavigationState } from "../config/layoutEditingWorkflow";
+import {
+  isSessionForRoom,
+  readActiveLayoutEditingSession,
+  readLayoutNavigationState,
+} from "../config/layoutEditingSession";
 
 // Single-glyph icons instead of the .furniture-card-* illustrations — always
 // centered within their own viewBox by design, so every row's thumbnail
@@ -39,10 +45,61 @@ const SHOPPING_LIST_ICONS: Record<string, typeof MdOutlineBed> = {
 };
 
 export default function LayoutConfirm() {
+  const location = useLocation();
   const navigate = useNavigate();
-  const roomLayout = resolveCurrentRoomLayout();
+  const routeState = readLayoutNavigationState(location.state);
+  const fallbackRoom = resolveCurrentRoomLayout();
+  const backendRoomId = Number(localStorage.getItem("roomfit:backendRoomId"));
+  const activeSession = readActiveLayoutEditingSession();
+  const hasMatchingDraft = Number.isInteger(backendRoomId)
+    && isSessionForRoom(activeSession, fallbackRoom.id, backendRoomId)
+    && !activeSession.confirmed;
+  const ownedRouteState = routeState
+    && routeState.roomId === backendRoomId
+    && routeState.roomLayoutId === fallbackRoom.id
+    && (!hasMatchingDraft || routeState.activeLayoutId === activeSession?.activeLayoutId)
+    ? routeState
+    : null;
+  const [roomLayout, setRoomLayout] = useState(() => ownedRouteState?.roomLayout ?? (hasMatchingDraft ? null : fallbackRoom));
+  const [loadError, setLoadError] = useState("");
+  const [justConfirmed, setJustConfirmed] = useState(false);
+  const [showShoppingList, setShowShoppingList] = useState(false);
+  const [isConfirming, setIsConfirming] = useState(false);
+  const [confirmError, setConfirmError] = useState("");
+  const roomViewerContainerRef = useRef<HTMLDivElement>(null);
+  const activeLayoutId = activeSession && hasMatchingDraft ? activeSession.activeLayoutId : null;
+
+  useEffect(() => {
+    if (roomLayout || activeLayoutId === null) return;
+    let cancelled = false;
+    refreshActiveDraftNavigationState()
+      .then((state) => {
+        if (!cancelled && state?.roomLayout) {
+          setRoomLayout(state.roomLayout);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setLoadError("편집 중인 배치를 불러오지 못했습니다. Editor에서 다시 저장해 주세요.");
+        }
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [activeLayoutId, roomLayout]);
+
+  if (!roomLayout) {
+    return (
+      <main className="grid min-h-[calc(100vh-76px)] place-items-center bg-[#fbfbfb] px-5 text-center">
+        <p role={loadError ? "alert" : undefined} className="font-bold text-[#777777]">
+          {loadError || "편집 중인 배치를 불러오는 중입니다..."}
+        </p>
+      </main>
+    );
+  }
+
   const preferredColorTone = resolveRoomLayoutPreferredColorTone(roomLayout);
-  const furnitureCount = roomLayout.furniture.length;
+  const furnitureCount = roomLayout.furniture.filter((item) => item.status !== "deleted").length;
   // Actual scanned width x depth (matches how Rooms.tsx shows room size on
   // its cards) rather than a computed ㎡ figure — a real width/depth pair
   // like "3.38m x 3.47m" reads as the literal room shape, whereas the
@@ -50,30 +107,31 @@ export default function LayoutConfirm() {
   // digit and doesn't match anything the user actually recognizes as "their
   // room."
   const roomSize = `${roomLayout.width}m × ${roomLayout.depth}m`;
-  const [justConfirmed, setJustConfirmed] = useState(false);
-  const [showShoppingList, setShowShoppingList] = useState(false);
-  const roomViewerContainerRef = useRef<HTMLDivElement>(null);
   // Real 오늘의집 product links only exist for the 네츄럴 톤 demo scenario
   // (see naturalScenarioShoppingList.ts) — there's no product-matching
   // backend to look these up generically for any other scenario/room.
   const isNaturalScenario = currentScenario()?.id === "rest-natural-wood";
 
-  const confirmLayout = () => {
-    // No backend endpoint saves a finalized layout back to a room (see
-    // api/rooms.ts) — this keeps the result locally, keyed by the room's own
-    // id, so reopening this same room later (see Rooms.tsx's selectRoom)
-    // picks the confirmed result back up instead of the bare as-uploaded
-    // furniture.
-    saveConfirmedLayout(roomLayout.id, roomLayout);
+  const confirmLayout = async () => {
+    if (isConfirming) return;
+    setIsConfirming(true);
+    setConfirmError("");
+
+    try {
+      const layoutToConfirm = await confirmActiveLayout(roomLayout);
+
+      saveConfirmedLayout(layoutToConfirm.id, layoutToConfirm);
+      localStorage.setItem("roomfit:selectedRoomLayout", JSON.stringify(layoutToConfirm));
+      localStorage.setItem("roomfit:confirmedRoomLayout", JSON.stringify(layoutToConfirm));
 
     // Snapshots whatever purpose/palette/style/추가 가구 this room actually
     // used — Rooms.tsx's selectRoom restores this the next time this same
     // room is picked, so reopening a confirmed room shows its own real
     // choices instead of whatever room was selected most recently elsewhere.
-    saveRoomPreferences(
-      roomLayout.id,
-      createAppliedRoomPreferences(readCurrentPreferences(), preferredColorTone),
-    );
+      saveRoomPreferences(
+        layoutToConfirm.id,
+        createAppliedRoomPreferences(readCurrentPreferences(), preferredColorTone),
+      );
 
     // /manage-furniture also captures a thumbnail (its "내부 보기" toggle),
     // but that happens early in the flow, before /preference's style pick or
@@ -83,14 +141,19 @@ export default function LayoutConfirm() {
     // now) overwrites that with the real final look, so /rooms' thumbnail
     // reflects whichever scenario actually ended up confirmed instead of
     // staying frozen at that one early snapshot.
-    const container = roomViewerContainerRef.current;
-    const dataUrl = container && captureCanvasThumbnail(container);
+      const container = roomViewerContainerRef.current;
+      const dataUrl = container && captureCanvasThumbnail(container);
 
-    if (dataUrl) {
-      saveRoomThumbnail(roomLayout.id, dataUrl);
+      if (dataUrl) {
+        saveRoomThumbnail(layoutToConfirm.id, dataUrl);
+      }
+
+      setJustConfirmed(true);
+    } catch {
+      setConfirmError("배치를 확정하지 못했습니다. 저장 상태를 확인한 뒤 다시 시도해 주세요.");
+    } finally {
+      setIsConfirming(false);
     }
-
-    setJustConfirmed(true);
   };
 
   return (
@@ -165,9 +228,10 @@ export default function LayoutConfirm() {
                 <button
                   type="button"
                   onClick={confirmLayout}
+                  disabled={isConfirming}
                   className="w-full rounded-lg bg-[#111111] px-5 py-4 text-base font-extrabold text-white transition-colors hover:bg-[#333333]"
                 >
-                  확정하기
+                  {isConfirming ? "저장 중..." : "확정하기"}
                 </button>
               ) : (
                 <>
@@ -198,6 +262,11 @@ export default function LayoutConfirm() {
                 </>
               )}
             </div>
+            {confirmError && (
+              <p role="alert" className="mt-4 rounded-lg bg-[#fff1f1] px-4 py-3 text-sm font-bold text-[#b42318]">
+                {confirmError}
+              </p>
+            )}
           </aside>
 
           <aside

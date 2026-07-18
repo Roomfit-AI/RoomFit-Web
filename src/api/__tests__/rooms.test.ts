@@ -70,6 +70,12 @@ describe("applyBackendFurnitureToLayout", () => {
     });
   });
 
+  it("rejects an unknown Backend status instead of changing it to recommended", () => {
+    expect(() => applyBackendFurnitureToLayout(baseLayout, [
+      createBackendFurniture({ status: "FUTURE_STATUS" }),
+    ])).toThrow("Unsupported Backend furniture status: FUTURE_STATUS");
+  });
+
   it("preserves an unknown variantId for render-time fallback", () => {
     const result = applyBackendFurnitureToLayout(baseLayout, [
       createBackendFurniture({ variantId: "future-desk-variant" }),
