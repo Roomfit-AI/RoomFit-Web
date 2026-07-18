@@ -41,6 +41,13 @@ describe("apiClient client scope header", () => {
     expect(await requestHeader()).toBeUndefined();
   });
 
+  it("omits the Client ID header completely for an explicit PUBLIC request", async () => {
+    const { local, session } = installStorage();
+    activateBrowserClientScope("setup-browser", local, session);
+
+    expect(await requestHeader("PUBLIC", APP_ID)).toBeUndefined();
+  });
+
   it("reads the current scope at request time instead of capturing an earlier ID", async () => {
     const { local, session } = installStorage();
     savePendingClientHandoff(resolveClientScopeForHandoff({ roomId: 42, clientId: APP_ID })!, session);
@@ -61,9 +68,14 @@ function installStorage() {
   return { local, session };
 }
 
-async function requestHeader(): Promise<string | undefined> {
+async function requestHeader(
+  roomfitClientScope?: "SCOPED" | "PUBLIC",
+  presetHeader?: string,
+): Promise<string | undefined> {
   let requestConfig: InternalAxiosRequestConfig | undefined;
   await apiClient.get("/__client-scope-test__", {
+    roomfitClientScope,
+    headers: presetHeader ? { [CLIENT_ID_HEADER]: presetHeader } : undefined,
     adapter: async (config) => {
       requestConfig = config;
       return {

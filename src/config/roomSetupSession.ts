@@ -18,6 +18,7 @@ import {
   bindActiveClientScopeToRoom,
   readActiveClientScope,
 } from "./clientScope";
+import { hasConfirmedLayout } from "./confirmedLayouts";
 
 const ROOM_SETUP_SESSION_KEY = "roomfit:roomSetupSession";
 const RECOMMENDATION_RESULT_KEY = "roomfit:recommendationResult";
@@ -218,7 +219,17 @@ export async function prepareSelectedRoomForManagement(
 
   const existingRoomId = normalizeBackendRoomId(storage.getItem("roomfit:backendRoomId"));
   if (existingRoomId !== null) {
-    bindRoomToSetupSession(room.id, existingRoomId, "REEDIT", storage, browserSession);
+    const current = readRoomSetupSession(browserSession);
+    const isCurrentNewSetup = current?.mode === "NEW"
+      && current.roomLayoutId === room.id
+      && current.backendRoomId === existingRoomId;
+    bindRoomToSetupSession(
+      room.id,
+      existingRoomId,
+      !isCurrentNewSetup && hasConfirmedLayout(room.id, storage) ? "REEDIT" : "NEW",
+      storage,
+      browserSession,
+    );
     return { created: false, roomLayoutId: room.id, backendRoomId: existingRoomId };
   }
 

@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 import {
   applyBackendFurnitureToLayout,
   getRoomById,
+  getSampleRooms,
   toRoomUploadRequest,
   uploadRoomLayout,
   type BackendFurnitureApiItem,
@@ -20,6 +21,23 @@ const baseLayout: RoomLayout = {
   windows: [],
   furniture: [],
 };
+
+describe("public sample API", () => {
+  it("uses the explicit PUBLIC request scope", async () => {
+    const get = vi.spyOn(apiClient, "get").mockResolvedValue({
+      data: { success: true, data: [], error: null },
+    });
+
+    try {
+      await expect(getSampleRooms()).resolves.toEqual([]);
+      expect(get).toHaveBeenCalledWith("/api/rooms/samples", {
+        roomfitClientScope: "PUBLIC",
+      });
+    } finally {
+      get.mockRestore();
+    }
+  });
+});
 
 function createBackendFurniture(
   overrides: Partial<BackendFurnitureApiItem> = {},

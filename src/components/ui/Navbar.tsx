@@ -1,18 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import Button from "./Button";
-import {
-  persistActiveEditorLayout,
-  prepareAdditionalFurnitureForEditor,
-  prepareManagedFurnitureDraft,
-  refreshActiveDraftNavigationState,
-} from "../../config/layoutEditingWorkflow";
-import {
-  beginNewRoomSetup,
-  prepareSelectedRoomForManagement,
-} from "../../config/roomSetupSession";
-import { RecommendationFeasibilityError } from "../../config/recommendationResult";
-import { AgentContextRequestValidationError } from "../../api/agentContextRequest";
 
 interface NavigationStep {
   path: string;
@@ -21,17 +9,41 @@ interface NavigationStep {
 }
 
 const navigationSteps: NavigationStep[] = [
-  { path: "/", label: "홈", beforeNext: beginNewRoomSetup },
+  {
+    path: "/",
+    label: "홈",
+    beforeNext: async () => (await import("../../config/roomSetupSession")).beginNewRoomSetup(),
+  },
   {
     path: "/rooms",
     label: "샘플 선택",
-    beforeNext: prepareSelectedRoomForManagement,
+    beforeNext: async () => (await import("../../config/roomSetupSession")).prepareSelectedRoomForManagement(),
   },
-  { path: "/manage-furniture", label: "가구 관리", beforeNext: prepareManagedFurnitureDraft },
-  { path: "/preference", label: "취향 선택", beforeNext: refreshActiveDraftNavigationState },
-  { path: "/reference-image", label: "이미지 선택", beforeNext: refreshActiveDraftNavigationState },
-  { path: "/add-furniture", label: "가구 선택", beforeNext: prepareAdditionalFurnitureForEditor },
-  { path: "/editor", label: "편집", beforeNext: persistActiveEditorLayout },
+  {
+    path: "/manage-furniture",
+    label: "가구 관리",
+    beforeNext: async () => (await import("../../config/layoutEditingWorkflow")).prepareManagedFurnitureDraft(),
+  },
+  {
+    path: "/preference",
+    label: "취향 선택",
+    beforeNext: async () => (await import("../../config/layoutEditingWorkflow")).refreshActiveDraftNavigationState(),
+  },
+  {
+    path: "/reference-image",
+    label: "이미지 선택",
+    beforeNext: async () => (await import("../../config/layoutEditingWorkflow")).refreshActiveDraftNavigationState(),
+  },
+  {
+    path: "/add-furniture",
+    label: "가구 선택",
+    beforeNext: async () => (await import("../../config/layoutEditingWorkflow")).prepareAdditionalFurnitureForEditor(),
+  },
+  {
+    path: "/editor",
+    label: "편집",
+    beforeNext: async () => (await import("../../config/layoutEditingWorkflow")).persistActiveEditorLayout(),
+  },
   { path: "/layout-confirm", label: "결과 확인" },
 ];
 
@@ -54,7 +66,8 @@ export default function Navbar() {
     }
 
     let cancelled = false;
-    refreshActiveDraftNavigationState()
+    import("../../config/layoutEditingWorkflow")
+      .then(({ refreshActiveDraftNavigationState }) => refreshActiveDraftNavigationState())
       .then((state) => {
         if (!cancelled && state) {
           navigate(location.pathname, { replace: true, state });
@@ -91,9 +104,9 @@ export default function Navbar() {
         navigate(nextStep.path, { state: nextState ?? location.state });
       }
     } catch (error) {
-      if (error instanceof AgentContextRequestValidationError) {
+      if (error instanceof Error && error.name === "AgentContextRequestValidationError") {
         setNavigationError(error.message);
-      } else if (!(error instanceof RecommendationFeasibilityError)) {
+      } else if (!(error instanceof Error && error.name === "RecommendationFeasibilityError")) {
         setNavigationError(
           location.pathname === "/rooms"
             ? "새 방을 만들지 못했습니다. 현재 선택을 유지한 채 다시 시도해 주세요."

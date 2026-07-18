@@ -57,8 +57,8 @@ export function commitRoomHandoff(
   const setup = beginNewRoomSetup(storage, browserSession, setupSessionId);
   activatePendingHandoffScope(handoff, setup.sessionId, room.layoutId, browserSession);
   persistRoomSelection(room, storage);
-  bindRoomToSetupSession(room.layoutId, room.roomId, "REEDIT", storage, browserSession);
-  restoreRoomPreferencesForSetup(room.layoutId, "REEDIT", storage);
+  bindRoomToSetupSession(room.layoutId, room.roomId, "NEW", storage, browserSession);
+  restoreRoomPreferencesForSetup(room.layoutId, "NEW", storage);
   clearPendingClientHandoff(browserSession);
 }
 

@@ -145,12 +145,16 @@ const collectorAppearanceById: Record<string, CollectorAppearance> = {
 };
 
 export async function getSampleRooms(): Promise<SampleRoomCard[]> {
-  const response = await apiClient.get<ApiResponse<SampleRoomApiItem[]>>("/api/rooms/samples");
+  const response = await apiClient.get<ApiResponse<SampleRoomApiItem[]>>("/api/rooms/samples", {
+    roomfitClientScope: "PUBLIC",
+  });
   return response.data.data.map(toSampleRoomCard);
 }
 
 export async function getSampleRoomLayouts(): Promise<RoomLayout[]> {
-  const response = await apiClient.get<ApiResponse<SampleRoomApiItem[]>>("/api/rooms/samples");
+  const response = await apiClient.get<ApiResponse<SampleRoomApiItem[]>>("/api/rooms/samples", {
+    roomfitClientScope: "PUBLIC",
+  });
   return response.data.data.map(toRoomLayout);
 }
 

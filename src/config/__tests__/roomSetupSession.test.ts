@@ -209,6 +209,7 @@ describe("room setup session", () => {
   it("does not POST when an existing Backend Room is explicitly selected for re-edit", async () => {
     const room = createRoomLayout("api-room-7", "ROOMPLAN");
     const local = selectedTemplateStorage(room);
+    local.setItem("roomfit:confirmedLayoutsByRoomId", JSON.stringify({ [room.id]: room }));
     const browser = createMemoryStorage();
     beginNewRoomSetup(local, browser, "reedit-setup");
     selectTemplate(local, room);
@@ -220,6 +221,25 @@ describe("room setup session", () => {
     expect(result).toEqual({ created: false, roomLayoutId: "api-room-7", backendRoomId: 7 });
     expect(createRoomApi).not.toHaveBeenCalled();
     expect(readRoomSetupSession(browser)?.mode).toBe("REEDIT");
+  });
+
+  it("does not treat a Backend Room ID as proof that a Layout exists", async () => {
+    const room = createRoomLayout("api-room-8", "ROOMPLAN");
+    const local = selectedTemplateStorage(room);
+    const browser = createMemoryStorage();
+    beginNewRoomSetup(local, browser, "existing-without-layout");
+    selectTemplate(local, room);
+    local.setItem("roomfit:backendRoomId", "8");
+    const createRoomApi = vi.fn();
+
+    await prepareSelectedRoomForManagement(local, browser, createRoomApi);
+
+    expect(createRoomApi).not.toHaveBeenCalled();
+    expect(readRoomSetupSession(browser)).toMatchObject({
+      roomLayoutId: room.id,
+      backendRoomId: 8,
+      mode: "NEW",
+    });
   });
 
   it("keeps a failed new Room retryable without restoring a stale Backend ID", async () => {

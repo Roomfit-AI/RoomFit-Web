@@ -78,6 +78,7 @@ describe("Draft layout editing workflow", () => {
     const room = createRoom("api-room-7");
     const storage = selectedRoomStorage(room, 7);
     const browser = setupBrowserStorage(room.id, 7, "reedit-setup", "REEDIT");
+    markConfirmed(storage, room);
     const latest = response(70, true, null, backendFurnitureFromRoom(room), 7);
     const api = fakeApi({ latest });
 
@@ -88,16 +89,54 @@ describe("Draft layout editing workflow", () => {
     expect(api.getRoomLayout).not.toHaveBeenCalled();
   });
 
+  it("recovers stale confirmed evidence only after the Room remains readable", async () => {
+    const room = createRoom("api-room-45");
+    const storage = selectedRoomStorage(room, 45);
+    const browser = setupBrowserStorage(room.id, 45, "stale-reedit", "REEDIT");
+    markConfirmed(storage, room);
+    const api = fakeApi({ room, latest: null });
+
+    const restored = await loadManagedFurnitureLayout(room, 45, storage, api, browser);
+
+    expect(restored).toEqual(room);
+    expect(api.getLatestConfirmedLayout).toHaveBeenCalledWith(45);
+    expect(api.getRoomLayout).toHaveBeenCalledWith(45);
+    expect(readActiveLayoutEditingSession(storage)).toBeNull();
+    expect(JSON.parse(storage.getItem("roomfit:confirmedLayoutsByRoomId") ?? "{}")[room.id]).toBeUndefined();
+    expect(JSON.parse(browser.getItem("roomfit:roomSetupSession") ?? "null")).toMatchObject({
+      roomLayoutId: room.id,
+      backendRoomId: 45,
+      mode: "NEW",
+    });
+  });
+
+  it("does not recover a stale re-edit when the Room is not readable in the current scope", async () => {
+    const room = createRoom("api-room-46");
+    const storage = selectedRoomStorage(room, 46);
+    const browser = setupBrowserStorage(room.id, 46, "wrong-scope-reedit", "REEDIT");
+    markConfirmed(storage, room);
+    const api = fakeApi({ latest: null });
+    vi.mocked(api.getRoomLayout).mockRejectedValueOnce(new Error("ROOM_NOT_FOUND"));
+
+    await expect(loadManagedFurnitureLayout(room, 46, storage, api, browser))
+      .rejects.toThrow("ROOM_NOT_FOUND");
+
+    expect(JSON.parse(storage.getItem("roomfit:confirmedLayoutsByRoomId") ?? "{}")[room.id]).toBeDefined();
+    expect(JSON.parse(browser.getItem("roomfit:roomSetupSession") ?? "null").mode).toBe("REEDIT");
+  });
+
   it("preserves move, rotation, and deletion through every intermediate route", async () => {
     const editedRoom = createRoom("api-room-1", -0.8, Math.PI / 2);
     editedRoom.furniture[1].status = "deleted";
     const storage = selectedRoomStorage(editedRoom);
+    const browser = setupBrowserStorage(editedRoom.id, 1, "preserve-reedit", "REEDIT");
+    markConfirmed(storage, editedRoom);
     const confirmed = response(10, true, null);
     const draft = response(11, false, 10);
     const saved = response(11, false, 10, backendFurnitureFromRoom(editedRoom));
     const api = fakeApi({ latest: confirmed, draft, saved, active: saved });
 
-    const manageState = await prepareManagedFurnitureDraft(storage, api);
+    const manageState = await prepareManagedFurnitureDraft(storage, api, browser);
     const preferenceState = await refreshActiveDraftNavigationState(storage, api);
     const referenceState = await refreshActiveDraftNavigationState(storage, api);
     const addFurnitureState = await prepareAdditionalFurnitureForEditor(storage, api);
@@ -126,13 +165,15 @@ describe("Draft layout editing workflow", () => {
   it("creates a Draft only after the confirmed source and saves the full latest snapshot", async () => {
     const storage = selectedRoomStorage(createRoom("api-room-1", -0.8, Math.PI / 2));
     storage.setItem("roomfit:confirmedRoomLayout", JSON.stringify(createRoom("api-room-1", 0.9, 0)));
+    const browser = setupBrowserStorage("api-room-1", 1, "confirmed-source", "REEDIT");
+    markConfirmed(storage, createRoom("api-room-1"));
     const api = fakeApi({
       latest: response(10, true, null),
       draft: response(11, false, 10),
       saved: response(11, false, 10, backendFurniture(-0.8, Math.PI / 2)),
     });
 
-    const result = await prepareManagedFurnitureDraft(storage, api);
+    const result = await prepareManagedFurnitureDraft(storage, api, browser);
 
     expect(result?.activeLayoutId).toBe(11);
     expect(api.createLayoutDraft).toHaveBeenCalledWith(10);
@@ -168,10 +209,12 @@ describe("Draft layout editing workflow", () => {
     const room = createRoom("api-room-1", -0.7, Math.PI / 2);
     const storage = selectedRoomStorage(room);
     storage.setItem("roomfit:confirmedRoomLayout", JSON.stringify(createRoom("api-room-1", 0.9, 0)));
+    const browser = setupBrowserStorage(room.id, 1, "failed-reedit", "REEDIT");
+    markConfirmed(storage, room);
     const api = fakeApi({ latest: response(10, true, null), draft: response(11, false, 10) });
     vi.mocked(api.updateLayout).mockRejectedValueOnce(new Error("network"));
 
-    await expect(prepareManagedFurnitureDraft(storage, api)).rejects.toThrow("network");
+    await expect(prepareManagedFurnitureDraft(storage, api, browser)).rejects.toThrow("network");
 
     expect(readRoom(storage)?.furniture[0].position.x).toBe(-0.7);
     expect(JSON.parse(storage.getItem("roomfit:confirmedRoomLayout") ?? "null").furniture[0].position.x).toBe(0.9);
@@ -526,6 +569,10 @@ function selectedRoomStorage(room: RoomLayout, backendRoomId = 1): MemoryStorage
   const storage = new MemoryStorage();
   selectRoom(storage, room, backendRoomId);
   return storage;
+}
+
+function markConfirmed(storage: MemoryStorage, room: RoomLayout): void {
+  storage.setItem("roomfit:confirmedLayoutsByRoomId", JSON.stringify({ [room.id]: room }));
 }
 
 function setupBrowserStorage(

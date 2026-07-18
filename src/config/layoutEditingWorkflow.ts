@@ -33,7 +33,8 @@ import {
   saveRecommendationResult,
   type RecommendationResultOwner,
 } from "./recommendationResult";
-import { readRoomSetupSession } from "./roomSetupSession";
+import { clearConfirmedLayout, hasConfirmedLayout } from "./confirmedLayouts";
+import { bindRoomToSetupSession, readRoomSetupSession } from "./roomSetupSession";
 import { currentScenario, isCollectorRoom } from "./scenarios";
 import { isHobbyCoralRecommendationSelected } from "../mock/hobbyCoralRecommendation";
 import { readPreferredColorTone } from "./preferredColorTone";
@@ -81,17 +82,15 @@ export async function loadManagedFurnitureLayout(
     return restored;
   }
 
-  if (isNewSetupWithoutLayout(room.id, backendRoomId, browserSession)) {
-    const backendRoom = await api.getRoomLayout(backendRoomId);
-    if (backendRoom.id !== room.id) {
-      throw new Error("Backend Room response does not match the selected Room.");
-    }
-    return backendRoom;
+  if (!isConfirmedReedit(room.id, backendRoomId, storage, browserSession)) {
+    return loadRoomDetailForInitialSetup(room, backendRoomId, storage, api, browserSession);
   }
 
   const response = await api.getLatestConfirmedLayout(backendRoomId);
 
-  if (!response) return null;
+  if (!response) {
+    return loadRoomDetailForInitialSetup(room, backendRoomId, storage, api, browserSession, true);
+  }
   assertLayoutOwner(response, backendRoomId);
   if (!response.confirmed) {
     saveLayoutResponseSession(room.id, response, storage, session?.editingMode);
@@ -115,11 +114,12 @@ export async function prepareManagedFurnitureDraft(
   const session = readActiveLayoutEditingSession(storage);
   const active = isSessionForRoom(session, room.id, backendRoomId)
     ? await api.getLayout(session.activeLayoutId)
-    : isNewSetupWithoutLayout(room.id, backendRoomId, browserSession)
-      ? null
-      : await api.getLatestConfirmedLayout(backendRoomId);
+    : isConfirmedReedit(room.id, backendRoomId, storage, browserSession)
+      ? await api.getLatestConfirmedLayout(backendRoomId)
+      : null;
 
   if (!active) {
+    recoverInitialSetupSession(room.id, backendRoomId, storage, browserSession);
     return createInitialSetupNavigationState(room.id, backendRoomId, room);
   }
   assertLayoutOwner(active, backendRoomId);
@@ -325,16 +325,53 @@ function parseBackendRoomId(raw: string | null): number | null {
   return Number.isInteger(parsed) && parsed > 0 ? parsed : null;
 }
 
-function isNewSetupWithoutLayout(
+function isConfirmedReedit(
   roomLayoutId: string,
   backendRoomId: number,
+  storage: WorkflowStorage,
   browserSession: WorkflowStorage | null,
 ): boolean {
   if (!browserSession) return false;
   const setup = readRoomSetupSession(browserSession);
-  return setup?.mode === "NEW"
+  return setup?.mode === "REEDIT"
     && setup.roomLayoutId === roomLayoutId
-    && setup.backendRoomId === backendRoomId;
+    && setup.backendRoomId === backendRoomId
+    && hasConfirmedLayout(roomLayoutId, storage);
+}
+
+async function loadRoomDetailForInitialSetup(
+  room: RoomLayout,
+  backendRoomId: number,
+  storage: WorkflowStorage,
+  api: LayoutWorkflowApi,
+  browserSession: WorkflowStorage | null,
+  clearStaleConfirmation = false,
+): Promise<RoomLayout> {
+  const backendRoom = await api.getRoomLayout(backendRoomId);
+  if (backendRoom.id !== room.id) {
+    throw new Error("Backend Room response does not match the selected Room.");
+  }
+
+  if (clearStaleConfirmation) {
+    clearConfirmedLayout(room.id, storage);
+  }
+  clearActiveLayoutEditingSession(storage);
+  recoverInitialSetupSession(room.id, backendRoomId, storage, browserSession);
+  storage.setItem("roomfit:selectedRoomLayout", JSON.stringify(backendRoom));
+  return backendRoom;
+}
+
+function recoverInitialSetupSession(
+  roomLayoutId: string,
+  backendRoomId: number,
+  storage: WorkflowStorage,
+  browserSession: WorkflowStorage | null,
+): void {
+  if (!browserSession) return;
+  const setup = readRoomSetupSession(browserSession);
+  if (setup?.roomLayoutId === roomLayoutId && setup.backendRoomId === backendRoomId && setup.mode !== "NEW") {
+    bindRoomToSetupSession(roomLayoutId, backendRoomId, "NEW", storage, browserSession);
+  }
 }
 
 function defaultBrowserSession(): WorkflowStorage | null {

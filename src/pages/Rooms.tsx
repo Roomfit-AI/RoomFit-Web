@@ -4,13 +4,10 @@ import { FiBox, FiCheck, FiLoader, FiPlus, FiSmartphone, FiStar, FiTrash2 } from
 
 import {
   deleteUploadedRoom,
-  getRecentUploadedRooms,
   getRoomById,
-  getSampleRooms,
   type SampleRoomCard,
   type UploadedRoomCard,
 } from "../api/rooms";
-import { RoomViewer } from "../components/room/RoomViewer";
 import { hasConfirmedLayout } from "../config/confirmedLayouts";
 import {
   createCustomRoom,
@@ -20,17 +17,16 @@ import {
   type CustomRoomFormErrors,
   type CustomRoomFormValues,
 } from "../config/customRoom";
-import { getRoomPreferences } from "../config/roomPreferences";
 import {
   beginNewRoomSetup,
   bindRoomToSetupSession,
   getSelectedRoomIdForSetup,
   initializeRoomSetupSession,
+  readRoomSetupSession,
   restoreRoomPreferencesForSetup,
 } from "../config/roomSetupSession";
-import { captureCanvasThumbnail, getRoomThumbnail, saveRoomThumbnail } from "../config/roomThumbnails";
-import type { RoomLayout } from "../types";
-import type { PreferredColorToneId } from "../config/preferredColorTone";
+import { getRoomThumbnail } from "../config/roomThumbnails";
+import { roomsPageLoader } from "../config/roomsPageLoader";
 import {
   clearPendingClientHandoff,
   readPendingClientHandoff,
@@ -58,7 +54,9 @@ export default function Rooms() {
   const [uploadedRooms, setUploadedRooms] = useState<UploadedRoomCard[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isUploadsLoading, setIsUploadsLoading] = useState(true);
-  const [uploadNotice, setUploadNotice] = useState(false);
+  const [samplesError, setSamplesError] = useState(false);
+  const [uploadsError, setUploadsError] = useState(false);
+  const [isServerStarting, setIsServerStarting] = useState(false);
   const [deletingRoomId, setDeletingRoomId] = useState<number | null>(null);
   const [deleteError, setDeleteError] = useState("");
   const [handoffError, setHandoffError] = useState("");
@@ -70,16 +68,8 @@ export default function Rooms() {
   const [initialHandoff] = useState(() => readPendingClientHandoff());
   const [isHandoffResolving, setIsHandoffResolving] = useState(Boolean(initialHandoff));
   const selectedRoomIdRef = useRef(selectedRoomId);
-  const knownUploadIds = useRef<Set<number> | null>(null);
   const deletedUploadIds = useRef(new Set<number>());
   const handoffRoomRef = useRef<UploadedRoomCard | null>(null);
-
-  // Ticks up after every background capture completes, purely to force
-  // roomNeedingCapture below to re-check which room (if any) still needs
-  // one — capturing happens one room at a time (see HiddenThumbnailCapture)
-  // rather than all at once, since each capture opens its own WebGL
-  // context and browsers cap how many a single page can hold open at once.
-  const [thumbnailCaptureTick, setThumbnailCaptureTick] = useState(0);
 
   useEffect(() => {
     const pendingHandoff = initialHandoff;
@@ -93,7 +83,6 @@ export default function Rooms() {
         commitRoomHandoff(room, pendingHandoff);
 
         handoffRoomRef.current = room;
-        knownUploadIds.current?.add(room.roomId);
         setUploadedRooms((current) => [room, ...current.filter((item) => item.roomId !== room.roomId)]);
         selectedRoomIdRef.current = room.layoutId;
         setSelectedRoomId(room.layoutId);
@@ -116,15 +105,17 @@ export default function Rooms() {
     if (isHandoffResolving) return;
     let ignore = false;
 
-    getSampleRooms()
+    roomsPageLoader.loadSamples()
       .then((samples) => {
         if (!ignore) {
           setRoomSamples(samples);
+          setSamplesError(false);
         }
       })
       .catch(() => {
         if (!ignore) {
           setRoomSamples([]);
+          setSamplesError(true);
         }
       })
       .finally(() => {
@@ -141,14 +132,10 @@ export default function Rooms() {
   useEffect(() => {
     if (isHandoffResolving) return;
     let ignore = false;
-    let requestInFlight = false;
 
     const loadUploadedRooms = async () => {
-      if (requestInFlight) return;
-      requestInFlight = true;
-
       try {
-        const rooms = (await getRecentUploadedRooms()).filter(
+        const rooms = (await roomsPageLoader.loadRecent()).filter(
           (room) => !deletedUploadIds.current.has(room.roomId),
         );
         const handoffRoom = handoffRoomRef.current;
@@ -157,63 +144,33 @@ export default function Rooms() {
           : rooms;
         if (ignore) return;
 
-        const nextIds = new Set(visibleRooms.map((room) => room.roomId));
-        if (
-          knownUploadIds.current !== null &&
-          visibleRooms.some((room) => !knownUploadIds.current?.has(room.roomId))
-        ) {
-          setUploadNotice(true);
-        }
-
-        knownUploadIds.current = nextIds;
         setUploadedRooms(visibleRooms);
+        setUploadsError(false);
       } catch {
-        // Keep the last successful list while the next poll retries.
+        if (!ignore) setUploadsError(true);
       } finally {
-        requestInFlight = false;
         if (!ignore) setIsUploadsLoading(false);
       }
     };
 
     void loadUploadedRooms();
-    const pollingId = window.setInterval(loadUploadedRooms, 3000);
 
     return () => {
       ignore = true;
-      window.clearInterval(pollingId);
     };
   }, [isHandoffResolving]);
 
   useEffect(() => {
-    if (!uploadNotice) return;
-
-    const timeoutId = window.setTimeout(() => setUploadNotice(false), 5000);
+    if ((!isLoading && !isUploadsLoading) || isHandoffResolving) return;
+    const timeoutId = window.setTimeout(() => setIsServerStarting(true), 5000);
     return () => window.clearTimeout(timeoutId);
-  }, [uploadNotice]);
+  }, [isHandoffResolving, isLoading, isUploadsLoading]);
 
   const visibleRooms = useMemo(() => {
     if (activeFilter === "전체") return roomSamples;
 
     return roomSamples.filter((room) => room.category === activeFilter);
   }, [activeFilter, roomSamples]);
-
-  // The first room (sample or uploaded) with no locally-captured thumbnail
-  // yet (see getRoomThumbnail) — capturing this automatically, right when
-  // the room list itself loads, means a real furnished-3D thumbnail is
-  // ready the moment a room shows up here instead of only after someone
-  // happens to open /manage-furniture for it.
-  const roomNeedingCapture = useMemo(() => {
-    const candidates: Array<{ layoutId: string; layout: RoomLayout }> = [
-      ...roomSamples.map((room) => ({ layoutId: room.layoutId, layout: room.layout })),
-      ...uploadedRooms.map((room) => ({ layoutId: room.layoutId, layout: room.layout })),
-    ];
-
-    return candidates.find((room) => !getRoomThumbnail(room.layoutId));
-    // thumbnailCaptureTick has no meaningful value itself — it's only here
-    // so a completed capture (see HiddenThumbnailCapture's onDone) forces
-    // this to re-run and pick up the next room still needing one.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [roomSamples, uploadedRooms, thumbnailCaptureTick]);
 
   const selectRoom = (
     room: SampleRoomCard | CustomRoomCard,
@@ -228,11 +185,20 @@ export default function Rooms() {
       : "roomId" in room
         ? room.roomId
         : null;
+    const currentSetup = readRoomSetupSession();
+    const preserveNewSetup = currentSetup?.mode === "NEW"
+      && currentSetup.roomLayoutId === room.layoutId
+      && currentSetup.backendRoomId === backendRoomId;
+    const setupMode = backendRoomId !== null
+      && !preserveNewSetup
+      && hasConfirmedLayout(room.layoutId)
+      ? "REEDIT"
+      : "NEW";
     persistRoomSelection(backendRoomId === null ? { ...room, roomId: undefined } : room);
     bindRoomToSetupSession(
       room.layoutId,
       backendRoomId,
-      backendRoomId === null ? "NEW" : "REEDIT",
+      setupMode,
     );
 
     // Deliberately always the raw as-uploaded room, never a previously
@@ -266,7 +232,7 @@ export default function Rooms() {
     // confirmed room reopens showing what it was actually confirmed with.
     restoreRoomPreferencesForSetup(
       room.layoutId,
-      backendRoomId === null ? "NEW" : "REEDIT",
+      setupMode,
     );
 
     selectedRoomIdRef.current = room.layoutId;
@@ -307,7 +273,6 @@ export default function Rooms() {
     try {
       await deleteUploadedRoom(room.roomId);
       deletedUploadIds.current.add(room.roomId);
-      knownUploadIds.current?.delete(room.roomId);
       setUploadedRooms((current) => current.filter((item) => item.roomId !== room.roomId));
       if (handoffRoomRef.current?.roomId === room.roomId) handoffRoomRef.current = null;
 
@@ -365,6 +330,16 @@ export default function Rooms() {
         </aside>
 
         <section className="space-y-12">
+          {isServerStarting && (isLoading || isUploadsLoading) && !isHandoffResolving && (
+            <div
+              role="status"
+              aria-live="polite"
+              className="border-l-4 border-[#111111] bg-[#f1f1f1] px-4 py-3 text-sm font-semibold text-[#333333]"
+            >
+              서버를 준비하고 있습니다. 공간 선택 화면은 먼저 사용할 수 있어요.
+            </div>
+          )}
+
           <section aria-labelledby="uploaded-rooms-title">
             <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
               <div>
@@ -379,13 +354,12 @@ export default function Rooms() {
               <FiSmartphone className="h-6 w-6 text-[#555555]" aria-hidden="true" />
             </div>
 
-            {uploadNotice && (
+            {uploadsError && (
               <div
-                role="status"
-                aria-live="polite"
-                className="mb-5 border-l-4 border-[#111111] bg-[#f1f1f1] px-4 py-3 text-sm font-semibold text-[#222222]"
+                role="alert"
+                className="mb-5 border-l-4 border-[#b42318] bg-[#fff4f2] px-4 py-3 text-sm font-semibold text-[#8a1c14]"
               >
-                앱에서 업로드한 방이 추가되었습니다.
+                최근 업로드 방을 불러오지 못했습니다. 샘플이나 직접 만들기는 계속 사용할 수 있어요.
               </div>
             )}
 
@@ -506,14 +480,25 @@ export default function Rooms() {
               ))}
             </div>
 
-            {isLoading ? (
-              <div className="flex h-80 items-center justify-center">
-                <span className="text-sm font-semibold text-[#777777]">
-                  불러오는 중...
-                </span>
+            {samplesError && (
+              <div
+                role="alert"
+                className="mb-5 border-l-4 border-[#b42318] bg-[#fff4f2] px-4 py-3 text-sm font-semibold text-[#8a1c14]"
+              >
+                샘플 방을 불러오지 못했습니다. 최근 업로드 방이나 직접 만들기는 계속 사용할 수 있어요.
               </div>
-            ) : (
-              <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
+            )}
+
+            <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
+                {isLoading && (
+                  <div
+                    role="status"
+                    className="flex min-h-63.5 items-center justify-center rounded-lg border border-[#e5e5e5] bg-white"
+                  >
+                    <span className="text-sm font-semibold text-[#777777]">샘플을 불러오는 중...</span>
+                  </div>
+                )}
+
                 {visibleRooms.map((room) => (
                   <button
                     key={`${room.layoutId}-${room.title}`}
@@ -594,20 +579,10 @@ export default function Rooms() {
                     새 공간 만들기
                   </span>
                 </button>
-              </div>
-            )}
+            </div>
           </section>
         </section>
       </section>
-
-      {roomNeedingCapture && (
-        <HiddenThumbnailCapture
-          key={roomNeedingCapture.layoutId}
-          room={roomNeedingCapture.layout}
-          preferredColorTone={getRoomPreferences(roomNeedingCapture.layoutId).palette || null}
-          onDone={() => setThumbnailCaptureTick((tick) => tick + 1)}
-        />
-      )}
 
       {isCustomRoomDialogOpen && (
         <div className="fixed inset-0 z-50 grid place-items-center bg-black/45 px-5 py-10">
@@ -807,68 +782,5 @@ function CustomRoomField({
         </span>
       )}
     </label>
-  );
-}
-
-// Renders one room invisibly just long enough to grab a real 3D thumbnail
-// of it, then reports back so the caller can move on to the next room still
-// missing one.
-function HiddenThumbnailCapture({
-  room,
-  preferredColorTone,
-  onDone,
-}: {
-  room: RoomLayout;
-  preferredColorTone: PreferredColorToneId | null;
-  onDone: () => void;
-}) {
-  const containerRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const timer = window.setTimeout(() => {
-      const container = containerRef.current;
-      const dataUrl = container && captureCanvasThumbnail(container);
-
-      if (dataUrl) {
-        saveRoomThumbnail(room.id, dataUrl);
-      }
-
-      onDone();
-    }, 500);
-
-    return () => window.clearTimeout(timer);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [room.id]);
-
-  return (
-    <div
-      ref={containerRef}
-      aria-hidden
-      // The actual bug behind the broken framing: RoomViewer's internal
-      // ".viewer-shell" div (see RoomViewer.tsx / index.css) only gets a
-      // real width/height from a CSS rule scoped to an ancestor className
-      // — ".manage-room .viewer-shell", ".confirm-room .viewer-shell", etc.
-      // Without one of those classes on this wrapper, .viewer-shell had no
-      // size at all, so the Canvas/orthographic camera ended up with a
-      // degenerate aspect ratio and rendered that near-empty top-down
-      // sliver instead of a normal isometric view — regardless of how this
-      // div itself was hidden (off-screen vs. opacity, neither mattered).
-      // Reusing "manage-room" here gives it the exact same sizing as
-      // /manage-furniture's real, visible viewer. Hidden via opacity +
-      // negative z-index while still sitting within viewport bounds.
-      className="manage-room"
-      style={{ position: "fixed", inset: 0, width: 900, height: 620, opacity: 0, zIndex: -1, pointerEvents: "none" }}
-    >
-      <RoomViewer
-        room={room}
-        furniture={room.furniture}
-        selectedFurnitureId={null}
-        onSelectFurniture={() => undefined}
-        onMoveFurniture={() => undefined}
-        hideEntranceWalls
-        alignCameraToEntrance
-        preferredColorTone={preferredColorTone}
-      />
-    </div>
   );
 }

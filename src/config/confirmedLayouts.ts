@@ -7,8 +7,10 @@ import type { RoomLayout } from "../types";
 // room resolves the latest confirmed Layout before editing begins.
 const CONFIRMED_LAYOUTS_KEY = "roomfit:confirmedLayoutsByRoomId";
 
-function readAll(): Record<string, RoomLayout> {
-  const raw = localStorage.getItem(CONFIRMED_LAYOUTS_KEY);
+type ConfirmedLayoutStorage = Pick<Storage, "getItem" | "setItem">;
+
+function readAll(storage: Pick<ConfirmedLayoutStorage, "getItem"> = localStorage): Record<string, RoomLayout> {
+  const raw = storage.getItem(CONFIRMED_LAYOUTS_KEY);
 
   if (!raw) {
     return {};
@@ -22,18 +24,38 @@ function readAll(): Record<string, RoomLayout> {
   }
 }
 
-export function saveConfirmedLayout(roomLayoutId: string, layout: RoomLayout): void {
-  const all = readAll();
+export function saveConfirmedLayout(
+  roomLayoutId: string,
+  layout: RoomLayout,
+  storage: ConfirmedLayoutStorage = localStorage,
+): void {
+  const all = readAll(storage);
   all[roomLayoutId] = layout;
-  localStorage.setItem(CONFIRMED_LAYOUTS_KEY, JSON.stringify(all));
+  storage.setItem(CONFIRMED_LAYOUTS_KEY, JSON.stringify(all));
 }
 
-export function getConfirmedLayout(roomLayoutId: string): RoomLayout | null {
-  return readAll()[roomLayoutId] ?? null;
+export function getConfirmedLayout(
+  roomLayoutId: string,
+  storage: Pick<ConfirmedLayoutStorage, "getItem"> = localStorage,
+): RoomLayout | null {
+  return readAll(storage)[roomLayoutId] ?? null;
 }
 
-export function hasConfirmedLayout(roomLayoutId: string): boolean {
-  return Boolean(readAll()[roomLayoutId]);
+export function hasConfirmedLayout(
+  roomLayoutId: string,
+  storage: Pick<ConfirmedLayoutStorage, "getItem"> = localStorage,
+): boolean {
+  return Boolean(readAll(storage)[roomLayoutId]);
+}
+
+export function clearConfirmedLayout(
+  roomLayoutId: string,
+  storage: ConfirmedLayoutStorage = localStorage,
+): void {
+  const all = readAll(storage);
+  if (!(roomLayoutId in all)) return;
+  delete all[roomLayoutId];
+  storage.setItem(CONFIRMED_LAYOUTS_KEY, JSON.stringify(all));
 }
 
 // Legacy confirmed mirror, written only after Backend confirm. Editing pages

@@ -99,7 +99,7 @@ describe("Room App handoff bootstrap", () => {
       sessionId: "setup-app",
       roomLayoutId: "api-room-42",
       backendRoomId: 42,
-      mode: "REEDIT",
+      mode: "NEW",
     });
     expect(readActiveClientScope(session)).toMatchObject({
       mode: "APP_UUID",
