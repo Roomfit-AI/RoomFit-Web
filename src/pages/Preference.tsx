@@ -10,6 +10,11 @@ import {
   hasRoomPreferences,
   shouldClearInitialPreferences,
 } from "../config/roomPreferences";
+import {
+  getPreferenceGuidanceMessage,
+  normalizeLifestyleId,
+  notifyOnboardingSelectionChanged,
+} from "../config/onboardingSelection";
 
 const purposes = [
   { id: "rest", title: "휴식", description: "편안하게 쉴 수 있는 목적", icon: FiCoffee },
@@ -39,17 +44,34 @@ export default function Preference() {
     } else {
       localStorage.removeItem("roomfit:selectedPalette");
     }
+
+    // 선택이 바뀌었으니 같은 탭의 Navbar가 "다음 단계" 버튼 활성화 여부를
+    // 다시 계산하도록 알린다.
+    notifyOnboardingSelectionChanged();
   }, [selectedPurpose, selectedPalette]);
+
+  const guidanceMessage = getPreferenceGuidanceMessage({
+    purpose: normalizeLifestyleId(selectedPurpose),
+    palette: normalizePreferredColorToneId(selectedPalette),
+  });
 
   return (
     <main className="min-h-[calc(100vh-76px)] bg-[#fbfbfb] px-5 py-8 text-[#141414] sm:px-8 lg:px-10">
       <section className="mx-auto max-w-7xl">
         <PageStepHeader step={3} title="라이프 스타일 및 선호하는 디자인 선택" className="mb-12" />
 
-        <header className="mb-12 text-center">
+        <header className="mb-8 text-center">
           <h1 className="text-3xl font-extrabold tracking-normal sm:text-4xl">당신의 라이프스타일과 선호하는 색감을 알려주세요</h1>
           <p className="mt-3 text-sm font-semibold text-[#777777]">정확한 추천을 위해 생활 패턴을 입력해주세요.</p>
         </header>
+
+        <div role="status" aria-live="polite" className="mb-8 flex justify-center">
+          {guidanceMessage && (
+            <p className="rounded-lg bg-[#fff8e6] px-4 py-3 text-sm font-bold text-[#8a5a00]">
+              {guidanceMessage}
+            </p>
+          )}
+        </div>
 
         <section className="mb-10">
           <h2 className="mb-4 text-base font-extrabold">라이프스타일</h2>
@@ -139,8 +161,10 @@ function getInitialPreferenceValues(): {
     sessionStorage.setItem(preferenceVisitedKey, "true");
   }
 
+  // 복원 값도 지원하는 유효 id일 때만 선택으로 인정한다 — 빈 문자열/지원하지
+  // 않는 값/오래된 값은 미선택("")으로 두고, 첫 번째 옵션으로 임의 치환하지 않는다.
   return {
-    purpose: localStorage.getItem("roomfit:selectedPurpose") ?? "",
+    purpose: normalizeLifestyleId(localStorage.getItem("roomfit:selectedPurpose")) ?? "",
     palette: normalizePreferredColorToneId(localStorage.getItem("roomfit:selectedPalette")) ?? "",
   };
 }

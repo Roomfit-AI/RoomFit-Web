@@ -1,6 +1,10 @@
 import { useEffect, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import Button from "./Button";
+import {
+  canAdvanceFromPath,
+  ONBOARDING_SELECTION_EVENT,
+} from "../../config/onboardingSelection";
 
 interface NavigationStep {
   path: string;
@@ -59,6 +63,23 @@ export default function Navbar() {
   const [isNavigating, setIsNavigating] = useState(false);
   const [navigationError, setNavigationError] = useState("");
   const navigationInFlightRef = useRef(false);
+  // /preference·/reference-image에서 필수 선택이 끝났는지. 게이트 대상이 아닌
+  // 단계에서는 항상 true라 기존 이동 동작에 영향이 없다.
+  const [canAdvance, setCanAdvance] = useState(() => canAdvanceFromPath(location.pathname));
+
+  useEffect(() => {
+    const update = () => setCanAdvance(canAdvanceFromPath(location.pathname));
+    // 새로고침/뒤로 가기/URL 직접 진입(경로 변경)마다, 그리고 페이지에서 선택이
+    // 바뀔 때(같은 탭 커스텀 이벤트)마다 다시 계산한다. storage 이벤트는 다른
+    // 탭에서의 변경까지 커버한다.
+    update();
+    window.addEventListener(ONBOARDING_SELECTION_EVENT, update);
+    window.addEventListener("storage", update);
+    return () => {
+      window.removeEventListener(ONBOARDING_SELECTION_EVENT, update);
+      window.removeEventListener("storage", update);
+    };
+  }, [location.pathname]);
 
   useEffect(() => {
     if (!["/preference", "/reference-image", "/add-furniture"].includes(location.pathname)) {
@@ -92,6 +113,9 @@ export default function Navbar() {
 
   const goNext = async () => {
     if (navigationInFlightRef.current) return;
+    // 버튼 disabled와 별개로, navigation handler에서도 필수 선택을 다시 확인한다
+    // (키보드/포커스 타이밍 등으로 disabled를 우회한 호출까지 막기 위해).
+    if (!canAdvanceFromPath(location.pathname)) return;
     navigationInFlightRef.current = true;
     const currentStep = navigationSteps[safeStepIndex];
     setIsNavigating(true);
@@ -147,7 +171,7 @@ export default function Navbar() {
               요약 정보 aside, which also handles the thumbnail capture on
               confirm — keeping this navbar one too just doubled the button. */}
           {nextStep && !isLastStep && (
-            <Button onClick={goNext} disabled={isNavigating} className="hidden px-7 py-2.5 sm:inline-flex">
+            <Button onClick={goNext} disabled={isNavigating || !canAdvance} className="hidden px-7 py-2.5 sm:inline-flex">
               {isNavigating
                 ? location.pathname === "/add-furniture" ? "추천 생성 중..." : "저장 중..."
                 : isHome ? "시작하기" : "다음 단계"}
