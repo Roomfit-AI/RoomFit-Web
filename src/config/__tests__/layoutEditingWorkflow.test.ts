@@ -738,7 +738,7 @@ describe("Draft layout editing workflow", () => {
   it("uses Layout Draft persistence instead of Room replacement during re-edit", async () => {
     const room = createRoom();
     const storage = selectedRoomStorage(room);
-    const api = fakeApi();
+    const api = fakeApi({ saved: response(31, false, 10) });
     saveDraftSession(storage, 31, 10);
 
     await persistManagedFurnitureSnapshot(room, storage, api);
@@ -766,6 +766,101 @@ describe("Draft layout editing workflow", () => {
 
     expect(vi.mocked(api.replaceRoomFurniture).mock.calls.map(([, saved]) => saved.furniture[0].position.x))
       .toEqual([-0.4, 0.4]);
+  });
+
+  it("does not send an old queued snapshot after another Room is selected", async () => {
+    const firstRoom = createRoom("api-room-1", -0.4);
+    const staleRoom = createRoom("api-room-1", 0.4);
+    const nextRoom = createRoom("api-room-2", 0.8);
+    const storage = selectedRoomStorage(firstRoom);
+    const first = createDeferred<RoomLayout>();
+    const api = fakeApi();
+    vi.mocked(api.replaceRoomFurniture).mockReturnValueOnce(first.promise);
+
+    const firstSave = persistManagedFurnitureSnapshot(firstRoom, storage, api);
+    await vi.waitFor(() => expect(api.replaceRoomFurniture).toHaveBeenCalledTimes(1));
+    const staleSave = persistManagedFurnitureSnapshot(staleRoom, storage, api);
+    selectRoom(storage, nextRoom, 2);
+    first.resolve(firstRoom);
+
+    await expect(firstSave).resolves.toBeNull();
+    await expect(staleSave).resolves.toBeNull();
+    expect(api.replaceRoomFurniture).toHaveBeenCalledExactlyOnceWith(1, firstRoom);
+    expect(readRoom(storage)).toEqual(nextRoom);
+  });
+
+  it("does not send an old queued snapshot after the active Draft changes", async () => {
+    const firstRoom = createRoom("api-room-1", -0.4);
+    const staleRoom = createRoom("api-room-1", 0.4);
+    const storage = selectedRoomStorage(firstRoom);
+    saveDraftSession(storage, 31, 10);
+    const first = createDeferred<LayoutResponse>();
+    const api = fakeApi();
+    vi.mocked(api.updateLayout).mockReturnValueOnce(first.promise);
+
+    const firstSave = persistManagedFurnitureSnapshot(firstRoom, storage, api);
+    await vi.waitFor(() => expect(api.updateLayout).toHaveBeenCalledTimes(1));
+    const staleSave = persistManagedFurnitureSnapshot(staleRoom, storage, api);
+    saveDraftSession(storage, 32, 10);
+    first.resolve(response(31, false, 10, backendFurnitureFromRoom(firstRoom)));
+
+    await expect(firstSave).resolves.toBeNull();
+    await expect(staleSave).resolves.toBeNull();
+    expect(api.updateLayout).toHaveBeenCalledExactlyOnceWith(31, firstRoom);
+  });
+
+  it("drops manage-furniture persistence when the client scope changes", async () => {
+    const room = createRoom();
+    const storage = selectedRoomStorage(room);
+    const browser = setupBrowserStorage(room.id, 1, "scope-a");
+    const activeScope = (clientId: string, setupSessionId: string) => JSON.stringify({
+      version: 1,
+      mode: "APP_UUID",
+      clientId,
+      setupSessionId,
+      backendRoomId: 1,
+      roomLayoutId: room.id,
+    });
+    browser.setItem("roomfit:activeClientScope:v1", activeScope(
+      "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+      "scope-a",
+    ));
+    const api = fakeApi();
+
+    const pending = persistManagedFurnitureSnapshot(room, storage, api, browser);
+    browser.setItem("roomfit:activeClientScope:v1", activeScope(
+      "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
+      "scope-b",
+    ));
+
+    await expect(pending).resolves.toBeNull();
+    expect(api.replaceRoomFurniture).not.toHaveBeenCalled();
+  });
+
+  it("does not let an older success replace a newer local snapshot when the newer save fails", async () => {
+    const firstRoom = createRoom("api-room-1", -0.4);
+    const latestRoom = createRoom("api-room-1", 0.4);
+    const storage = selectedRoomStorage(firstRoom);
+    const first = createDeferred<RoomLayout>();
+    const api = fakeApi();
+    vi.mocked(api.replaceRoomFurniture)
+      .mockReturnValueOnce(first.promise)
+      .mockRejectedValueOnce(new Error("latest save failed"));
+
+    const firstSave = persistManagedFurnitureSnapshot(firstRoom, storage, api);
+    await vi.waitFor(() => expect(api.replaceRoomFurniture).toHaveBeenCalledTimes(1));
+    storage.setItem("roomfit:selectedRoomLayout", JSON.stringify(latestRoom));
+    const latestSave = persistManagedFurnitureSnapshot(latestRoom, storage, api);
+    const latestFailure = expect(latestSave).rejects.toThrow("latest save failed");
+    first.resolve(firstRoom);
+
+    await expect(firstSave).resolves.toEqual(firstRoom);
+    expect(readRoom(storage)).toEqual(latestRoom);
+    await latestFailure;
+    expect(readRoom(storage)).toEqual(latestRoom);
+
+    vi.mocked(api.replaceRoomFurniture).mockResolvedValueOnce(latestRoom);
+    await persistManagedFurnitureSnapshot(latestRoom, storage, api);
   });
 
   it("keeps the edited mirror and rejects navigation when Room persistence fails", async () => {
@@ -1491,6 +1586,10 @@ function selectedRoomStorageWithPlant(): MemoryStorage {
 
 function createDeferred<T>() {
   let resolve!: (value: T) => void;
-  const promise = new Promise<T>((resolver) => { resolve = resolver; });
-  return { promise, resolve };
+  let reject!: (reason?: unknown) => void;
+  const promise = new Promise<T>((resolver, rejecter) => {
+    resolve = resolver;
+    reject = rejecter;
+  });
+  return { promise, resolve, reject };
 }

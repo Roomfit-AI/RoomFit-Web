@@ -50,24 +50,22 @@ function hasMatchingCenter(supporter: Furniture, dependent: Furniture): boolean 
 }
 
 function containsFootprint(supporter: Furniture, dependent: Furniture): boolean {
-  const supporterBounds = worldFootprintBounds(supporter);
-  const dependentBounds = worldFootprintBounds(dependent);
-  return dependentBounds.minX >= supporterBounds.minX - CENTER_EPSILON_METERS
-    && dependentBounds.maxX <= supporterBounds.maxX + CENTER_EPSILON_METERS
-    && dependentBounds.minZ >= supporterBounds.minZ - CENTER_EPSILON_METERS
-    && dependentBounds.maxZ <= supporterBounds.maxZ + CENTER_EPSILON_METERS;
-}
-
-function worldFootprintBounds(item: Furniture) {
-  const footprint = calculateRotatedFootprint(
-    item.dimensions,
-    item.rotationY,
-    resolveFurnitureLocalFootprint(item),
-  );
-  return {
-    minX: item.position.x + footprint.minX,
-    maxX: item.position.x + footprint.maxX,
-    minZ: item.position.z + footprint.minZ,
-    maxZ: item.position.z + footprint.maxZ,
-  };
+  const supporterFootprint = resolveFurnitureLocalFootprint(supporter);
+  const dependentCorners = calculateRotatedFootprint(
+    dependent.dimensions,
+    dependent.rotationY,
+    resolveFurnitureLocalFootprint(dependent),
+  ).corners;
+  const cosine = Math.cos(supporter.rotationY);
+  const sine = Math.sin(supporter.rotationY);
+  return dependentCorners.every((corner) => {
+    const worldX = dependent.position.x + corner.x - supporter.position.x;
+    const worldZ = dependent.position.z + corner.z - supporter.position.z;
+    const localX = worldX * cosine + worldZ * sine;
+    const localZ = -worldX * sine + worldZ * cosine;
+    return localX >= supporterFootprint.minX - CENTER_EPSILON_METERS
+      && localX <= supporterFootprint.maxX + CENTER_EPSILON_METERS
+      && localZ >= supporterFootprint.minZ - CENTER_EPSILON_METERS
+      && localZ <= supporterFootprint.maxZ + CENTER_EPSILON_METERS;
+  });
 }

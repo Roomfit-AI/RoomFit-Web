@@ -46,6 +46,20 @@ describe("resolveFurnitureSupportPositions", () => {
       .toBe(monitor.dimensions.height / 2);
   });
 
+  it("rejects differing rotations whose AABBs overlap but exact footprints do not fit", () => {
+    const desk = {
+      ...furniture("desk", "desk", { width: 2, depth: 1, height: 0.72 }),
+      rotationY: Math.PI / 4,
+    };
+    const monitor = {
+      ...furniture("monitor", "monitor", { width: 1.8, depth: 0.2, height: 0.4 }),
+      rotationY: -Math.PI / 4,
+    };
+
+    expect(resolveFurnitureSupportPositions([desk, monitor]).get("monitor")?.[1])
+      .toBe(monitor.dimensions.height / 2);
+  });
+
   it("keeps a dependent moved by 0.01m on the floor", () => {
     const desk = furniture("desk", "desk", { width: 1.4, depth: 0.7, height: 0.72 });
     const monitor = {

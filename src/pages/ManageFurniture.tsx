@@ -12,6 +12,7 @@ import { getLiveMirrorForSelectedRoom } from "../config/confirmedLayouts";
 import {
   loadManagedFurnitureLayout,
   persistManagedFurnitureSnapshot,
+  settleLatestManagedFurniturePersistence,
 } from "../config/layoutEditingWorkflow";
 import { captureCanvasThumbnail, saveRoomThumbnail } from "../config/roomThumbnails";
 import { sampleRoomLayouts } from "../mock/interiorPlacementMock";
@@ -27,6 +28,8 @@ const specs: Record<FurnitureCategory, string> = {
   lighting: "W350 D350 H1550",
   unsupported: "크기 정보 없음",
 };
+
+const MANAGED_FURNITURE_SAVE_ERROR = "가구 배치를 저장하지 못했습니다. 편집 내용은 이 브라우저에 유지됩니다.";
 
 export default function ManageFurniture() {
   const [selectedRoom, setSelectedRoom] = useState<RoomLayout>(() => getSelectedRoom());
@@ -54,6 +57,7 @@ export default function ManageFurniture() {
   const [panelWidth, setPanelWidth] = useState(320);
   const [isResizing, setIsResizing] = useState(false);
   const [layoutError, setLayoutError] = useState("");
+  const persistenceUiRevisionRef = useRef(0);
 
   const visibleFurniture = furniture.filter((item) => item.status !== "deleted");
 
@@ -154,11 +158,18 @@ export default function ManageFurniture() {
     setFurniture(nextFurniture);
 
     if (persistToBackend) {
-      setLayoutError("");
-      void persistManagedFurnitureSnapshot(nextRoom).catch(() => {
-        setLayoutError("가구 배치를 저장하지 못했습니다. 편집 내용은 이 브라우저에 유지됩니다.");
-      });
+      persistFurniture(nextRoom);
     }
+  };
+
+  const persistFurniture = (room: RoomLayout) => {
+    setLayoutError("");
+    settleLatestManagedFurniturePersistence(
+      persistManagedFurnitureSnapshot(room),
+      persistenceUiRevisionRef,
+      () => setLayoutError(""),
+      () => setLayoutError(MANAGED_FURNITURE_SAVE_ERROR),
+    );
   };
 
   const removeFurniture = (id: string) => {
@@ -177,10 +188,7 @@ export default function ManageFurniture() {
   };
 
   const persistMovedFurniture = () => {
-    setLayoutError("");
-    void persistManagedFurnitureSnapshot(latestRoomRef.current).catch(() => {
-      setLayoutError("가구 배치를 저장하지 못했습니다. 편집 내용은 이 브라우저에 유지됩니다.");
-    });
+    persistFurniture(latestRoomRef.current);
   };
 
   const resetFurniture = () => {
