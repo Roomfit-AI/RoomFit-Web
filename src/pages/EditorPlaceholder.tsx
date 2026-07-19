@@ -244,6 +244,11 @@ export default function EditorPlaceholder() {
     let active = true;
 
     persistEditorLayoutSnapshot(request.roomLayout)
+      .then((result) => {
+        if (!active || !result?.layoutResponse) return;
+        setScoreSummary(result.layoutResponse.scoreSummary);
+        setValidationResult(result.layoutResponse.validationResult);
+      })
       .catch(() => {
         if (active) {
           setErrorMessage("편집 내용을 저장하지 못했습니다. 현재 화면에서 다시 시도해 주세요.");
@@ -632,9 +637,10 @@ export default function EditorPlaceholder() {
             </section>
           )}
 
-          {scoreSummary && recommendationNotice?.status !== "FAILED" && (
+          {scoreSummary && validationResult && recommendationNotice?.status !== "FAILED" && (
             <ScoreSummaryPanel
               scoreSummary={scoreSummary}
+              validationResult={validationResult}
               recommendationStatus={recommendationNotice?.status}
             />
           )}

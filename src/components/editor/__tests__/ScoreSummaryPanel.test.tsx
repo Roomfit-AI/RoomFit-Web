@@ -1,8 +1,8 @@
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 
-import type { ScoreSummary } from "../../../api/layouts";
-import ScoreSummaryPanel from "../ScoreSummaryPanel";
+import type { LayoutValidationResult, ScoreSummary } from "../../../api/layouts";
+import ScoreSummaryPanel, { resolveLayoutQuality } from "../ScoreSummaryPanel";
 
 describe("ScoreSummaryPanel", () => {
   it.each([
@@ -12,6 +12,7 @@ describe("ScoreSummaryPanel", () => {
     const html = renderToStaticMarkup(
       <ScoreSummaryPanel
         scoreSummary={scoreSummary(rawTotal)}
+        validationResult={validationResult()}
         recommendationStatus={status}
       />,
     );
@@ -25,6 +26,7 @@ describe("ScoreSummaryPanel", () => {
     const html = renderToStaticMarkup(
       <ScoreSummaryPanel
         scoreSummary={scoreSummary(450)}
+        validationResult={validationResult()}
         recommendationStatus="FAILED"
       />,
     );
@@ -32,6 +34,14 @@ describe("ScoreSummaryPanel", () => {
     expect(html).not.toContain("총점");
     expect(html).not.toContain(">76<");
     expect(html).toContain("충돌");
+  });
+
+  it("marks a fully valid layout scoring at least 80 as good", () => {
+    expect(resolveLayoutQuality(80, validationResult())).toBe("양호");
+  });
+
+  it("requires every validation check even when the score is high", () => {
+    expect(resolveLayoutQuality(95, validationResult({ pathSecured: false }))).toBe("개선 필요");
   });
 });
 
@@ -44,5 +54,19 @@ function scoreSummary(totalScore: number): ScoreSummary {
     goalScore: 95,
     styleScore: 96,
     totalScore,
+  };
+}
+
+function validationResult(
+  overrides: Partial<LayoutValidationResult> = {},
+): LayoutValidationResult {
+  return {
+    collisionFree: true,
+    boundaryValid: true,
+    doorClearance: true,
+    windowClearance: true,
+    pathSecured: true,
+    warnings: [],
+    ...overrides,
   };
 }

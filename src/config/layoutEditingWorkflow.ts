@@ -16,7 +16,7 @@ import {
   AgentContextRequestValidationError,
   resolveRequiredFurnitureTypes,
 } from "../api/agentContextRequest";
-import { applyBackendFurnitureToLayout, getRoomById } from "../api/rooms";
+import { applyBackendFurnitureToLayout, getRoomById, replaceRoomFurniture } from "../api/rooms";
 import type { RoomLayout } from "../types";
 import {
   resolveRoomLayoutPreferredColorTone,
@@ -50,6 +50,7 @@ type WorkflowStorage = Pick<Storage, "getItem" | "setItem" | "removeItem">;
 
 export interface LayoutWorkflowApi {
   getRoomLayout: (roomId: number) => Promise<RoomLayout>;
+  replaceRoomFurniture: typeof replaceRoomFurniture;
   getLayout: typeof getLayout;
   getLatestConfirmedLayout: typeof getLatestConfirmedLayout;
   createLayoutDraft: typeof createLayoutDraft;
@@ -62,6 +63,7 @@ export interface LayoutWorkflowApi {
 
 const defaultApi: LayoutWorkflowApi = {
   getRoomLayout: async (roomId) => (await getRoomById(roomId)).layout,
+  replaceRoomFurniture,
   getLayout,
   getLatestConfirmedLayout,
   createLayoutDraft,
@@ -79,8 +81,146 @@ interface EditorPersistenceOwner {
   clientId: string | null;
 }
 
+interface ManagedFurniturePersistenceOwner {
+  roomLayoutId: string;
+  backendRoomId: number;
+  activeLayoutId: number | null;
+  sessionIdentity: string | null;
+  clientId: string | null;
+}
+
 let pendingEditorLayoutPersistence: Promise<void> = Promise.resolve();
 let latestEditorLayoutPersistence: Promise<unknown> = Promise.resolve();
+let pendingManagedFurniturePersistence: Promise<void> = Promise.resolve();
+let latestManagedFurniturePersistence: Promise<unknown> = Promise.resolve();
+const managedFurnitureRevisions = new WeakMap<object, Map<string, number>>();
+
+export function persistManagedFurnitureSnapshot(
+  room: RoomLayout,
+  storage: WorkflowStorage = localStorage,
+  api: LayoutWorkflowApi = defaultApi,
+  browserSession: WorkflowStorage | null = defaultBrowserSession(),
+): Promise<RoomLayout | null> {
+  const owner = readManagedFurniturePersistenceOwner(room, storage, browserSession);
+  if (!owner) return Promise.resolve(null);
+  const ownerKey = managedFurnitureOwnerKey(owner);
+  const revision = nextManagedFurnitureRevision(storage, ownerKey);
+  const persist = () => persistManagedFurnitureNow(
+    room,
+    owner,
+    ownerKey,
+    revision,
+    storage,
+    api,
+    browserSession,
+  );
+  const task = pendingManagedFurniturePersistence.then(persist, persist);
+  pendingManagedFurniturePersistence = task.then(() => undefined, () => undefined);
+  latestManagedFurniturePersistence = task;
+  return task;
+}
+
+export async function flushManagedFurniturePersistence(): Promise<void> {
+  await latestManagedFurniturePersistence;
+}
+
+export function settleLatestManagedFurniturePersistence(
+  request: Promise<unknown>,
+  revisionRef: { current: number },
+  onSuccess: () => void,
+  onFailure: () => void,
+): void {
+  const revision = ++revisionRef.current;
+  void request.then(
+    () => {
+      if (revisionRef.current === revision) onSuccess();
+    },
+    () => {
+      if (revisionRef.current === revision) onFailure();
+    },
+  );
+}
+
+async function persistManagedFurnitureNow(
+  room: RoomLayout,
+  owner: ManagedFurniturePersistenceOwner,
+  ownerKey: string,
+  revision: number,
+  storage: WorkflowStorage,
+  api: LayoutWorkflowApi,
+  browserSession: WorkflowStorage | null,
+): Promise<RoomLayout | null> {
+  if (!isManagedFurniturePersistenceOwnerCurrent(owner, storage, browserSession)) return null;
+
+  let saved: RoomLayout;
+  if (owner.activeLayoutId !== null) {
+    const response = await api.updateLayout(owner.activeLayoutId, room);
+    assertActiveDraftResponse(response, owner.activeLayoutId, owner.backendRoomId);
+    saved = applyBackendFurnitureToLayout(room, response.recommendedFurniture);
+  } else {
+    saved = await api.replaceRoomFurniture(owner.backendRoomId, room);
+  }
+
+  if (!isManagedFurniturePersistenceOwnerCurrent(owner, storage, browserSession)) return null;
+  if (readManagedFurnitureRevision(storage, ownerKey) === revision) {
+    persistActiveDraftMirror(saved, storage);
+  }
+  return saved;
+}
+
+function readManagedFurniturePersistenceOwner(
+  room: RoomLayout,
+  storage: WorkflowStorage,
+  browserSession: WorkflowStorage | null,
+): ManagedFurniturePersistenceOwner | null {
+  const selected = readSelectedRoomLayout(storage);
+  const backendRoomId = parseBackendRoomId(storage.getItem("roomfit:backendRoomId"));
+  if (selected?.id !== room.id || backendRoomId === null) return null;
+  const session = readActiveLayoutEditingSession(storage);
+  const activeLayoutId = isSessionForRoom(session, room.id, backendRoomId) && !session.confirmed
+    ? session.activeLayoutId
+    : null;
+  return {
+    roomLayoutId: room.id,
+    backendRoomId,
+    activeLayoutId,
+    sessionIdentity: createActiveSessionIdentity(storage),
+    clientId: browserSession ? getActiveRequestClientId(storage, browserSession) : null,
+  };
+}
+
+function isManagedFurniturePersistenceOwnerCurrent(
+  owner: ManagedFurniturePersistenceOwner,
+  storage: WorkflowStorage,
+  browserSession: WorkflowStorage | null,
+): boolean {
+  const selected = readSelectedRoomLayout(storage);
+  const backendRoomId = parseBackendRoomId(storage.getItem("roomfit:backendRoomId"));
+  const clientId = browserSession ? getActiveRequestClientId(storage, browserSession) : null;
+  return selected?.id === owner.roomLayoutId
+    && backendRoomId === owner.backendRoomId
+    && createActiveSessionIdentity(storage) === owner.sessionIdentity
+    && clientId === owner.clientId;
+}
+
+function managedFurnitureOwnerKey(owner: ManagedFurniturePersistenceOwner): string {
+  return JSON.stringify(owner);
+}
+
+function nextManagedFurnitureRevision(storage: WorkflowStorage, ownerKey: string): number {
+  let revisions = managedFurnitureRevisions.get(storage);
+  if (!revisions) {
+    revisions = new Map<string, number>();
+    managedFurnitureRevisions.set(storage, revisions);
+  }
+  const revision = (revisions.get(ownerKey) ?? 0) + 1;
+  revisions.set(ownerKey, revision);
+  return revision;
+}
+
+function readManagedFurnitureRevision(storage: WorkflowStorage, ownerKey: string): number | null {
+  return managedFurnitureRevisions.get(storage)?.get(ownerKey) ?? null;
+}
 
 export async function loadManagedFurnitureLayout(
   room: RoomLayout,
@@ -124,6 +264,7 @@ export async function prepareManagedFurnitureDraft(
   api: LayoutWorkflowApi = defaultApi,
   browserSession: WorkflowStorage | null = defaultBrowserSession(),
 ): Promise<LayoutNavigationState | null> {
+  await flushManagedFurniturePersistence();
   const room = readSelectedRoomLayout(storage);
   const backendRoomId = parseBackendRoomId(storage.getItem("roomfit:backendRoomId"));
   if (!room || backendRoomId === null) return null;
@@ -136,8 +277,10 @@ export async function prepareManagedFurnitureDraft(
       : null;
 
   if (!active) {
+    const savedRoom = await api.replaceRoomFurniture(backendRoomId, room);
+    persistActiveDraftMirror(savedRoom, storage);
     recoverInitialSetupSession(room.id, backendRoomId, storage, browserSession);
-    return createInitialSetupNavigationState(room.id, backendRoomId, room);
+    return createInitialSetupNavigationState(room.id, backendRoomId, savedRoom);
   }
   assertLayoutOwner(active, backendRoomId);
 

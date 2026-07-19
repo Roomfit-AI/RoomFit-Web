@@ -13,7 +13,6 @@ describe("dynamic shopping list", () => {
       furniture("desk-b", "desk-compact-01"),
       furniture("deleted-sofa", "sofa-01", "deleted"),
       furniture("rug", "rug-01", "recommended", "rug"),
-      furniture("legacy", null),
     ], [
       product("desk-compact-01", "https://example.com/desk"),
       product("desk-compact-010", "https://example.com/wrong-partial-match"),
@@ -21,11 +20,24 @@ describe("dynamic shopping list", () => {
       product("rug-01", null),
     ]);
 
-    expect(entries.map((entry) => entry.productId)).toEqual(["desk-compact-01", "rug-01", null]);
+    expect(entries.map((entry) => entry.productId)).toEqual(["desk-compact-01", "rug-01"]);
     expect(entries[0]).toMatchObject({ quantity: 2, purchaseUrl: "https://example.com/desk" });
     expect(entries[1]).toMatchObject({ quantity: 1, purchaseUrl: null });
     expect(entries.some((entry) => entry.purchaseUrl?.includes("partial"))).toBe(false);
     expect(entries.some((entry) => entry.productId === "sofa-01")).toBe(false);
+  });
+
+  it("leaves furniture the room already had out of the list, even after the user moves it", () => {
+    const entries = buildShoppingListEntries([
+      furniture("scanned-bed", null, "existing", "bed"),
+      // Dragging or rotating any piece rewrites its status to "user_modified"
+      // (ManageFurniture's markUserModified), so an already-owned item must stay
+      // out on the strength of its missing catalog productId alone.
+      furniture("scanned-wardrobe-moved", null, "user_modified", "cabinet"),
+      furniture("recommended-desk", "desk-compact-01"),
+    ], [product("desk-compact-01", "https://example.com/desk")]);
+
+    expect(entries.map((entry) => entry.productId)).toEqual(["desk-compact-01"]);
   });
 
   it("renders real links safely and keeps unavailable current furniture without dead anchors", () => {
