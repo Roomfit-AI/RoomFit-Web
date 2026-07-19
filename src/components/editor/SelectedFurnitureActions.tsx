@@ -1,23 +1,26 @@
-import { FiCornerUpLeft, FiRotateCw, FiTrash2 } from "react-icons/fi";
+import { FiRefreshCw, FiRotateCw, FiTrash2 } from "react-icons/fi";
 
 interface SelectedFurnitureActionsProps {
   selectedFurnitureId: string | null;
   selectedFurnitureName?: string;
+  canEditSelection?: boolean;
   onRotate: (id: string) => void;
   onDelete: (id: string) => void;
-  onUndo: () => void;
-  canUndo: boolean;
+  onReset: (id: string) => void;
+  canReset: boolean;
 }
 
 export default function SelectedFurnitureActions({
   selectedFurnitureId,
   selectedFurnitureName,
+  canEditSelection = true,
   onRotate,
   onDelete,
-  onUndo,
-  canUndo,
+  onReset,
+  canReset,
 }: SelectedFurnitureActionsProps) {
   const hasSelection = selectedFurnitureId !== null;
+  const canEdit = hasSelection && canEditSelection;
 
   return (
     <section
@@ -35,17 +38,17 @@ export default function SelectedFurnitureActions({
         <EditorToolButton
           label="90° 회전"
           icon={<FiRotateCw aria-hidden="true" />}
-          onClick={hasSelection ? () => onRotate(selectedFurnitureId) : undefined}
+          onClick={canEdit ? () => onRotate(selectedFurnitureId) : undefined}
         />
         <EditorToolButton
           label="가구 삭제"
           icon={<FiTrash2 aria-hidden="true" />}
-          onClick={hasSelection ? () => onDelete(selectedFurnitureId) : undefined}
+          onClick={canEdit ? () => onDelete(selectedFurnitureId) : undefined}
         />
         <EditorToolButton
-          label="이전"
-          icon={<FiCornerUpLeft aria-hidden="true" />}
-          onClick={canUndo ? onUndo : undefined}
+          label="초기화"
+          icon={<FiRefreshCw aria-hidden="true" />}
+          onClick={canReset && hasSelection ? () => onReset(selectedFurnitureId) : undefined}
         />
       </div>
     </section>

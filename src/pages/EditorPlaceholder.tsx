@@ -26,10 +26,11 @@ import RecommendationResultPanel from "../components/editor/RecommendationResult
 import ScoreSummaryPanel from "../components/editor/ScoreSummaryPanel";
 import SelectedFurnitureActions from "../components/editor/SelectedFurnitureActions";
 import {
-  canUndoEditorLayout,
-  createEditorLayoutHistory,
-  reduceEditorLayoutHistory,
-} from "../components/editor/editorLayoutHistory";
+  canResetEditorFurniture,
+  createEditorLayoutScopeKey,
+  createEditorLayoutState,
+  reduceEditorLayoutState,
+} from "../components/editor/editorLayoutState";
 import {
   resolveFeedbackRoomLayout,
   resolveNextFeedbackLayoutId,
@@ -65,9 +66,7 @@ import {
 import { readRoomSetupSession } from "../config/roomSetupSession";
 import type { Furniture, RoomLayout, Vector2D } from "../types";
 
-// The latest room mirror saved by the setup/editor workflow. Reset uses this
-// persisted baseline rather than whatever transient furniture edits are
-// currently on screen.
+// The latest room mirror saved by the setup/editor workflow.
 function loadSelectedRoomLayout(): RoomLayout | null {
   const raw = localStorage.getItem("roomfit:selectedRoomLayout");
 
@@ -135,35 +134,35 @@ export default function EditorPlaceholder() {
   const matchingSessionBackendRoomId = matchingSession?.backendRoomId ?? null;
   const matchingSessionEditingMode = matchingSession?.editingMode;
   const navigationHasSavedDraft = Boolean(navigationState?.roomLayout && navigationState.layoutResponse);
+  const [layoutId, setLayoutId] = useState<number | null>(
+    navigationState?.activeLayoutId ?? matchingSession?.activeLayoutId ?? null,
+  );
   const activeClientScope = readActiveClientScope();
-  const editorScopeKey = JSON.stringify({
+  const editorScopeKey = createEditorLayoutScopeKey({
     roomLayoutId: selectedBaseline?.id ?? null,
     backendRoomId,
+    activeLayoutId: layoutId,
     clientMode: activeClientScope?.mode ?? null,
     clientId: activeClientScope?.clientId ?? null,
     setupSessionId: activeClientScope?.setupSessionId ?? null,
     scopedRoomLayoutId: activeClientScope?.roomLayoutId ?? null,
     scopedBackendRoomId: activeClientScope?.backendRoomId ?? null,
   });
-  const [layoutHistory, dispatchLayoutHistory] = useReducer(
-    reduceEditorLayoutHistory,
+  const [editorLayout, dispatchEditorLayout] = useReducer(
+    reduceEditorLayoutState,
     undefined,
-    () => createEditorLayoutHistory(resolveEditorInitialRoomLayout({
+    () => createEditorLayoutState(resolveEditorInitialRoomLayout({
       navigationState,
       activeSession: matchingSession,
       selectedRoomLayout: selectedBaseline,
       liveMirror: getLiveMirrorForSelectedRoom(),
     }), editorScopeKey),
   );
-  const roomLayout = layoutHistory.roomLayout;
-  const canUndo = canUndoEditorLayout(layoutHistory, editorScopeKey);
+  const roomLayout = editorLayout.roomLayout;
   const preferredColorTone = roomLayout
     ? resolveRoomLayoutPreferredColorTone(roomLayout)
     : null;
   const [selectedFurnitureId, setSelectedFurnitureId] = useState<string | null>(null);
-  const [layoutId, setLayoutId] = useState<number | null>(
-    navigationState?.activeLayoutId ?? matchingSession?.activeLayoutId ?? null,
-  );
   const [feedback, setFeedback] = useState("");
   const [hideEntranceWalls, setHideEntranceWalls] = useState(false);
   const [isRecommending, setIsRecommending] = useState(false);
@@ -195,7 +194,7 @@ export default function EditorPlaceholder() {
         const baseline = loadSelectedRoomLayout();
         if (!baseline || response.roomId !== matchingSessionBackendRoomId) return;
         const restored = applyBackendFurnitureToLayout(baseline, response.recommendedFurniture);
-        dispatchLayoutHistory({ type: "replace", roomLayout: restored, scopeKey: editorScopeKey });
+        dispatchEditorLayout({ type: "replace", roomLayout: restored, scopeKey: editorScopeKey });
         setLayoutId(response.layoutId);
         setScoreSummary(response.scoreSummary);
         setValidationResult(response.validationResult);
@@ -222,7 +221,7 @@ export default function EditorPlaceholder() {
   }, [roomLayout]);
 
   useEffect(() => {
-    const request = layoutHistory.persistenceRequest;
+    const request = editorLayout.persistenceRequest;
     if (!request) return;
     let active = true;
 
@@ -231,15 +230,24 @@ export default function EditorPlaceholder() {
         if (active) {
           setErrorMessage("편집 내용을 저장하지 못했습니다. 현재 화면에서 다시 시도해 주세요.");
         }
+      })
+      .finally(() => {
+        if (active) {
+          dispatchEditorLayout({
+            type: "finishPersistence",
+            scopeKey: request.scopeKey,
+            requestId: request.requestId,
+          });
+        }
       });
 
     return () => {
       active = false;
     };
-  }, [layoutHistory.persistenceRequest]);
+  }, [editorLayout.persistenceRequest]);
 
   const handleMoveFurniture = (id: string, position: Vector2D) => {
-    dispatchLayoutHistory({
+    dispatchEditorLayout({
       type: "updateEdit",
       scopeKey: editorScopeKey,
       update: (current) => ({
@@ -254,15 +262,15 @@ export default function EditorPlaceholder() {
   };
 
   const handleBeginMoveFurniture = () => {
-    dispatchLayoutHistory({ type: "beginEdit", scopeKey: editorScopeKey });
+    dispatchEditorLayout({ type: "beginEdit", scopeKey: editorScopeKey });
   };
 
   const handleEndMoveFurniture = () => {
-    dispatchLayoutHistory({ type: "endEdit", scopeKey: editorScopeKey });
+    dispatchEditorLayout({ type: "endEdit", scopeKey: editorScopeKey });
   };
 
   const handleRotateFurniture = (id: string) => {
-    dispatchLayoutHistory({
+    dispatchEditorLayout({
       type: "edit",
       scopeKey: editorScopeKey,
       update: (current) => ({
@@ -277,7 +285,7 @@ export default function EditorPlaceholder() {
   };
 
   const handleDeleteFurniture = (id: string) => {
-    dispatchLayoutHistory({
+    dispatchEditorLayout({
       type: "edit",
       scopeKey: editorScopeKey,
       update: (current) => ({
@@ -287,12 +295,15 @@ export default function EditorPlaceholder() {
         )),
       }),
     });
-    setSelectedFurnitureId(null);
   };
 
-  const handleUndoFurnitureEdit = () => {
-    dispatchLayoutHistory({ type: "undo", scopeKey: editorScopeKey });
-    setSelectedFurnitureId(null);
+  const handleResetFurniture = (id: string) => {
+    if (editorLayout.isPersisting
+      || !canResetEditorFurniture(editorLayout, editorScopeKey, id)) {
+      return;
+    }
+    setErrorMessage("");
+    dispatchEditorLayout({ type: "resetFurniture", scopeKey: editorScopeKey, furnitureId: id });
   };
 
   const handleRecommend = async () => {
@@ -360,10 +371,19 @@ export default function EditorPlaceholder() {
       }
 
       const recommendedLayout = applyBackendFurnitureToLayout(roomLayout, result.recommendedFurniture);
-      dispatchLayoutHistory({
+      dispatchEditorLayout({
         type: "replace",
         roomLayout: withAppliedPreferredColorTone(recommendedLayout, recommendationColorTone),
-        scopeKey: editorScopeKey,
+        scopeKey: createEditorLayoutScopeKey({
+          roomLayoutId: roomLayout.id,
+          backendRoomId: roomId,
+          activeLayoutId: result.layoutId,
+          clientMode: activeClientScope?.mode ?? null,
+          clientId: activeClientScope?.clientId ?? null,
+          setupSessionId: activeClientScope?.setupSessionId ?? null,
+          scopedRoomLayoutId: activeClientScope?.roomLayoutId ?? null,
+          scopedBackendRoomId: activeClientScope?.backendRoomId ?? null,
+        }),
       });
       setLayoutId(result.layoutId);
       saveLayoutResponseSession(roomLayout.id, { ...result, layoutId: result.layoutId });
@@ -419,15 +439,24 @@ export default function EditorPlaceholder() {
       await flushEditorLayoutPersistence();
       const result = await applyLayoutFeedback(layoutId, feedback.trim());
       const nextFeedback = resolveFeedbackRoomLayout(roomLayout, result);
+      const nextLayoutId = resolveNextFeedbackLayoutId(layoutId, result.layoutId);
 
       if (nextFeedback.roomLayout !== roomLayout) {
-        dispatchLayoutHistory({
+        dispatchEditorLayout({
           type: "replace",
           roomLayout: nextFeedback.roomLayout,
-          scopeKey: editorScopeKey,
+          scopeKey: createEditorLayoutScopeKey({
+            roomLayoutId: roomLayout.id,
+            backendRoomId,
+            activeLayoutId: nextLayoutId ?? layoutId,
+            clientMode: activeClientScope?.mode ?? null,
+            clientId: activeClientScope?.clientId ?? null,
+            setupSessionId: activeClientScope?.setupSessionId ?? null,
+            scopedRoomLayoutId: activeClientScope?.roomLayoutId ?? null,
+            scopedBackendRoomId: activeClientScope?.backendRoomId ?? null,
+          }),
         });
       }
-      const nextLayoutId = resolveNextFeedbackLayoutId(layoutId, result.layoutId);
       if (nextLayoutId !== null) {
         setLayoutId(nextLayoutId);
         saveLayoutResponseSession(roomLayout.id, { ...result, layoutId: nextLayoutId });
@@ -459,8 +488,10 @@ export default function EditorPlaceholder() {
 
   const warnings = validationResult?.warnings ?? [];
   const selectedFurniture = selectedFurnitureId
-    ? roomLayout.furniture.find((item) => item.id === selectedFurnitureId && item.status !== "deleted")
+    ? roomLayout.furniture.find((item) => item.id === selectedFurnitureId)
     : undefined;
+  const canResetSelectedFurniture = !editorLayout.isPersisting
+    && canResetEditorFurniture(editorLayout, editorScopeKey, selectedFurniture?.id ?? null);
 
   return (
     <main className="min-h-[calc(100vh-76px)] bg-[#fbfbfb] text-[#141414]">
@@ -491,10 +522,11 @@ export default function EditorPlaceholder() {
           <SelectedFurnitureActions
             selectedFurnitureId={selectedFurniture?.id ?? null}
             selectedFurnitureName={selectedFurniture?.name}
+            canEditSelection={selectedFurniture?.status !== "deleted"}
             onRotate={handleRotateFurniture}
             onDelete={handleDeleteFurniture}
-            onUndo={handleUndoFurnitureEdit}
-            canUndo={canUndo}
+            onReset={handleResetFurniture}
+            canReset={canResetSelectedFurniture}
           />
 
           <div className="manage-room flex-1">
