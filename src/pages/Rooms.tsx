@@ -21,7 +21,6 @@ import {
   type UploadedRoomCard,
 } from "../api/rooms";
 import PairingDialog from "../components/rooms/PairingDialog";
-import { formatRoomCardDate } from "../config/roomCardDate";
 import { startAppRoomsPolling, type AppRoomsPollingController } from "../config/appRoomsPolling";
 import { clearBrowserRoomOrigin, getBrowserRoomOrigin } from "../config/browserRoomOrigins";
 import {
@@ -87,6 +86,23 @@ export default function Rooms() {
   const [deleteError, setDeleteError] = useState("");
   const [handoffError, setHandoffError] = useState("");
   const [pairingNotice, setPairingNotice] = useState("");
+  // Public samples and this browser's own rooms are two independent, concurrent
+  // requests; this tracks which of the two are still pending their *first*
+  // settle so the merged grid below can show one combined loading placeholder
+  // instead of two separate inline LoadingCards resolving at different times.
+  // Sources are only ever removed (never re-added), so once both have settled
+  // once, a later retry of just one side won't hide the other side's
+  // already-rendered cards behind the combined placeholder again.
+  const [pendingInitialSampleSources, setPendingInitialSampleSources] =
+    useState<ReadonlySet<"samples" | "browser">>(() => new Set(["samples", "browser"]));
+  const markInitialSampleSourceSettled = (source: "samples" | "browser") => {
+    setPendingInitialSampleSources((current) => {
+      if (!current.has(source)) return current;
+      const next = new Set(current);
+      next.delete(source);
+      return next;
+    });
+  };
   const [selectedCardKey, setSelectedCardKey] = useState(() => getInitialSelectedCardKey());
   const [customRoom, setCustomRoom] = useState<CustomRoomCard | null>(() => readSelectedCustomRoom());
   const [isCustomRoomDialogOpen, setIsCustomRoomDialogOpen] = useState(false);
@@ -142,7 +158,11 @@ export default function Rooms() {
         }
       })
       .catch(() => { if (!ignore) setSamplesError(true); })
-      .finally(() => { if (!ignore) setIsSamplesLoading(false); });
+      .finally(() => {
+        if (ignore) return;
+        setIsSamplesLoading(false);
+        markInitialSampleSourceSettled("samples");
+      });
     return () => { ignore = true; };
   }, []);
 
@@ -156,7 +176,11 @@ export default function Rooms() {
         }
       })
       .catch(() => { if (!ignore) setBrowserRoomsError(true); })
-      .finally(() => { if (!ignore) setIsBrowserRoomsLoading(false); });
+      .finally(() => {
+        if (ignore) return;
+        setIsBrowserRoomsLoading(false);
+        markInitialSampleSourceSettled("browser");
+      });
     return () => { ignore = true; };
   }, [browserClientId]);
 
@@ -415,16 +439,20 @@ export default function Rooms() {
             {browserRoomsError && <RetryNotice message="이 브라우저에서 만든 방을 불러오지 못했습니다." onRetry={() => void retryBrowserRooms()} />}
 
             <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
-              {isSamplesLoading && <LoadingCard message="공개 샘플을 불러오는 중..." />}
-              {visibleSamples.map((room) => {
-                const key = roomCardKey({ scope: "PUBLIC", room });
-                return <PublicRoomCard key={key} room={room} selected={selectedCardKey === key} onSelect={() => selectRoom(room, "PUBLIC", browserClientId)} />;
-              })}
-              {isBrowserRoomsLoading && <LoadingCard message="내 브라우저 방을 불러오는 중..." />}
-              {browserRooms.map((room) => {
-                const card: OwnedRoomCard = { scope: "BROWSER", clientId: browserClientId, room };
-                return <OwnedRoomArticle key={roomCardKey(card)} card={card} selected={selectedCardKey === roomCardKey(card)} deleting={deletingRoomKey === roomCardKey(card)} onSelect={() => selectRoom(room, "BROWSER", browserClientId)} onDelete={(event) => void removeOwnedRoom(event, card)} />;
-              })}
+              {pendingInitialSampleSources.size > 0 ? (
+                <LoadingCard message="공간을 불러오는 중..." />
+              ) : (
+                <>
+                  {visibleSamples.map((room) => {
+                    const key = roomCardKey({ scope: "PUBLIC", room });
+                    return <PublicRoomCard key={key} room={room} selected={selectedCardKey === key} onSelect={() => selectRoom(room, "PUBLIC", browserClientId)} />;
+                  })}
+                  {browserRooms.map((room) => {
+                    const card: OwnedRoomCard = { scope: "BROWSER", clientId: browserClientId, room };
+                    return <OwnedRoomArticle key={roomCardKey(card)} card={card} selected={selectedCardKey === roomCardKey(card)} deleting={deletingRoomKey === roomCardKey(card)} onSelect={() => selectRoom(room, "BROWSER", browserClientId)} onDelete={(event) => void removeOwnedRoom(event, card)} />;
+                  })}
+                </>
+              )}
               {customRoom && <CustomRoomCardButton room={customRoom} selected={selectedCardKey === `custom:${customRoom.layoutId}`} onSelect={() => selectRoom(customRoom, "BROWSER", browserClientId)} />}
               <button type="button" onClick={() => { setCustomRoomForm(initialCustomRoomForm); setCustomRoomErrors({}); setIsCustomRoomDialogOpen(true); }} aria-haspopup="dialog" className="flex min-h-63.5 flex-col items-center justify-center rounded-lg border border-dashed border-[#d9d9d9] bg-white p-5 text-center transition-colors hover:bg-[#f6f6f6]">
                 <span className="grid h-16 w-16 place-items-center rounded-full border border-[#d7d7d7]"><FiPlus className="h-8 w-8" /></span>
@@ -447,14 +475,14 @@ function OwnedRoomArticle({ card, selected, deleting, onSelect, onDelete }: { ca
   const origin = card.scope === "BROWSER" ? getBrowserRoomOrigin(room.roomId) : null;
   const badge = card.scope === "PAIRED_APP" ? "RoomFit Scan" : origin === "DIRECT" ? "직접 만든 방" : origin === "SAMPLE_COPY" ? "샘플 복사본" : "내 브라우저 방";
   return (
-    <article className={`group relative overflow-hidden rounded-lg border bg-white text-left transition-all hover:-translate-y-1 hover:shadow-[0_18px_35px_rgba(0,0,0,0.08)] ${selected ? "border-[#111111] shadow-[0_18px_35px_rgba(0,0,0,0.08)]" : "border-[#e5e5e5] hover:border-[#cfcfcf]"} ${deleting ? "opacity-65" : ""}`}>
+    <article className={`group relative overflow-hidden rounded-lg border bg-white text-left transition-all hover:-translate-y-1 hover:shadow-[0_18px_35px_rgba(0,0,0,0.08)] ${selected ? "border-[#111111] ring-2 ring-[#111111] shadow-[0_18px_35px_rgba(0,0,0,0.08)]" : "border-[#e5e5e5] hover:border-[#cfcfcf]"} ${deleting ? "opacity-65" : ""}`}>
       <button type="button" onClick={onSelect} aria-pressed={selected} disabled={deleting} className="block w-full p-5 text-left disabled:cursor-wait">
-        <div className="mb-4 flex min-h-6 items-center justify-between gap-3 pr-10"><Badge>{badge}</Badge><span className="text-xs font-medium text-[#777777]">{formatRoomCardDate(room.createdAt)}</span></div>
+        <div className="mb-4 flex min-h-6 items-center gap-3"><Badge>{badge}</Badge></div>
+        <SelectionMark selected={selected} />
         <RoomPreview tone={room.tone} thumbnailUrl={getRoomThumbnail(room.layoutId, card.clientId) ?? room.thumbnailUrl} alt={room.title} />
         <strong className="mt-5 block text-base font-bold text-[#151515]">{room.title}</strong>
         <span className="mt-1 block text-sm font-medium text-[#777777]">{room.dimensions}</span>
         {hasConfirmedLayout(room.layoutId, localStorage, card.clientId) && <span className="mt-2 inline-flex items-center gap-1 rounded-full bg-[#eefbf1] px-2.5 py-1 text-xs font-bold text-[#16803a]"><FiCheck className="h-3.5 w-3.5" />확정됨</span>}
-        {selected && <SelectedBadge />}
       </button>
       <button type="button" title="방 삭제" aria-label={`${room.title} 삭제`} disabled={deleting} onClick={onDelete} className="absolute bottom-7 right-5 z-20 grid h-9 w-9 place-items-center rounded-md bg-white text-[#555555] hover:text-[#b42318] disabled:cursor-wait disabled:opacity-50">
         {deleting ? <FiLoader className="h-4 w-4 animate-spin" /> : <FiTrash2 className="h-4 w-4" />}
@@ -477,8 +505,9 @@ export function PublicRoomCard({ room, selected, onSelect }: { room: SampleRoomC
 
 function CustomRoomCardButton({ room, selected, onSelect }: { room: CustomRoomCard; selected: boolean; onSelect(): void }) {
   return (
-    <button type="button" onClick={onSelect} aria-pressed={selected} className={`group relative overflow-hidden rounded-lg border bg-white p-5 text-left transition-all hover:-translate-y-1 hover:shadow-[0_18px_35px_rgba(0,0,0,0.08)] ${selected ? "border-[#111111]" : "border-[#e5e5e5]"}`}>
-      <div className="mb-4"><Badge>직접 만든 방</Badge></div>{selected && <SelectedBadge />}
+    <button type="button" onClick={onSelect} aria-pressed={selected} className={`group relative overflow-hidden rounded-lg border bg-white p-5 text-left transition-all hover:-translate-y-1 hover:shadow-[0_18px_35px_rgba(0,0,0,0.08)] ${selected ? "border-[#111111] ring-2 ring-[#111111] shadow-[0_18px_35px_rgba(0,0,0,0.08)]" : "border-[#e5e5e5] hover:border-[#cfcfcf]"}`}>
+      <div className="mb-4"><Badge>직접 만든 방</Badge></div>
+      <SelectionMark selected={selected} />
       <RoomPreview tone={room.tone} alt={room.title} empty />
       <strong className="mt-5 block text-base font-bold">{room.title}</strong><span className="mt-1 block text-sm text-[#777777]">{room.category} · {room.size}</span>
     </button>
@@ -506,7 +535,6 @@ function SuccessNotice({ message }: { message: string }) { return <div role="sta
 function LoadingRow({ message }: { message: string }) { return <div role="status" className="flex min-h-28 items-center justify-center border-y border-[#ececec]"><span className="text-sm font-semibold text-[#777777]">{message}</span></div>; }
 function LoadingCard({ message }: { message: string }) { return <div role="status" className="flex min-h-63.5 items-center justify-center rounded-lg border border-[#e5e5e5] bg-white px-5 text-center"><span className="text-sm font-semibold text-[#777777]">{message}</span></div>; }
 function Badge({ children }: { children: ReactNode }) { return <span className="inline-flex rounded-full bg-[#f0f0f0] px-2.5 py-1 text-xs font-bold text-[#444444]">{children}</span>; }
-function SelectedBadge() { return <span className="absolute right-4 top-5 z-10 inline-flex items-center gap-1 rounded-full bg-[#111111] px-3 py-1.5 text-xs font-bold text-white"><FiCheck className="h-3.5 w-3.5" />선택됨</span>; }
 function SelectionMark({ selected }: { selected: boolean }) { return <span aria-hidden="true" className={`absolute right-4 top-5 z-10 grid h-6 w-6 place-items-center rounded-full border ${selected ? "border-[#111111] bg-[#111111] text-white" : "border-[#d8d8d8] bg-white text-transparent"}`}><FiCheck className="h-4 w-4" /></span>; }
 
 function activeFilterValue(rooms: SampleRoomCard[], filter: string) { return filter === "전체" ? rooms : rooms.filter((room) => room.category === filter); }
