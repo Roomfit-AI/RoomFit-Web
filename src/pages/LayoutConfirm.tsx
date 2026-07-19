@@ -2,27 +2,19 @@ import { useEffect, useRef, useState } from "react";
 import { FaRug } from "react-icons/fa6";
 import { FiCheck, FiChevronDown, FiChevronUp, FiExternalLink, FiHome, FiInfo, FiShoppingBag } from "react-icons/fi";
 import { useLocation, useNavigate } from "react-router-dom";
-import {
-  MdOutlineBed,
-  MdOutlineDesk,
-  MdOutlineLibraryBooks,
-  MdOutlineLightbulb,
-  MdOutlineLocalFlorist,
-  MdOutlineWeekend,
-} from "react-icons/md";
+import { MdOutlineBed, MdOutlineDesk, MdOutlineLibraryBooks, MdOutlineLightbulb, MdOutlineWeekend } from "react-icons/md";
 
 import RoomViewer from "../components/room/RoomViewer";
 import PageStepHeader from "../components/ui/PageStepHeader";
 import { resolveCurrentRoomLayout, saveConfirmedLayout } from "../config/confirmedLayouts";
 import { resolveRoomLayoutPreferredColorTone } from "../config/appliedColorTone";
-import { NATURAL_SCENARIO_SHOPPING_LIST } from "../config/naturalScenarioShoppingList";
+import { fetchMockProducts, type MockProductApiItem } from "../api/products";
 import {
   createAppliedRoomPreferences,
   readCurrentPreferences,
   saveRoomPreferences,
 } from "../config/roomPreferences";
 import { captureCanvasThumbnail, saveRoomThumbnail } from "../config/roomThumbnails";
-import { currentScenario } from "../config/scenarios";
 import { completeRoomSetupSession } from "../config/roomSetupSession";
 import { confirmActiveLayout, refreshActiveDraftNavigationState } from "../config/layoutEditingWorkflow";
 import { RecommendationFeasibilityError } from "../config/recommendationResult";
@@ -31,19 +23,31 @@ import {
   readActiveLayoutEditingSession,
   readLayoutNavigationState,
 } from "../config/layoutEditingSession";
+import type { FurnitureCategory } from "../types";
 
-// Single-glyph icons instead of the .furniture-card-* illustrations — always
-// centered within their own viewBox by design, so every row's thumbnail
-// lines up the same way regardless of how "top-heavy" or "off-center" that
-// particular piece of furniture's shape is.
-const SHOPPING_LIST_ICONS: Record<string, typeof MdOutlineBed> = {
+// EXPERIMENTAL (experimental/develop): keyed by the room's own (coarse)
+// FurnitureCategory now, not a scenario-specific iconKey -- this list used
+// to only cover the 7 pieces the one hardcoded rest-natural-wood scenario
+// could ever contain. "unsupported" is the fallback for any category this
+// map doesn't recognize.
+const SHOPPING_LIST_ICONS: Record<FurnitureCategory, typeof MdOutlineBed> = {
   bed: MdOutlineBed,
-  plant: MdOutlineLocalFlorist,
   desk: MdOutlineDesk,
-  sofa: MdOutlineWeekend,
-  lamp: MdOutlineLightbulb,
-  bookshelf: MdOutlineLibraryBooks,
+  chair: MdOutlineWeekend,
+  cabinet: MdOutlineLibraryBooks,
   rug: FaRug,
+  lighting: MdOutlineLightbulb,
+  unsupported: FiShoppingBag,
+};
+
+const SHOPPING_LIST_CATEGORY_LABELS: Record<FurnitureCategory, string> = {
+  bed: "침실 가구",
+  desk: "책상 / 테이블",
+  chair: "의자 / 소파",
+  cabinet: "수납 가구",
+  rug: "러그",
+  lighting: "조명",
+  unsupported: "가구",
 };
 
 export default function LayoutConfirm() {
@@ -68,8 +72,30 @@ export default function LayoutConfirm() {
   const [showShoppingList, setShowShoppingList] = useState(false);
   const [isConfirming, setIsConfirming] = useState(false);
   const [confirmError, setConfirmError] = useState("");
+  const [products, setProducts] = useState<MockProductApiItem[] | null>(null);
   const roomViewerContainerRef = useRef<HTMLDivElement>(null);
   const activeLayoutId = activeSession && hasMatchingDraft ? activeSession.activeLayoutId : null;
+
+  // EXPERIMENTAL (experimental/develop): fetched once and matched against
+  // this room's furniture by productId, replacing the old hardcoded
+  // per-scenario shopping list (see naturalScenarioShoppingList.ts).
+  useEffect(() => {
+    let cancelled = false;
+    fetchMockProducts()
+      .then((items) => {
+        if (!cancelled) {
+          setProducts(items);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setProducts([]);
+        }
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   useEffect(() => {
     if (roomLayout || activeLayoutId === null) return;
@@ -109,10 +135,20 @@ export default function LayoutConfirm() {
   // digit and doesn't match anything the user actually recognizes as "their
   // room."
   const roomSize = `${roomLayout.width}m × ${roomLayout.depth}m`;
-  // Real 오늘의집 product links only exist for the 네츄럴 톤 demo scenario
-  // (see naturalScenarioShoppingList.ts) — there's no product-matching
-  // backend to look these up generically for any other scenario/room.
-  const isNaturalScenario = currentScenario()?.id === "rest-natural-wood";
+  // EXPERIMENTAL (experimental/develop): built from this room's actual
+  // recommended/existing furniture (matched by productId against the real
+  // product catalog) instead of a hardcoded per-scenario list -- so it
+  // reflects whatever was really placed, not just one specific demo mood.
+  // Furniture with no productId (never product-matched) or whose product
+  // has no purchaseUrl (~4 of 99 mock products, all legacy) is skipped
+  // rather than shown with a dead link.
+  const productById = new Map((products ?? []).map((product) => [product.productId, product]));
+  const shoppingListEntries = roomLayout.furniture
+    .filter((item) => item.status !== "deleted" && item.productId)
+    .map((item) => ({ item, product: item.productId ? productById.get(item.productId) : undefined }))
+    .filter((entry): entry is { item: typeof roomLayout.furniture[number]; product: MockProductApiItem } =>
+      Boolean(entry.product?.purchaseUrl),
+    );
 
   const confirmLayout = async () => {
     if (isConfirming) return;
@@ -294,15 +330,21 @@ export default function LayoutConfirm() {
                 </button>
               </div>
 
-              {isNaturalScenario ? (
+              {products === null ? (
+                <p className="text-sm font-semibold leading-6 text-[#777777]">쇼핑 리스트를 불러오는 중이에요...</p>
+              ) : shoppingListEntries.length === 0 ? (
+                <p className="text-sm font-semibold leading-6 text-[#777777]">
+                  이 방의 가구에는 아직 연결된 구매 링크가 없어요.
+                </p>
+              ) : (
                 <ul className="space-y-3">
-                  {NATURAL_SCENARIO_SHOPPING_LIST.map((entry) => {
-                    const Icon = SHOPPING_LIST_ICONS[entry.iconKey];
+                  {shoppingListEntries.map(({ item, product }) => {
+                    const Icon = SHOPPING_LIST_ICONS[item.category];
 
                     return (
-                      <li key={entry.name}>
+                      <li key={item.id}>
                         <a
-                          href={entry.url}
+                          href={product.purchaseUrl!}
                           target="_blank"
                           rel="noreferrer"
                           className="flex items-center gap-3.5 rounded-lg border border-[#eeeeee] p-3 transition-colors hover:border-[#111111] hover:bg-[#f9f9f9]"
@@ -311,8 +353,10 @@ export default function LayoutConfirm() {
                             <Icon className="h-6 w-6 text-[#8b633d]" />
                           </span>
                           <span className="min-w-0 flex-1">
-                            <strong className="block truncate text-sm font-bold">{entry.name}</strong>
-                            <span className="mt-0.5 block truncate text-xs font-medium text-[#999999]">{entry.info}</span>
+                            <strong className="block truncate text-sm font-bold">{item.name || product.name}</strong>
+                            <span className="mt-0.5 block truncate text-xs font-medium text-[#999999]">
+                              {SHOPPING_LIST_CATEGORY_LABELS[item.category]}
+                            </span>
                           </span>
                           <FiExternalLink className="h-4 w-4 shrink-0 text-[#999999]" />
                         </a>
@@ -320,10 +364,6 @@ export default function LayoutConfirm() {
                     );
                   })}
                 </ul>
-              ) : (
-                <p className="text-sm font-semibold leading-6 text-[#777777]">
-                  이 스타일의 쇼핑 리스트는 아직 준비 중이에요.
-                </p>
               )}
             </div>
           </aside>
