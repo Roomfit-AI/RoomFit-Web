@@ -167,7 +167,6 @@ export function getFeedbackClarificationGuidance(
   if (kind === "REFERENCE") return "기준이 되는 가구를 요청 문장에 구체적으로 적어 주세요.";
   return "요청 내용을 더 구체적으로 적어 다시 시도해 주세요.";
 }
-
 function deriveFeedbackStatus(
   operationResults: FeedbackOperationResult[],
   clarifications: FeedbackClarification[],
