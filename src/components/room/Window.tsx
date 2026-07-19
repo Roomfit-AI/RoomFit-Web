@@ -1,11 +1,9 @@
-import Blind from "./Blind";
-import Curtain from "./Curtain";
 import { windowCenterY } from "./openingLayout";
 import type { Opening } from "../../types";
 
 // Referencing the divided-lite/casement window convention common in interior
-// renders: an outer casing, a sill ledge, a recessed sky-blue pane split into
-// a small grid by mullions, and the wood blind layered on top. The casing/
+// renders: an outer casing, a sill ledge, and a recessed sky-blue pane split
+// into a small grid by mullions. The casing/
 // glass/mullions are centered on z=0 (not offset toward one face) so the
 // window reads the same from both inside and outside the room.
 export default function Window({ opening, wallHeight = 2.4 }: { opening: Opening; wallHeight?: number }) {
@@ -84,7 +82,9 @@ export default function Window({ opening, wallHeight = 2.4 }: { opening: Opening
         );
       })}
 
-      {opening.blind?.type === "curtain" ? <Curtain opening={opening} /> : <Blind opening={opening} />}
+      {/* Window openings intentionally render frame and glass only. Blinds are
+          independently selected furniture, anchored by RoomViewer; historical
+          opening.blind data is ignored so it cannot reappear after reload. */}
     </group>
   );
 }

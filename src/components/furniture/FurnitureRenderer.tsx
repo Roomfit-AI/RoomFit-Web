@@ -21,14 +21,16 @@ import {
 } from "./variants/furnitureVariantRouting";
 import type { Furniture } from "../../types";
 import type { PreferredColorToneId } from "../../config/preferredColorTone";
-import { applyPreferredColorToneToLegacyFurniture } from "./materialPalette";
+import type { Vector3Tuple } from "./variants/types";
 
 export default function FurnitureRenderer({
   item,
   preferredColorTone,
+  visualScale,
 }: {
   item: Furniture;
   preferredColorTone?: PreferredColorToneId | null;
+  visualScale?: Vector3Tuple;
 }) {
   const variant = resolveFurnitureVariant(item.variantId);
 
@@ -43,11 +45,14 @@ export default function FurnitureRenderer({
         materialPresets={materialPresets}
         layoutPosition={[0, getFurnitureVariantLocalYOffset(item.dimensions.height), 0]}
         preferredColorTone={preferredColorTone}
+        visualScale={visualScale}
       />
     );
   }
 
-  const renderedItem = applyPreferredColorToneToLegacyFurniture(item, preferredColorTone);
+  // Legacy furniture lacks per-part target metadata. Preserve its original
+  // materials rather than applying an indiscriminate whole-object tint.
+  const renderedItem = item;
   const name = `${renderedItem.id} ${renderedItem.name}`.toLowerCase();
   const material = materialFromConfig(renderedItem.material, renderedItem.color);
 

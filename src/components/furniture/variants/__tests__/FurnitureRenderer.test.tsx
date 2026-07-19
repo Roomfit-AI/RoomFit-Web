@@ -4,7 +4,6 @@ import FurnitureRenderer from "../../FurnitureRenderer";
 import Table from "../../Table";
 import type { Furniture } from "../../../../types";
 import { FurnitureVariantRenderer } from "../FurnitureVariantRenderer";
-import { FURNITURE_MATERIAL_PALETTES } from "../../materialPalette";
 
 function createDesk(overrides: Partial<Furniture> = {}): Furniture {
   return {
@@ -50,14 +49,14 @@ describe("FurnitureRenderer variant adapter", () => {
     expect(element.props.preferredColorTone).toBe("blue");
   });
 
-  it("keeps the legacy renderer for furniture without a variantId", () => {
+  it("keeps legacy furniture's original material without per-part policy metadata", () => {
     const element = FurnitureRenderer({
       item: createDesk({ variantId: null }),
       preferredColorTone: "brown",
     }) as ReactElement<{ item: Furniture }>;
 
     expect(element.type).toBe(Table);
-    expect(element.props.item.color).toBe(FURNITURE_MATERIAL_PALETTES.brown.wood);
+    expect(element.props.item.color).toBe("#ffffff");
     expect(element.props.item.productId).toBe("desk-compact-01");
     expect(element.props.item.variantId).toBeNull();
   });

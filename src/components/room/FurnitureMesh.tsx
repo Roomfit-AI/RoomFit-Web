@@ -5,6 +5,8 @@ import * as THREE from "three";
 import FurnitureRenderer from "../furniture/FurnitureRenderer";
 import type { Furniture, RoomLayout, Vector2D } from "../../types";
 import type { PreferredColorToneId } from "../../config/preferredColorTone";
+import type { Vector3Tuple } from "../furniture/variants/types";
+import { resolveFurnitureCollisionMode } from "../../config/furnitureBehaviorPolicy";
 import {
   clampFurniturePositionToRoom,
   resolveFurnitureLocalFootprint,
@@ -19,6 +21,9 @@ interface FurnitureMeshProps {
   onSelect: (id: string) => void;
   onMove: (id: string, position: Vector2D) => void;
   preferredColorTone?: PreferredColorToneId | null;
+  layoutPosition?: Vector3Tuple;
+  layoutRotationY?: number;
+  visualScale?: Vector3Tuple;
 }
 
 export function FurnitureMesh({
@@ -30,18 +35,27 @@ export function FurnitureMesh({
   onSelect,
   onMove,
   preferredColorTone,
+  layoutPosition,
+  layoutRotationY,
+  visualScale,
 }: FurnitureMeshProps) {
   const groupRef = useRef<THREE.Group>(null!);
-  const heightOffset = item.dimensions.height / 2;
+  const floorOverlayOffset = resolveFurnitureCollisionMode(item.variantId, item.category) === "FLOOR_OVERLAY"
+    ? 0.006
+    : 0;
+  const heightOffset = (layoutPosition?.[1] ?? item.dimensions.height / 2) + floorOverlayOffset;
+  const positionX = layoutPosition?.[0] ?? item.position.x;
+  const positionZ = layoutPosition?.[2] ?? item.position.z;
+  const rotationY = layoutRotationY ?? item.rotationY;
 
   useEffect(() => {
     if (!groupRef.current) {
       return;
     }
 
-    groupRef.current.position.set(item.position.x, heightOffset, item.position.z);
-    groupRef.current.rotation.y = item.rotationY;
-  }, [heightOffset, item.position.x, item.position.z, item.rotationY]);
+    groupRef.current.position.set(positionX, heightOffset, positionZ);
+    groupRef.current.rotation.y = rotationY;
+  }, [heightOffset, positionX, positionZ, rotationY]);
 
   const handlePointerDown = (event: ThreeEvent<PointerEvent>) => {
     event.stopPropagation();
@@ -69,11 +83,11 @@ export function FurnitureMesh({
   const meshGroup = (
     <group
       ref={groupRef}
-      position={[item.position.x, heightOffset, item.position.z]}
-      rotation={[0, item.rotationY, 0]}
+      position={[positionX, heightOffset, positionZ]}
+      rotation={[0, rotationY, 0]}
       onPointerDown={handlePointerDown}
     >
-      <FurnitureRenderer item={item} preferredColorTone={preferredColorTone} />
+      <FurnitureRenderer item={item} preferredColorTone={preferredColorTone} visualScale={visualScale} />
       {isSelected && showSelectionIndicator && (
         <mesh position={[0, item.dimensions.height / 2 + 0.045, 0]}>
           <boxGeometry args={[item.dimensions.width + 0.1, 0.035, item.dimensions.depth + 0.1]} />

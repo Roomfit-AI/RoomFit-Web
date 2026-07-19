@@ -2,6 +2,7 @@ import { MeshStandardMaterial } from "three";
 import type { MeshStandardMaterialParameters } from "three";
 import { applyPreferredColorToneToMaterialPreset } from "../materialPalette";
 import type { PreferredColorToneId } from "../../../config/preferredColorTone";
+import { getThemeColor, type ThemeTarget } from "../../../config/furnitureBehaviorPolicy";
 
 export interface MaterialPreset {
   color: string;
@@ -58,16 +59,25 @@ export function resolveMaterialPreset(
   presetId: string,
   catalog: Readonly<MaterialPresetCatalog>,
   preferredColorTone?: PreferredColorToneId | null,
+  themeTarget?: ThemeTarget | null,
+  themeKey = presetId,
 ): MeshStandardMaterialParameters {
   if (!Object.hasOwn(catalog, presetId)) {
     throw new Error(`Unknown material preset "${presetId}"`);
   }
 
-  const preset = applyPreferredColorToneToMaterialPreset(
-    presetId,
-    catalog[presetId],
-    preferredColorTone,
-  );
+  // A material is never recolored merely because it has a familiar name such
+  // as `fabric` or `wood`. Only an explicitly declared variant part receives
+  // a palette slot; every other PBR preset remains untouched.
+  const paletteColor = preferredColorTone && themeTarget
+    ? getThemeColor(preferredColorTone, themeTarget, themeKey)
+    : null;
+  // The omitted-argument branch retains the public utility's historical
+  // behaviour for callers outside the renderer. Renderer callers always pass
+  // `null` for an undeclared part, which is the deliberate no-tint policy.
+  const preset = themeTarget === undefined
+    ? applyPreferredColorToneToMaterialPreset(presetId, catalog[presetId], preferredColorTone)
+    : paletteColor ? { ...catalog[presetId], color: paletteColor } : catalog[presetId];
   const opacity = preset.opacity ?? 1;
   return {
     color: preset.color,
@@ -84,8 +94,10 @@ export function createMaterialFromPreset(
   presetId: string,
   catalog: Readonly<MaterialPresetCatalog>,
   preferredColorTone?: PreferredColorToneId | null,
+  themeTarget?: ThemeTarget | null,
+  themeKey?: string,
 ): MeshStandardMaterial {
-  return new MeshStandardMaterial(resolveMaterialPreset(presetId, catalog, preferredColorTone));
+  return new MeshStandardMaterial(resolveMaterialPreset(presetId, catalog, preferredColorTone, themeTarget, themeKey));
 }
 
 function parseMaterialPreset(presetId: string, input: Record<string, unknown>): MaterialPreset {

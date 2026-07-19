@@ -14,10 +14,16 @@ import {
   FURNITURE_SELECTION_CATEGORIES,
   FURNITURE_SELECTION_ITEMS,
 } from "../config/furnitureSelectionCatalog";
+import {
+  getFurnitureSelectionBlockReason,
+  parseStoredRoomLayout,
+} from "../config/furnitureSelectionPolicy";
 const addFurnitureVisitedKey = "roomfit:visited:add-furniture";
 
 export default function AddFurniture() {
   const [activeCategory, setActiveCategory] = useState("전체");
+  const [selectionNotice, setSelectionNotice] = useState<string | null>(null);
+  const [room] = useState(() => parseStoredRoomLayout(localStorage.getItem("roomfit:selectedRoomLayout")));
   const [recommendationNotice, setRecommendationNotice] = useState<RecommendationResultNotice | null>(
     readCurrentRecommendationNotice,
   );
@@ -57,6 +63,12 @@ export default function AddFurniture() {
   }), []);
 
   const toggleFurniture = (id: string) => {
+    const isSelected = selectedIds.includes(id);
+    const reason = !isSelected ? getFurnitureSelectionBlockReason(id, selectedIds, room) : null;
+    if (reason) {
+      setSelectionNotice(reason);
+      return;
+    }
     setSelectedIds((current) =>
       current.includes(id) ? current.filter((itemId) => itemId !== id) : [...current, id],
     );
@@ -78,6 +90,13 @@ export default function AddFurniture() {
         {recommendationNotice && (
           <div className="mb-8">
             <RecommendationResultPanel notice={recommendationNotice} />
+          </div>
+        )}
+        {selectionNotice && (
+          <div role="alert" className="mb-8 rounded-xl border border-[#d7b7b1] bg-[#fff8f6] px-5 py-4 text-sm font-semibold text-[#6f3329]">
+            <strong className="block">함께 배치할 수 없는 가구예요</strong>
+            <span>{selectionNotice}</span>
+            <button type="button" className="ml-3 underline" onClick={() => setSelectionNotice(null)}>가구 다시 선택하기</button>
           </div>
         )}
 
@@ -103,14 +122,18 @@ export default function AddFurniture() {
             <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
               {visibleItems.map((item) => {
                 const selected = selectedIds.includes(item.id);
+                const blockReason = !selected ? getFurnitureSelectionBlockReason(item.id, selectedIds, room) : null;
 
                 return (
                   <button
                     key={item.id}
                     type="button"
                     onClick={() => toggleFurniture(item.id)}
+                    disabled={Boolean(blockReason)}
+                    title={blockReason ?? undefined}
                     className={`relative rounded-lg border bg-white p-3 text-left transition-all hover:-translate-y-1 hover:shadow-[0_18px_35px_rgba(0,0,0,0.08)] ${
                       selected ? "border-[#111111]" : "border-transparent"
+                    } ${blockReason ? "cursor-not-allowed opacity-45 hover:translate-y-0 hover:shadow-none" : ""
                     }`}
                   >
                     <span
