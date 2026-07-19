@@ -16,6 +16,7 @@ export interface ActiveLayoutEditingSession {
   sourceLayoutId: number | null;
   editingMode: LayoutEditingMode;
   confirmed: boolean;
+  recommendationFingerprint?: string;
   updatedAt: string;
 }
 
@@ -46,6 +47,8 @@ export function readActiveLayoutEditingSession(
       || !(parsed.sourceLayoutId === null || isPositiveInteger(parsed.sourceLayoutId))
       || !isLayoutEditingMode(parsed.editingMode)
       || typeof parsed.confirmed !== "boolean"
+      || (parsed.recommendationFingerprint !== undefined
+        && (typeof parsed.recommendationFingerprint !== "string" || !parsed.recommendationFingerprint))
       || typeof parsed.updatedAt !== "string"
       || Number.isNaN(Date.parse(parsed.updatedAt))
     ) {
@@ -75,6 +78,7 @@ export function saveLayoutResponseSession(
   response: LayoutResponse,
   storage: SessionStorage = localStorage,
   requestedMode?: LayoutEditingMode,
+  recommendationFingerprint?: string,
 ): ActiveLayoutEditingSession {
   const existing = readActiveLayoutEditingSession(storage);
   const matchingExisting = existing?.roomLayoutId === roomLayoutId
@@ -87,6 +91,9 @@ export function saveLayoutResponseSession(
   const sourceLayoutId = editingMode === "REEDIT_DRAFT"
     ? matchingExisting?.sourceLayoutId ?? response.sourceLayoutId
     : null;
+  const savedRecommendationFingerprint = editingMode === "INITIAL_SETUP"
+    ? recommendationFingerprint ?? matchingExisting?.recommendationFingerprint
+    : undefined;
 
   return saveActiveLayoutEditingSession({
     roomLayoutId,
@@ -95,6 +102,9 @@ export function saveLayoutResponseSession(
     sourceLayoutId,
     editingMode,
     confirmed: response.confirmed,
+    ...(savedRecommendationFingerprint
+      ? { recommendationFingerprint: savedRecommendationFingerprint }
+      : {}),
   }, storage);
 }
 

@@ -3,6 +3,7 @@ import { isAxiosError } from "axios";
 import { apiClient } from "./client";
 import {
   buildAgentContextRequest,
+  type AgentContextRequest,
   type DesignStyleApiValue,
   type FurnitureTypeApiValue,
   type LifestyleGoalApiValue,
@@ -170,8 +171,13 @@ export interface DraftFurnitureAdditionRequest {
   contextId: number;
 }
 
-function readStringArrayFromStorage(key: string): string[] {
-  const raw = localStorage.getItem(key);
+type AgentContextStorage = Pick<Storage, "getItem">;
+
+function readStringArrayFromStorage(
+  key: string,
+  storage: AgentContextStorage = localStorage,
+): string[] {
+  const raw = storage.getItem(key);
 
   if (!raw) {
     return [];
@@ -186,14 +192,21 @@ function readStringArrayFromStorage(key: string): string[] {
   }
 }
 
-export async function createDefaultAgentContext(roomId: number): Promise<AgentContextResponse> {
-  const request = buildAgentContextRequest({
+export function buildDefaultAgentContextRequest(
+  roomId: number,
+  storage: AgentContextStorage = localStorage,
+): AgentContextRequest {
+  return buildAgentContextRequest({
     roomId,
-    purpose: localStorage.getItem("roomfit:selectedPurpose"),
-    style: localStorage.getItem("roomfit:selectedStyle"),
-    palette: localStorage.getItem("roomfit:selectedPalette"),
-    additionalFurnitureIds: readStringArrayFromStorage("roomfit:selectedAdditionalFurnitureIds"),
+    purpose: storage.getItem("roomfit:selectedPurpose"),
+    style: storage.getItem("roomfit:selectedStyle"),
+    palette: storage.getItem("roomfit:selectedPalette"),
+    additionalFurnitureIds: readStringArrayFromStorage("roomfit:selectedAdditionalFurnitureIds", storage),
   });
+}
+
+export async function createDefaultAgentContext(roomId: number): Promise<AgentContextResponse> {
+  const request = buildDefaultAgentContextRequest(roomId);
   const response = await apiClient.post<ApiResponse<AgentContextResponse>>(
     "/api/agent/context",
     request,

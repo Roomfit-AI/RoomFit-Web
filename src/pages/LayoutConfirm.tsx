@@ -1,101 +1,146 @@
 import { useEffect, useRef, useState } from "react";
-import { FaRug } from "react-icons/fa6";
-import { FiCheck, FiChevronDown, FiChevronUp, FiExternalLink, FiHome, FiInfo, FiShoppingBag } from "react-icons/fi";
-import { useLocation, useNavigate } from "react-router-dom";
-import {
-  MdOutlineBed,
-  MdOutlineDesk,
-  MdOutlineLibraryBooks,
-  MdOutlineLightbulb,
-  MdOutlineLocalFlorist,
-  MdOutlineWeekend,
-} from "react-icons/md";
+import { FiCheck, FiChevronDown, FiChevronUp, FiHome, FiInfo, FiShoppingBag } from "react-icons/fi";
+import { useNavigate } from "react-router-dom";
 
+import { getLatestConfirmedLayout, type LayoutResponse } from "../api/layouts";
+import { fetchMockProducts, type MockProductApiItem } from "../api/products";
+import { applyBackendFurnitureToLayout } from "../api/rooms";
+import ShoppingListPanel, { type ShoppingListLoadStatus } from "../components/layout/ShoppingListPanel";
 import RoomViewer from "../components/room/RoomViewer";
 import PageStepHeader from "../components/ui/PageStepHeader";
-import { resolveCurrentRoomLayout, saveConfirmedLayout } from "../config/confirmedLayouts";
+import {
+  getLiveMirrorForSelectedRoom,
+  resolveCurrentRoomLayout,
+  saveConfirmedLayout,
+} from "../config/confirmedLayouts";
 import { resolveRoomLayoutPreferredColorTone } from "../config/appliedColorTone";
-import { NATURAL_SCENARIO_SHOPPING_LIST } from "../config/naturalScenarioShoppingList";
 import {
   createAppliedRoomPreferences,
   readCurrentPreferences,
   saveRoomPreferences,
 } from "../config/roomPreferences";
 import { captureCanvasThumbnail, saveRoomThumbnail } from "../config/roomThumbnails";
-import { currentScenario } from "../config/scenarios";
 import { completeRoomSetupSession } from "../config/roomSetupSession";
 import { confirmActiveLayout, refreshActiveDraftNavigationState } from "../config/layoutEditingWorkflow";
+import { getActiveRequestClientId } from "../config/clientScope";
 import { RecommendationFeasibilityError } from "../config/recommendationResult";
 import {
   isSessionForRoom,
   readActiveLayoutEditingSession,
-  readLayoutNavigationState,
 } from "../config/layoutEditingSession";
+import type { RoomLayout } from "../types";
 
-// Single-glyph icons instead of the .furniture-card-* illustrations — always
-// centered within their own viewBox by design, so every row's thumbnail
-// lines up the same way regardless of how "top-heavy" or "off-center" that
-// particular piece of furniture's shape is.
-const SHOPPING_LIST_ICONS: Record<string, typeof MdOutlineBed> = {
-  bed: MdOutlineBed,
-  plant: MdOutlineLocalFlorist,
-  desk: MdOutlineDesk,
-  sofa: MdOutlineWeekend,
-  lamp: MdOutlineLightbulb,
-  bookshelf: MdOutlineLibraryBooks,
-  rug: FaRug,
-};
+// eslint-disable-next-line react-refresh/only-export-components
+export function resolveLatestConfirmedRoom(
+  fallbackRoom: RoomLayout,
+  backendRoomId: number,
+  response: Pick<LayoutResponse, "confirmed" | "roomId" | "recommendedFurniture"> | null,
+): RoomLayout | null {
+  if (!response?.confirmed || response.roomId !== backendRoomId) return null;
+  return applyBackendFurnitureToLayout(fallbackRoom, response.recommendedFurniture);
+}
 
 export default function LayoutConfirm() {
-  const location = useLocation();
   const navigate = useNavigate();
-  const routeState = readLayoutNavigationState(location.state);
-  const fallbackRoom = resolveCurrentRoomLayout();
-  const backendRoomId = Number(localStorage.getItem("roomfit:backendRoomId"));
+  const [fallbackRoom] = useState(resolveCurrentRoomLayout);
+  const [confirmedMirror] = useState(getLiveMirrorForSelectedRoom);
+  const rawBackendRoomId = Number(localStorage.getItem("roomfit:backendRoomId"));
+  const backendRoomId = Number.isInteger(rawBackendRoomId) && rawBackendRoomId > 0
+    ? rawBackendRoomId
+    : null;
   const activeSession = readActiveLayoutEditingSession();
-  const hasMatchingDraft = Number.isInteger(backendRoomId)
+  const hasMatchingDraft = fallbackRoom !== null
+    && backendRoomId !== null
     && isSessionForRoom(activeSession, fallbackRoom.id, backendRoomId)
     && !activeSession.confirmed;
-  const ownedRouteState = routeState
-    && routeState.roomId === backendRoomId
-    && routeState.roomLayoutId === fallbackRoom.id
-    && (!hasMatchingDraft || routeState.activeLayoutId === activeSession?.activeLayoutId)
-    ? routeState
-    : null;
-  const [roomLayout, setRoomLayout] = useState(() => ownedRouteState?.roomLayout ?? (hasMatchingDraft ? null : fallbackRoom));
-  const [loadError, setLoadError] = useState("");
-  const [justConfirmed, setJustConfirmed] = useState(false);
+  const [roomLayout, setRoomLayout] = useState(() => (hasMatchingDraft ? null : confirmedMirror));
+  const [loadError, setLoadError] = useState(() => (
+    fallbackRoom ? "" : "확정할 배치를 찾지 못했습니다. 방을 다시 선택해 주세요."
+  ));
+  const [justConfirmed, setJustConfirmed] = useState(Boolean(confirmedMirror && !hasMatchingDraft));
   const [showShoppingList, setShowShoppingList] = useState(false);
   const [isConfirming, setIsConfirming] = useState(false);
   const [confirmError, setConfirmError] = useState("");
+  const [products, setProducts] = useState<MockProductApiItem[]>([]);
+  const [productStatus, setProductStatus] = useState<ShoppingListLoadStatus>("loading");
+  const [productRequestVersion, setProductRequestVersion] = useState(0);
   const roomViewerContainerRef = useRef<HTMLDivElement>(null);
   const activeLayoutId = activeSession && hasMatchingDraft ? activeSession.activeLayoutId : null;
 
   useEffect(() => {
-    if (roomLayout || activeLayoutId === null) return;
+    if (!roomLayout) return;
     let cancelled = false;
-    refreshActiveDraftNavigationState()
-      .then((state) => {
-        if (!cancelled && state?.roomLayout) {
-          setRoomLayout(state.roomLayout);
+    fetchMockProducts()
+      .then((items) => {
+        if (!cancelled) {
+          setProducts(items);
+          setProductStatus("success");
         }
       })
       .catch(() => {
-        if (!cancelled) {
+        if (!cancelled) setProductStatus("error");
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [productRequestVersion, roomLayout]);
+
+  useEffect(() => {
+    if (!fallbackRoom || backendRoomId === null) return;
+    let cancelled = false;
+    const requestClientId = readRequestClientId();
+    const request = activeLayoutId !== null
+      ? refreshActiveDraftNavigationState()
+      : getLatestConfirmedLayout(backendRoomId).then((response) => {
+        const recovered = resolveLatestConfirmedRoom(fallbackRoom, backendRoomId, response);
+        return recovered ? { roomLayout: recovered, confirmed: true } : null;
+      });
+
+    request
+      .then((state) => {
+        if (cancelled
+          || !isCurrentConfirmScope(fallbackRoom.id, backendRoomId, requestClientId)) return;
+        if (state?.roomLayout) {
+          setLoadError("");
+          setRoomLayout(state.roomLayout);
+          if ("confirmed" in state && state.confirmed) {
+            saveConfirmedLayout(state.roomLayout.id, state.roomLayout);
+            localStorage.setItem("roomfit:selectedRoomLayout", JSON.stringify(state.roomLayout));
+            localStorage.setItem("roomfit:confirmedRoomLayout", JSON.stringify(state.roomLayout));
+            setJustConfirmed(true);
+          }
+        } else {
+          setLoadError("현재 사용자 범위에서 확정된 배치를 찾지 못했습니다. Editor에서 다시 확인해 주세요.");
+        }
+      })
+      .catch(() => {
+        if (!cancelled
+          && isCurrentConfirmScope(fallbackRoom.id, backendRoomId, requestClientId)) {
           setLoadError("편집 중인 배치를 불러오지 못했습니다. Editor에서 다시 저장해 주세요.");
         }
       });
     return () => {
       cancelled = true;
     };
-  }, [activeLayoutId, roomLayout]);
+  }, [activeLayoutId, backendRoomId, fallbackRoom]);
 
   if (!roomLayout) {
     return (
       <main className="grid min-h-[calc(100vh-76px)] place-items-center bg-[#fbfbfb] px-5 text-center">
-        <p role={loadError ? "alert" : undefined} className="font-bold text-[#777777]">
-          {loadError || "편집 중인 배치를 불러오는 중입니다..."}
-        </p>
+        <section>
+          <p role={loadError ? "alert" : undefined} className="font-bold text-[#777777]">
+            {loadError || "편집 중인 배치를 불러오는 중입니다..."}
+          </p>
+          {loadError && (
+            <button
+              type="button"
+              onClick={() => navigate("/rooms")}
+              className="mt-5 rounded-lg bg-[#111111] px-5 py-3 text-sm font-extrabold text-white"
+            >
+              방 선택으로 돌아가기
+            </button>
+          )}
+        </section>
       </main>
     );
   }
@@ -109,11 +154,6 @@ export default function LayoutConfirm() {
   // digit and doesn't match anything the user actually recognizes as "their
   // room."
   const roomSize = `${roomLayout.width}m × ${roomLayout.depth}m`;
-  // Real 오늘의집 product links only exist for the 네츄럴 톤 demo scenario
-  // (see naturalScenarioShoppingList.ts) — there's no product-matching
-  // backend to look these up generically for any other scenario/room.
-  const isNaturalScenario = currentScenario()?.id === "rest-natural-wood";
-
   const confirmLayout = async () => {
     if (isConfirming) return;
     setIsConfirming(true);
@@ -122,6 +162,7 @@ export default function LayoutConfirm() {
     try {
       const layoutToConfirm = await confirmActiveLayout(roomLayout);
 
+      setRoomLayout(layoutToConfirm);
       saveConfirmedLayout(layoutToConfirm.id, layoutToConfirm);
       localStorage.setItem("roomfit:selectedRoomLayout", JSON.stringify(layoutToConfirm));
       localStorage.setItem("roomfit:confirmedRoomLayout", JSON.stringify(layoutToConfirm));
@@ -294,37 +335,15 @@ export default function LayoutConfirm() {
                 </button>
               </div>
 
-              {isNaturalScenario ? (
-                <ul className="space-y-3">
-                  {NATURAL_SCENARIO_SHOPPING_LIST.map((entry) => {
-                    const Icon = SHOPPING_LIST_ICONS[entry.iconKey];
-
-                    return (
-                      <li key={entry.name}>
-                        <a
-                          href={entry.url}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="flex items-center gap-3.5 rounded-lg border border-[#eeeeee] p-3 transition-colors hover:border-[#111111] hover:bg-[#f9f9f9]"
-                        >
-                          <span className="grid h-14 w-14 shrink-0 place-items-center rounded-md bg-[#f3f0eb]">
-                            <Icon className="h-6 w-6 text-[#8b633d]" />
-                          </span>
-                          <span className="min-w-0 flex-1">
-                            <strong className="block truncate text-sm font-bold">{entry.name}</strong>
-                            <span className="mt-0.5 block truncate text-xs font-medium text-[#999999]">{entry.info}</span>
-                          </span>
-                          <FiExternalLink className="h-4 w-4 shrink-0 text-[#999999]" />
-                        </a>
-                      </li>
-                    );
-                  })}
-                </ul>
-              ) : (
-                <p className="text-sm font-semibold leading-6 text-[#777777]">
-                  이 스타일의 쇼핑 리스트는 아직 준비 중이에요.
-                </p>
-              )}
+              <ShoppingListPanel
+                furniture={roomLayout.furniture}
+                products={products}
+                status={productStatus}
+                onRetry={() => {
+                  setProductStatus("loading");
+                  setProductRequestVersion((current) => current + 1);
+                }}
+              />
             </div>
           </aside>
         </div>
@@ -348,4 +367,22 @@ function SummaryItem({ label, value }: { label: string; value: string }) {
       <dd className="mt-3 break-keep text-lg font-semibold text-[#111111]">{value}</dd>
     </div>
   );
+}
+
+function readRequestClientId(): string | null {
+  try {
+    return getActiveRequestClientId();
+  } catch {
+    return null;
+  }
+}
+
+function isCurrentConfirmScope(
+  roomLayoutId: string,
+  backendRoomId: number,
+  requestClientId: string | null,
+): boolean {
+  return localStorage.getItem("roomfit:selectedRoomId") === roomLayoutId
+    && Number(localStorage.getItem("roomfit:backendRoomId")) === backendRoomId
+    && readRequestClientId() === requestClientId;
 }

@@ -18,6 +18,8 @@ interface RoomViewerProps {
   selectedFurnitureId: string | null;
   onSelectFurniture: (id: string | null) => void;
   onMoveFurniture: (id: string, position: Vector2D) => void;
+  onBeginMoveFurniture?: (id: string) => void;
+  onEndMoveFurniture?: (id: string) => void;
   onRotateFurniture?: (id: string) => void;
   hideEntranceWalls?: boolean;
   alignCameraToEntrance?: boolean;
@@ -31,6 +33,8 @@ export function RoomViewer({
   selectedFurnitureId,
   onSelectFurniture,
   onMoveFurniture,
+  onBeginMoveFurniture,
+  onEndMoveFurniture,
   onRotateFurniture,
   hideEntranceWalls = false,
   alignCameraToEntrance = false,
@@ -103,6 +107,8 @@ export function RoomViewer({
                 showSelectionIndicator={showEditingHelpers && !blindPlacement}
                 onSelect={onSelectFurniture}
                 onMove={onMoveFurniture}
+                onMoveStart={onBeginMoveFurniture}
+                onMoveEnd={onEndMoveFurniture}
                 preferredColorTone={preferredColorTone}
                 layoutPosition={blindPlacement?.position}
                 layoutRotationY={blindPlacement?.rotationY}

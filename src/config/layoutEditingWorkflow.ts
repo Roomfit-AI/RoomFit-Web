@@ -1,5 +1,6 @@
 import {
   addFurnitureToDraft,
+  buildDefaultAgentContextRequest,
   confirmLayout,
   createDefaultAgentContext,
   createLayoutDraft,
@@ -7,10 +8,14 @@ import {
   getLayout,
   recommendLayout,
   updateLayout,
+  type AgentContextRequest,
   type LayoutRecommendationResponse,
   type LayoutResponse,
 } from "../api/layouts";
-import { resolveRequiredFurnitureTypes } from "../api/agentContextRequest";
+import {
+  AgentContextRequestValidationError,
+  resolveRequiredFurnitureTypes,
+} from "../api/agentContextRequest";
 import { applyBackendFurnitureToLayout, getRoomById } from "../api/rooms";
 import type { RoomLayout } from "../types";
 import {
@@ -37,8 +42,6 @@ import {
 import { clearConfirmedLayout, hasConfirmedLayout } from "./confirmedLayouts";
 import { bindRoomToSetupSession, readRoomSetupSession } from "./roomSetupSession";
 import { getActiveRequestClientId } from "./clientScope";
-import { currentScenario, isCollectorRoom } from "./scenarios";
-import { isHobbyCoralRecommendationSelected } from "../mock/hobbyCoralRecommendation";
 import { readPreferredColorTone } from "./preferredColorTone";
 import { assertFurnitureAdditionAllowed } from "./furnitureAdditionPolicy";
 import { hasDeskLoftConflict, DESK_LOFT_CONFLICT_MESSAGE } from "./furnitureSelectionPolicy";
@@ -68,6 +71,16 @@ const defaultApi: LayoutWorkflowApi = {
   recommendLayout,
   confirmLayout,
 };
+
+interface EditorPersistenceOwner {
+  roomLayoutId: string;
+  backendRoomId: number;
+  activeLayoutId: number;
+  clientId: string | null;
+}
+
+let pendingEditorLayoutPersistence: Promise<void> = Promise.resolve();
+let latestEditorLayoutPersistence: Promise<unknown> = Promise.resolve();
 
 export async function loadManagedFurnitureLayout(
   room: RoomLayout,
@@ -167,11 +180,13 @@ export async function prepareAdditionalFurnitureForEditor(
   storage: WorkflowStorage = localStorage,
   api: LayoutWorkflowApi = defaultApi,
   browserSession: WorkflowStorage = sessionStorage,
+  signal?: AbortSignal,
 ): Promise<LayoutNavigationState | null> {
   const selectedIds = readStringArray(storage.getItem("roomfit:selectedAdditionalFurnitureIds"));
   assertFurnitureAdditionAllowed(readSelectedRoomLayout(storage), selectedIds);
 
   const current = await refreshActiveDraftNavigationState(storage, api);
+  throwIfRecommendationCancelled(signal);
   if (!current) {
     return current;
   }
@@ -179,7 +194,7 @@ export async function prepareAdditionalFurnitureForEditor(
   assertFurnitureAdditionAllowed(current.roomLayout ?? readSelectedRoomLayout(storage), selectedIds);
 
   if (current.editingMode === "INITIAL_SETUP") {
-    return prepareInitialRecommendation(current, storage, browserSession, api);
+    return prepareInitialRecommendation(current, storage, browserSession, api, signal);
   }
 
   if (current.editingMode !== "REEDIT_DRAFT" || current.activeLayoutId === null) return current;
@@ -205,17 +220,109 @@ export async function prepareAdditionalFurnitureForEditor(
   return createLayoutNavigationState(session, response, restored);
 }
 
+export async function prepareRecommendationTransitionForEditor(
+  storage: WorkflowStorage = localStorage,
+  api: LayoutWorkflowApi = defaultApi,
+  browserSession: WorkflowStorage = sessionStorage,
+  signal?: AbortSignal,
+): Promise<LayoutNavigationState | null> {
+  const current = await refreshActiveDraftNavigationState(storage, api);
+  throwIfRecommendationCancelled(signal);
+  if (current?.editingMode === "INITIAL_SETUP" && current.activeLayoutId !== null) {
+    const fingerprint = createRecommendationFingerprint(current, storage, browserSession);
+    const session = readActiveLayoutEditingSession(storage);
+    if (session?.activeLayoutId === current.activeLayoutId
+      && session.recommendationFingerprint === fingerprint) {
+      return current;
+    }
+
+    const selectedIds = readStringArray(storage.getItem("roomfit:selectedAdditionalFurnitureIds"));
+    const baseline = await api.getRoomLayout(current.roomId);
+    throwIfRecommendationCancelled(signal);
+    if (baseline.id !== current.roomLayoutId) {
+      throw new Error("Backend Room response does not match the selected Room.");
+    }
+    assertFurnitureAdditionAllowed(baseline, selectedIds);
+    if (hasDeskLoftConflict(selectedIds, baseline.furniture)) {
+      throw new AgentContextRequestValidationError(DESK_LOFT_CONFLICT_MESSAGE);
+    }
+    return prepareInitialRecommendation(
+      current,
+      storage,
+      browserSession,
+      api,
+      signal,
+      fingerprint,
+      baseline,
+    );
+  }
+  return prepareAdditionalFurnitureForEditor(storage, api, browserSession, signal);
+}
+
+export async function prepareFurnitureSelectionForRecommendation(
+  storage: WorkflowStorage = localStorage,
+  api: LayoutWorkflowApi = defaultApi,
+): Promise<LayoutNavigationState | null> {
+  const selectedIds = readStringArray(storage.getItem("roomfit:selectedAdditionalFurnitureIds"));
+  const selectedRoom = readSelectedRoomLayout(storage);
+  assertFurnitureAdditionAllowed(selectedRoom, selectedIds);
+  assertRecommendationSelectionReady(selectedIds);
+
+  const current = await refreshActiveDraftNavigationState(storage, api);
+  if (!current) return null;
+
+  assertFurnitureAdditionAllowed(current.roomLayout ?? selectedRoom, selectedIds);
+  if (hasDeskLoftConflict(selectedIds, current.roomLayout?.furniture ?? [])) {
+    throw new AgentContextRequestValidationError(DESK_LOFT_CONFLICT_MESSAGE);
+  }
+  return current;
+}
+
 async function prepareInitialRecommendation(
   current: LayoutNavigationState,
   storage: WorkflowStorage,
   browserSession: WorkflowStorage,
   api: LayoutWorkflowApi,
+  signal?: AbortSignal,
+  knownFingerprint?: string,
+  baselineOverride?: RoomLayout,
 ): Promise<LayoutNavigationState> {
-  const baseline = current.roomLayout ?? readSelectedRoomLayout(storage);
-  if (!baseline || shouldUseLocalScenario(baseline, storage)) return current;
+  throwIfRecommendationCancelled(signal);
+  const baseline = baselineOverride ?? current.roomLayout ?? readSelectedRoomLayout(storage);
+  if (!baseline) return current;
+  const recommendationFingerprint = knownFingerprint
+    ?? createRecommendationFingerprint(current, storage, browserSession);
+  const expectedSessionIdentity = createActiveSessionIdentity(storage);
+  assertRecommendationRequestIsCurrent(
+    current,
+    recommendationFingerprint,
+    expectedSessionIdentity,
+    storage,
+    browserSession,
+    signal,
+  );
 
   const context = await api.createDefaultAgentContext(current.roomId);
+  assertRecommendationRequestIsCurrent(
+    current,
+    recommendationFingerprint,
+    expectedSessionIdentity,
+    storage,
+    browserSession,
+    signal,
+  );
   const response = await api.recommendLayout(current.roomId, context.contextId);
+  assertRecommendationRequestIsCurrent(
+    current,
+    recommendationFingerprint,
+    expectedSessionIdentity,
+    storage,
+    browserSession,
+    signal,
+  );
+  if (response.roomId !== current.roomId) {
+    throw new Error("The Backend Layout belongs to a different Room.");
+  }
   const decision = resolveRecommendationDecision(response);
   const owner = resolveRecommendationOwner(current, browserSession);
 
@@ -239,6 +346,7 @@ async function prepareInitialRecommendation(
     persistedResponse,
     storage,
     "INITIAL_SETUP",
+    recommendationFingerprint,
   );
 
   if (decision.notice && owner) {
@@ -250,25 +358,186 @@ async function prepareInitialRecommendation(
   return createLayoutNavigationState(session, persistedResponse, restored);
 }
 
+function createRecommendationFingerprint(
+  current: LayoutNavigationState,
+  storage: WorkflowStorage,
+  browserSession: WorkflowStorage,
+): string {
+  return createRecommendationFingerprintFromRequest({
+    roomLayoutId: current.roomLayoutId,
+    clientId: getActiveRequestClientId(storage, browserSession),
+    request: buildDefaultAgentContextRequest(current.roomId, storage),
+  });
+}
+
+export function createRecommendationFingerprintFromRequest({
+  roomLayoutId,
+  clientId,
+  request,
+}: {
+  roomLayoutId: string;
+  clientId: string | null;
+  request: AgentContextRequest;
+}): string {
+  return JSON.stringify({
+    version: 1,
+    roomLayoutId,
+    clientId,
+    roomId: request.roomId,
+    lifestyleGoal: request.lifestyleGoal,
+    designStyle: [...request.designStyle].sort(),
+    requiredItems: [...request.requiredItems].sort(),
+    optionalItems: [...request.optionalItems].sort(),
+    selectedImageIds: [...request.selectedImageIds].sort((left, right) => left - right),
+    selectedProductIds: [...request.selectedProductIds].sort(),
+    preferredColorTone: request.preferredColorTone,
+  });
+}
+
+function assertRecommendationRequestIsCurrent(
+  current: LayoutNavigationState,
+  expectedFingerprint: string,
+  expectedSessionIdentity: string | null,
+  storage: WorkflowStorage,
+  browserSession: WorkflowStorage,
+  signal?: AbortSignal,
+): void {
+  throwIfRecommendationCancelled(signal);
+  const selectedRoom = readSelectedRoomLayout(storage);
+  const backendRoomId = parseBackendRoomId(storage.getItem("roomfit:backendRoomId"));
+  const session = readActiveLayoutEditingSession(storage);
+  if (selectedRoom?.id !== current.roomLayoutId
+    || backendRoomId !== current.roomId
+    || createActiveSessionIdentity(storage) !== expectedSessionIdentity
+    || (current.activeLayoutId !== null
+      && (!isSessionForRoom(session, current.roomLayoutId, current.roomId)
+        || session.activeLayoutId !== current.activeLayoutId
+        || session.confirmed))) {
+    throwRecommendationAbort();
+  }
+
+  try {
+    if (createRecommendationFingerprint(current, storage, browserSession) !== expectedFingerprint) {
+      throwRecommendationAbort();
+    }
+  } catch (error) {
+    if (error instanceof DOMException && error.name === "AbortError") throw error;
+    throwRecommendationAbort();
+  }
+}
+
+function createActiveSessionIdentity(storage: WorkflowStorage): string | null {
+  const session = readActiveLayoutEditingSession(storage);
+  return session ? JSON.stringify({
+    roomLayoutId: session.roomLayoutId,
+    backendRoomId: session.backendRoomId,
+    activeLayoutId: session.activeLayoutId,
+    sourceLayoutId: session.sourceLayoutId,
+    editingMode: session.editingMode,
+    confirmed: session.confirmed,
+  }) : null;
+}
+
+function throwIfRecommendationCancelled(signal?: AbortSignal): void {
+  if (signal?.aborted) throwRecommendationAbort();
+}
+
+function throwRecommendationAbort(): never {
+  throw new DOMException("The recommendation request is no longer current.", "AbortError");
+}
+
 export async function persistActiveEditorLayout(
   storage: WorkflowStorage = localStorage,
   api: LayoutWorkflowApi = defaultApi,
   browserSession: WorkflowStorage | null = defaultBrowserSession(),
 ): Promise<LayoutNavigationState | null> {
+  await pendingEditorLayoutPersistence;
   const room = readSelectedRoomLayout(storage);
-  const backendRoomId = parseBackendRoomId(storage.getItem("roomfit:backendRoomId"));
-  if (!room || backendRoomId === null) return null;
+  if (!room) return null;
+  const owner = readEditorPersistenceOwner(room, storage, browserSession);
+  if (!owner) return null;
+
+  return persistEditorLayoutNow(room, owner, storage, api, browserSession, true);
+}
+
+export function persistEditorLayoutSnapshot(
+  room: RoomLayout,
+  storage: WorkflowStorage = localStorage,
+  api: LayoutWorkflowApi = defaultApi,
+  browserSession: WorkflowStorage | null = defaultBrowserSession(),
+): Promise<LayoutNavigationState | null> {
+  const owner = readEditorPersistenceOwner(room, storage, browserSession);
+  if (!owner) return Promise.resolve(null);
+
+  const persist = () => persistEditorLayoutNow(room, owner, storage, api, browserSession, false);
+  const request = pendingEditorLayoutPersistence.then(persist, persist);
+  pendingEditorLayoutPersistence = request.then(() => undefined, () => undefined);
+  latestEditorLayoutPersistence = request;
+  return request;
+}
+
+export async function flushEditorLayoutPersistence(): Promise<void> {
+  await latestEditorLayoutPersistence;
+}
+
+async function persistEditorLayoutNow(
+  room: RoomLayout,
+  owner: EditorPersistenceOwner,
+  storage: WorkflowStorage,
+  api: LayoutWorkflowApi,
+  browserSession: WorkflowStorage | null,
+  persistMirror: boolean,
+): Promise<LayoutNavigationState | null> {
+  if (!isEditorPersistenceOwnerCurrent(owner, storage, browserSession)) return null;
   assertRecommendationCanBeConfirmed(room, storage, browserSession);
 
-  const session = readActiveLayoutEditingSession(storage);
-  if (!isSessionForRoom(session, room.id, backendRoomId) || session.confirmed) return null;
+  const saved = await api.updateLayout(owner.activeLayoutId, room);
+  assertActiveDraftResponse(saved, owner.activeLayoutId, owner.backendRoomId);
+  if (!isEditorPersistenceOwnerCurrent(owner, storage, browserSession)) return null;
 
-  const saved = await api.updateLayout(session.activeLayoutId, room);
-  assertActiveDraftResponse(saved, session.activeLayoutId, backendRoomId);
   const savedRoom = applyBackendFurnitureToLayout(room, saved.recommendedFurniture);
-  persistActiveDraftMirror(savedRoom, storage);
-  const savedSession = saveLayoutResponseSession(room.id, saved, storage, session.editingMode);
+  if (persistMirror) persistActiveDraftMirror(savedRoom, storage);
+  const session = readActiveLayoutEditingSession(storage);
+  const savedSession = saveLayoutResponseSession(room.id, saved, storage, session?.editingMode);
   return createLayoutNavigationState(savedSession, saved, savedRoom);
+}
+
+function readEditorPersistenceOwner(
+  room: RoomLayout,
+  storage: WorkflowStorage,
+  browserSession: WorkflowStorage | null,
+): EditorPersistenceOwner | null {
+  const backendRoomId = parseBackendRoomId(storage.getItem("roomfit:backendRoomId"));
+  const session = readActiveLayoutEditingSession(storage);
+  if (backendRoomId === null
+    || !isSessionForRoom(session, room.id, backendRoomId)
+    || session.confirmed) {
+    return null;
+  }
+
+  return {
+    roomLayoutId: room.id,
+    backendRoomId,
+    activeLayoutId: session.activeLayoutId,
+    clientId: browserSession ? getActiveRequestClientId(storage, browserSession) : null,
+  };
+}
+
+function isEditorPersistenceOwnerCurrent(
+  owner: EditorPersistenceOwner,
+  storage: WorkflowStorage,
+  browserSession: WorkflowStorage | null,
+): boolean {
+  const selected = readSelectedRoomLayout(storage);
+  const backendRoomId = parseBackendRoomId(storage.getItem("roomfit:backendRoomId"));
+  const session = readActiveLayoutEditingSession(storage);
+  const clientId = browserSession ? getActiveRequestClientId(storage, browserSession) : null;
+  return selected?.id === owner.roomLayoutId
+    && backendRoomId === owner.backendRoomId
+    && isSessionForRoom(session, owner.roomLayoutId, owner.backendRoomId)
+    && !session.confirmed
+    && session.activeLayoutId === owner.activeLayoutId
+    && clientId === owner.clientId;
 }
 
 export async function confirmActiveLayout(
@@ -417,11 +686,6 @@ function defaultBrowserSession(): WorkflowStorage | null {
   return typeof sessionStorage === "undefined" ? null : sessionStorage;
 }
 
-function shouldUseLocalScenario(room: RoomLayout, storage: WorkflowStorage): boolean {
-  if (isHobbyCoralRecommendationSelected(storage)) return true;
-  return room.source !== "CUSTOM" && !isCollectorRoom(room) && Boolean(currentScenario(storage));
-}
-
 function resolveRecommendationOwner(
   current: LayoutNavigationState,
   browserSession: WorkflowStorage,
@@ -437,6 +701,12 @@ function resolveRecommendationOwner(
     roomLayoutId: current.roomLayoutId,
     backendRoomId: current.roomId,
   };
+}
+
+function assertRecommendationSelectionReady(selectedIds: string[]): void {
+  if (resolveRequiredFurnitureTypes(selectedIds).length === 0) {
+    throw new AgentContextRequestValidationError("추천에 포함할 가구를 하나 이상 선택해 주세요.");
+  }
 }
 
 function requirePersistedRecommendation(response: LayoutRecommendationResponse): LayoutResponse {

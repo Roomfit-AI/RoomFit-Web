@@ -1,11 +1,13 @@
 import { useEffect, useState } from "react";
 import { FiCheck } from "react-icons/fi";
 import PageStepHeader from "../components/ui/PageStepHeader";
+import InlineSelectionValidation from "../components/ui/InlineSelectionValidation";
 import { hasRoomPreferences } from "../config/roomPreferences";
 import {
   getReferenceStyleGuidanceMessage,
   normalizeInteriorStyleId,
   notifyOnboardingSelectionChanged,
+  ONBOARDING_VALIDATION_EVENT,
 } from "../config/onboardingSelection";
 
 import minimal from "../assets/styles/minimal.png";
@@ -59,6 +61,7 @@ export default function ReferenceImage() {
     // 않는 값은 미선택("")으로 두고, 첫 번째 스타일로 임의 치환하지 않는다.
     return normalizeInteriorStyleId(localStorage.getItem("roomfit:selectedStyle")) ?? "";
   });
+  const [validationMessage, setValidationMessage] = useState("");
 
   useEffect(() => {
     if (selectedStyle) {
@@ -71,9 +74,15 @@ export default function ReferenceImage() {
     notifyOnboardingSelectionChanged();
   }, [selectedStyle]);
 
-  const guidanceMessage = getReferenceStyleGuidanceMessage(
-    normalizeInteriorStyleId(selectedStyle),
-  );
+  useEffect(() => {
+    const showValidation = (event: Event) => {
+      const detail = (event as CustomEvent<{ pathname?: string }>).detail;
+      if (detail?.pathname !== "/reference-image") return;
+      setValidationMessage(getReferenceStyleGuidanceMessage(normalizeInteriorStyleId(selectedStyle)));
+    };
+    window.addEventListener(ONBOARDING_VALIDATION_EVENT, showValidation);
+    return () => window.removeEventListener(ONBOARDING_VALIDATION_EVENT, showValidation);
+  }, [selectedStyle]);
 
   return (
     <main className="min-h-[calc(100vh-76px)] bg-[#fbfbfb] px-5 py-8 text-[#141414] sm:px-8 lg:px-10">
@@ -85,20 +94,14 @@ export default function ReferenceImage() {
           <p className="mt-3 text-sm font-semibold text-[#777777]">선택한 이미지는 AI 추천 스타일에 반영됩니다.</p>
         </header>
 
-        <div role="status" aria-live="polite" className="mb-12 flex justify-center">
-          {guidanceMessage && (
-            <p className="rounded-lg bg-[#fff8e6] px-4 py-3 text-sm font-bold text-[#8a5a00]">
-              {guidanceMessage}
-            </p>
-          )}
-        </div>
+        <InlineSelectionValidation message={validationMessage} />
 
         <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-5">
           {styles.map((style) => {
             const selected = selectedStyle === style.id;
 
             return (
-              <button key={style.id} type="button" onClick={() => setSelectedStyle(style.id)} className="group text-left">
+              <button key={style.id} type="button" onClick={() => { setSelectedStyle(style.id); setValidationMessage(""); }} className="group text-left">
                 <span
                   className={`relative block overflow-hidden rounded-lg border bg-white p-2 transition-all group-hover:-translate-y-1 group-hover:shadow-[0_18px_35px_rgba(0,0,0,0.08)] ${
                     selected ? "border-[#111111] ring-2 ring-[#111111]" : "border-[#e5e5e5]"

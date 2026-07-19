@@ -4,6 +4,7 @@ import { apiClient } from "../client";
 import {
   addFurnitureToDraft,
   applyLayoutFeedback,
+  createDefaultAgentContext,
   getLayout,
   normalizeFeedbackResponse,
   normalizeRecommendationResponse,
@@ -13,6 +14,40 @@ import {
 import { FurnitureAdditionRequestError } from "../../config/furnitureAdditionError";
 
 describe("layout recommendation response adapter", () => {
+  it("sends every selected furniture type and preference through the actual Agent Context handler", async () => {
+    const values = new Map<string, string>([
+      ["roomfit:selectedPurpose", "hobby"],
+      ["roomfit:selectedStyle", "modern"],
+      ["roomfit:selectedPalette", "pink"],
+      ["roomfit:selectedAdditionalFurnitureIds", JSON.stringify([
+        "sofa", "nightstand", "side-table", "tv", "tv-console", "mood-light", "plant", "monitor",
+      ])],
+    ]);
+    vi.stubGlobal("localStorage", { getItem: (key: string) => values.get(key) ?? null });
+    const post = vi.spyOn(apiClient, "post").mockResolvedValue({
+      data: { success: true, data: { contextId: 4 }, error: null },
+    });
+
+    try {
+      await createDefaultAgentContext(17);
+      expect(post).toHaveBeenCalledExactlyOnceWith("/api/agent/context", {
+        roomId: 17,
+        lifestyleGoal: "RELAX_FOCUSED",
+        designStyle: ["MODERN"],
+        requiredItems: [
+          "sofa", "nightstand", "side_table", "tv", "media_console", "mood_lamp", "plant", "monitor",
+        ],
+        optionalItems: [],
+        selectedImageIds: [3],
+        selectedProductIds: [],
+        preferredColorTone: "PINK_CORAL",
+      });
+    } finally {
+      post.mockRestore();
+      vi.unstubAllGlobals();
+    }
+  });
+
   it("keeps a legacy response as SUCCESS-compatible when additive fields are absent", () => {
     const result = normalizeRecommendationResponse(createFeedbackResponse());
 

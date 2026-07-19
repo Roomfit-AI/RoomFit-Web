@@ -1,5 +1,3 @@
-import { applyScenario, currentScenario } from "./scenarios";
-import { sampleRoom } from "../mock/sampleRoom";
 import type { RoomLayout } from "../types";
 import { getActiveRequestClientId } from "./clientScope";
 
@@ -104,13 +102,16 @@ export function getLiveMirrorForSelectedRoom(): RoomLayout | null {
   const confirmed = localStorage.getItem("roomfit:confirmedRoomLayout");
   const selectedRoomId = localStorage.getItem("roomfit:selectedRoomId");
 
-  if (!confirmed) {
+  if (!confirmed || !selectedRoomId) {
     return null;
   }
 
+  const storedOwner = readOwners()[selectedRoomId];
+  if (storedOwner !== readActiveOwner()) return null;
+
   try {
     const parsedConfirmed = JSON.parse(confirmed) as RoomLayout;
-    return !selectedRoomId || parsedConfirmed.id === selectedRoomId ? parsedConfirmed : null;
+    return parsedConfirmed.id === selectedRoomId ? parsedConfirmed : null;
   } catch {
     return null;
   }
@@ -120,27 +121,25 @@ export function getLiveMirrorForSelectedRoom(): RoomLayout | null {
 // LayoutConfirm.tsx (to display it) and Navbar.tsx (its own "확정하기" button
 // on the last step confirms whatever this resolves to, without needing the
 // page's local state).
-export function resolveCurrentRoomLayout(): RoomLayout {
+export function resolveCurrentRoomLayout(): RoomLayout | null {
   const liveMirror = getLiveMirrorForSelectedRoom();
 
   if (liveMirror) {
     return liveMirror;
   }
 
-  // Only reached when the user lands here without ever visiting /editor —
-  // apply the scripted scenario once as a fallback so the confirm preview
-  // isn't just the bare as-uploaded room.
+  // Only reached when the user lands here without an active Editor mirror.
+  // Preserve the selected room exactly; recommendation results must come
+  // from the persisted Backend Layout, never from a preference-based script.
   const selected = localStorage.getItem("roomfit:selectedRoomLayout");
 
   if (!selected) {
-    return sampleRoom;
+    return null;
   }
 
   try {
-    const room = JSON.parse(selected) as RoomLayout;
-    const scenario = currentScenario();
-    return scenario ? applyScenario(room, scenario) : room;
+    return JSON.parse(selected) as RoomLayout;
   } catch {
-    return sampleRoom;
+    return null;
   }
 }

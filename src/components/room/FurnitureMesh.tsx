@@ -20,6 +20,8 @@ interface FurnitureMeshProps {
   showSelectionIndicator: boolean;
   onSelect: (id: string) => void;
   onMove: (id: string, position: Vector2D) => void;
+  onMoveStart?: (id: string) => void;
+  onMoveEnd?: (id: string) => void;
   preferredColorTone?: PreferredColorToneId | null;
   layoutPosition?: Vector3Tuple;
   layoutRotationY?: number;
@@ -34,6 +36,8 @@ export function FurnitureMesh({
   showSelectionIndicator,
   onSelect,
   onMove,
+  onMoveStart,
+  onMoveEnd,
   preferredColorTone,
   layoutPosition,
   layoutRotationY,
@@ -120,7 +124,11 @@ export function FurnitureMesh({
           mode="translate"
           showY={false}
           translationSnap={0.05}
-          onMouseUp={commitPosition}
+          onMouseDown={() => onMoveStart?.(item.id)}
+          onMouseUp={() => {
+            commitPosition();
+            onMoveEnd?.(item.id);
+          }}
           onObjectChange={commitPosition}
         />
       </>
