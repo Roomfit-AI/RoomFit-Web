@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 
 import type { RoomLayout } from "../../types";
 import { BROWSER_CLIENT_ID_KEY, activateAppClientScope } from "../clientScope";
-import { hasConfirmedLayout, saveConfirmedLayout } from "../confirmedLayouts";
+import { hasConfirmedLayout, resolveCurrentRoomLayout, saveConfirmedLayout } from "../confirmedLayouts";
 
 const BROWSER_ID = "11111111-1111-4111-8111-111111111111";
 const APP_ID = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
@@ -20,6 +20,32 @@ describe("confirmed Layout scope ownership", () => {
 
     expect(hasConfirmedLayout(layout.id, local, APP_ID)).toBe(true);
     expect(hasConfirmedLayout(layout.id, local, BROWSER_ID)).toBe(false);
+    vi.unstubAllGlobals();
+  });
+
+  it("does not synthesize a scenario Layout when confirm is opened without an Editor mirror", () => {
+    const selected = room();
+    selected.furniture = [{
+      id: "existing-desk",
+      name: "기존 책상",
+      category: "desk",
+      dimensions: { width: 1, depth: 0.6, height: 0.72 },
+      position: { x: 0, z: 0 },
+      rotationY: 0,
+      color: "#fff",
+      material: "wood",
+      status: "existing",
+      removable: true,
+    }];
+    const local = memoryStorage({
+      "roomfit:selectedRoomLayout": JSON.stringify(selected),
+      "roomfit:selectedPurpose": "rest",
+      "roomfit:selectedStyle": "natural",
+      "roomfit:selectedPalette": "brown",
+    });
+    vi.stubGlobal("localStorage", local);
+
+    expect(resolveCurrentRoomLayout()).toEqual(selected);
     vi.unstubAllGlobals();
   });
 });

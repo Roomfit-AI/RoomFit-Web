@@ -43,7 +43,6 @@ import { getActiveRequestClientId } from "./clientScope";
 import { readPreferredColorTone } from "./preferredColorTone";
 import { assertFurnitureAdditionAllowed } from "./furnitureAdditionPolicy";
 import { hasDeskLoftConflict, DESK_LOFT_CONFLICT_MESSAGE } from "./furnitureSelectionPolicy";
-import { createLocalRecommendation } from "./localRecommendation";
 
 type WorkflowStorage = Pick<Storage, "getItem" | "setItem" | "removeItem">;
 
@@ -70,8 +69,6 @@ const defaultApi: LayoutWorkflowApi = {
   recommendLayout,
   confirmLayout,
 };
-
-const LOCAL_RECOMMENDATION_DELAY_MS = 5_000;
 
 export async function loadManagedFurnitureLayout(
   room: RoomLayout,
@@ -248,22 +245,6 @@ async function prepareInitialRecommendation(
 ): Promise<LayoutNavigationState> {
   const baseline = current.roomLayout ?? readSelectedRoomLayout(storage);
   if (!baseline) return current;
-
-  const localRecommendation = createLocalRecommendation(baseline, storage);
-  if (localRecommendation) {
-    await new Promise((resolve) => setTimeout(resolve, LOCAL_RECOMMENDATION_DELAY_MS));
-    persistActiveDraftMirror(localRecommendation.roomLayout, storage);
-    const owner = resolveRecommendationOwner(current, browserSession);
-    if (owner) clearRecommendationResult(browserSession, owner);
-    return {
-      ...current,
-      roomLayout: localRecommendation.roomLayout,
-      localRecommendation: {
-        scoreSummary: localRecommendation.scoreSummary,
-        validationResult: localRecommendation.validationResult,
-      },
-    };
-  }
 
   const context = await api.createDefaultAgentContext(current.roomId);
   const response = await api.recommendLayout(current.roomId, context.contextId);

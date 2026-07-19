@@ -1,6 +1,5 @@
 import { describe, expect, it } from "vitest";
 import {
-  AgentContextRequestValidationError,
   buildAgentContextRequest,
   normalizeBackendRoomId,
   normalizeSelectedImageIds,
@@ -10,7 +9,6 @@ import {
   resolveStyleImageIds,
 } from "../agentContextRequest";
 import { PREFERRED_COLOR_TONE_OPTIONS } from "../../config/preferredColorTone";
-import { isHobbyCoralRecommendationSelected } from "../../mock/hobbyCoralRecommendation";
 import { FURNITURE_TYPE_BY_UI_ID } from "../../config/furnitureSelectionCatalog";
 
 const baseInput = {
@@ -22,11 +20,11 @@ const baseInput = {
 };
 
 describe("Agent Context request mappings", () => {
-  it("maps supported lifestyle purposes without inventing a hobby goal", () => {
+  it("maps every onboarding lifestyle to the existing Backend contract", () => {
     expect(resolveLifestyleGoal("rest")).toBe("RELAX_FOCUSED");
     expect(resolveLifestyleGoal("work")).toBe("STUDY_FOCUSED");
     expect(resolveLifestyleGoal("storage")).toBe("STORAGE_FOCUSED");
-    expect(resolveLifestyleGoal("hobby")).toBeNull();
+    expect(resolveLifestyleGoal("hobby")).toBe("RELAX_FOCUSED");
     expect(resolveLifestyleGoal("업무 / 공부")).toBeNull();
   });
 
@@ -168,26 +166,27 @@ describe("Agent Context request mappings", () => {
       .toThrowError("스타일 이미지");
   });
 
-  it("rejects hobby in the general Agent path with a specific contract error", () => {
-    expect(() => buildAgentContextRequest({ ...baseInput, purpose: "hobby" }))
-      .toThrow(AgentContextRequestValidationError);
-    expect(() => buildAgentContextRequest({ ...baseInput, purpose: "hobby" }))
-      .toThrowError("코랄 시나리오");
-  });
-});
+  it("keeps all eight generic selections in the Backend request without inventing product IDs", () => {
+    const request = buildAgentContextRequest({
+      roomId: 17,
+      purpose: "hobby",
+      style: "modern",
+      palette: "pink",
+      additionalFurnitureIds: [
+        "sofa", "nightstand", "side-table", "tv", "tv-console", "mood-light", "plant", "monitor",
+      ],
+    });
 
-describe("hobby coral scripted recommendation", () => {
-  it("continues to recognize only the existing hobby and pink combination", () => {
-    const selectedValues = new Map([
-      ["roomfit:selectedPurpose", "hobby"],
-      ["roomfit:selectedPalette", "pink"],
-    ]);
-    const storage = {
-      getItem: (key: string) => selectedValues.get(key) ?? null,
-    };
-
-    expect(isHobbyCoralRecommendationSelected(storage)).toBe(true);
-    selectedValues.set("roomfit:selectedPalette", "ivory");
-    expect(isHobbyCoralRecommendationSelected(storage)).toBe(false);
+    expect(request).toMatchObject({
+      roomId: 17,
+      lifestyleGoal: "RELAX_FOCUSED",
+      designStyle: ["MODERN"],
+      requiredItems: [
+        "sofa", "nightstand", "side_table", "tv", "media_console", "mood_lamp", "plant", "monitor",
+      ],
+      optionalItems: [],
+      selectedProductIds: [],
+      preferredColorTone: "PINK_CORAL",
+    });
   });
 });

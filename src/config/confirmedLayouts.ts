@@ -1,4 +1,3 @@
-import { applyScenario, currentScenario } from "./scenarios";
 import { sampleRoom } from "../mock/sampleRoom";
 import type { RoomLayout } from "../types";
 import { getActiveRequestClientId } from "./clientScope";
@@ -127,9 +126,9 @@ export function resolveCurrentRoomLayout(): RoomLayout {
     return liveMirror;
   }
 
-  // Only reached when the user lands here without ever visiting /editor —
-  // apply the scripted scenario once as a fallback so the confirm preview
-  // isn't just the bare as-uploaded room.
+  // Only reached when the user lands here without an active Editor mirror.
+  // Preserve the selected room exactly; recommendation results must come
+  // from the persisted Backend Layout, never from a preference-based script.
   const selected = localStorage.getItem("roomfit:selectedRoomLayout");
 
   if (!selected) {
@@ -137,9 +136,7 @@ export function resolveCurrentRoomLayout(): RoomLayout {
   }
 
   try {
-    const room = JSON.parse(selected) as RoomLayout;
-    const scenario = currentScenario();
-    return scenario ? applyScenario(room, scenario) : room;
+    return JSON.parse(selected) as RoomLayout;
   } catch {
     return sampleRoom;
   }

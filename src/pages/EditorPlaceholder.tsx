@@ -19,7 +19,6 @@ import { ensureCustomRoomBackendRoom } from "../api/customRoomBackend";
 import EditorFeedbackPanel from "../components/editor/EditorFeedbackPanel";
 import {
   createEmptyFeedbackResult,
-  createSuccessfulFeedbackPresentation,
   readFeedbackErrorMessage,
   type FeedbackResultState,
 } from "../components/editor/feedbackResultState";
@@ -33,14 +32,10 @@ import {
 import RoomViewer from "../components/room/RoomViewer";
 import { moveFurnitureInsideRoom, rotateFurnitureInsideRoom } from "../components/room/furnitureBoundary";
 import { getLiveMirrorForSelectedRoom } from "../config/confirmedLayouts";
-import { applyLocalFeedback } from "../config/localFeedback";
-import { buildScenarioValidation } from "../config/localValidation";
-import { createLocalRecommendation } from "../config/localRecommendation";
 import {
   resolveRoomLayoutPreferredColorTone,
   withAppliedPreferredColorTone,
 } from "../config/appliedColorTone";
-import { currentScenario } from "../config/scenarios";
 import { readPreferredColorTone } from "../config/preferredColorTone";
 import {
   isSessionForRoom,
@@ -60,20 +55,9 @@ import {
 import { readRoomSetupSession } from "../config/roomSetupSession";
 import type { Furniture, RoomLayout, Vector2D } from "../types";
 
-// Sentinel layoutId for rooms whose "AI 추천 생성" took the scripted-mood
-// shortcut (see handleRecommend below) instead of a real backend call —
-// there's no backend layoutId to hand to applyLayoutFeedback in that case,
-// but the "AI 피드백" panel only unlocks once layoutId is truthy, so without
-// this the feedback box would stay permanently disabled for every scenario
-// demo run. handleFeedback branches on this value to run applyLocalFeedback
-// instead of hitting the network.
-const LOCAL_SCENARIO_LAYOUT_ID = -1;
-
-// The room as saved from /manage-furniture, unmodified — demo-mood
-// restyling/additions (see config/scenarios.ts) only happen when "AI 추천
-// 생성" is clicked (see handleRecommend below), not at load time. Used by
-// handleResetFurniture's "초기화" button, which needs the true untouched
-// baseline to discard edits back to — not whatever's currently on screen.
+// The latest room mirror saved by the setup/editor workflow. Reset uses this
+// persisted baseline rather than whatever transient furniture edits are
+// currently on screen.
 function loadSelectedRoomLayout(): RoomLayout | null {
   const raw = localStorage.getItem("roomfit:selectedRoomLayout");
 
@@ -154,9 +138,7 @@ export default function EditorPlaceholder() {
     : null;
   const [selectedFurnitureId, setSelectedFurnitureId] = useState<string | null>(null);
   const [layoutId, setLayoutId] = useState<number | null>(
-    navigationState?.localRecommendation
-      ? LOCAL_SCENARIO_LAYOUT_ID
-      : navigationState?.activeLayoutId ?? matchingSession?.activeLayoutId ?? null,
+    navigationState?.activeLayoutId ?? matchingSession?.activeLayoutId ?? null,
   );
   const [feedback, setFeedback] = useState("");
   const [hideEntranceWalls, setHideEntranceWalls] = useState(false);
@@ -164,10 +146,10 @@ export default function EditorPlaceholder() {
   const [isApplyingFeedback, setIsApplyingFeedback] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [scoreSummary, setScoreSummary] = useState<ScoreSummary | null>(
-    navigationState?.layoutResponse?.scoreSummary ?? navigationState?.localRecommendation?.scoreSummary ?? null,
+    navigationState?.layoutResponse?.scoreSummary ?? null,
   );
   const [validationResult, setValidationResult] = useState<LayoutValidationResult | null>(
-    navigationState?.layoutResponse?.validationResult ?? navigationState?.localRecommendation?.validationResult ?? null,
+    navigationState?.layoutResponse?.validationResult ?? null,
   );
   const [interpretedIntent, setInterpretedIntent] = useState<InterpretedIntent | null>(null);
   const [feedbackResult, setFeedbackResult] = useState<FeedbackResultState>(createEmptyFeedbackResult);
@@ -290,25 +272,6 @@ export default function EditorPlaceholder() {
 
     const recommendationColorTone = readPreferredColorTone() ?? preferredColorTone;
 
-    const localRecommendation = createLocalRecommendation(roomLayout);
-    if (localRecommendation) {
-      setIsRecommending(true);
-      setErrorMessage("");
-      setInterpretedIntent(null);
-
-      await new Promise((resolve) => setTimeout(resolve, 5000));
-
-      setRoomLayout(localRecommendation.roomLayout);
-      setLayoutId(LOCAL_SCENARIO_LAYOUT_ID);
-      setScoreSummary(localRecommendation.scoreSummary);
-      setValidationResult(localRecommendation.validationResult);
-      clearCurrentRecommendationNotice();
-      setRecommendationNotice(null);
-      setIsRecommending(false);
-      recommendationInFlightRef.current = false;
-      return;
-    }
-
     let roomId = loadBackendRoomId();
 
     if (roomLayout.source === "CUSTOM") {
@@ -341,18 +304,8 @@ export default function EditorPlaceholder() {
     setInterpretedIntent(null);
 
     try {
-      // Real backend round trip (used by sample rooms whose
-      // purpose/style/palette don't match a scripted demo mood, e.g. the
-      // collector rooms above) —
-      // a local backend answers near-instantly, which read as an instant
-      // swap instead of the AI actually working. Racing it against the same
-      // fixed 5s floor used by the scripted-mood path keeps that "AI 추천
-      // 생성 중..." reading consistent regardless of which path a given
-      // sample room happens to take.
-      const [result] = await Promise.all([
-        createDefaultAgentContext(roomId).then((context) => recommendLayout(roomId, context.contextId)),
-        new Promise((resolve) => setTimeout(resolve, 5000)),
-      ]);
+      const context = await createDefaultAgentContext(roomId);
+      const result = await recommendLayout(roomId, context.contextId);
 
       const decision = resolveRecommendationDecision(result);
       if (decision.status === "FAILED") {
@@ -420,40 +373,6 @@ export default function EditorPlaceholder() {
     setErrorMessage("");
     setFeedbackResult(createEmptyFeedbackResult());
     setInterpretedIntent(null);
-
-    if (layoutId === LOCAL_SCENARIO_LAYOUT_ID) {
-      try {
-        // Same fixed 5s pause as the recommend flow above, so "피드백 반영 중..."
-        // reads the same way instead of an instant swap.
-        await new Promise((resolve) => setTimeout(resolve, 5000));
-        const result = applyLocalFeedback(roomLayout, feedback, currentScenario()?.id);
-
-        if ("error" in result) {
-          setFeedbackResult({ presentation: null, errorMessage: result.error });
-        } else {
-          const { scoreSummary, validationResult } = buildScenarioValidation();
-
-          setRoomLayout(result.room);
-          setInterpretedIntent(result.intent);
-          setScoreSummary(scoreSummary);
-          setValidationResult(validationResult);
-          setFeedbackResult({
-            presentation: createSuccessfulFeedbackPresentation(),
-            errorMessage: "",
-          });
-        }
-      } catch (error) {
-        console.error(error);
-        setFeedbackResult({
-          presentation: null,
-          errorMessage: "피드백 요청을 처리하지 못했습니다. 잠시 후 다시 시도해 주세요.",
-        });
-      } finally {
-        setIsApplyingFeedback(false);
-        feedbackInFlightRef.current = false;
-      }
-      return;
-    }
 
     try {
       const result = await applyLayoutFeedback(layoutId, feedback.trim());

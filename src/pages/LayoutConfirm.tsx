@@ -1,28 +1,19 @@
 import { useEffect, useRef, useState } from "react";
-import { FaRug } from "react-icons/fa6";
-import { FiCheck, FiChevronDown, FiChevronUp, FiExternalLink, FiHome, FiInfo, FiShoppingBag } from "react-icons/fi";
+import { FiCheck, FiChevronDown, FiChevronUp, FiHome, FiInfo, FiShoppingBag } from "react-icons/fi";
 import { useLocation, useNavigate } from "react-router-dom";
-import {
-  MdOutlineBed,
-  MdOutlineDesk,
-  MdOutlineLibraryBooks,
-  MdOutlineLightbulb,
-  MdOutlineLocalFlorist,
-  MdOutlineWeekend,
-} from "react-icons/md";
 
+import { fetchMockProducts, type MockProductApiItem } from "../api/products";
+import ShoppingListPanel, { type ShoppingListLoadStatus } from "../components/layout/ShoppingListPanel";
 import RoomViewer from "../components/room/RoomViewer";
 import PageStepHeader from "../components/ui/PageStepHeader";
 import { resolveCurrentRoomLayout, saveConfirmedLayout } from "../config/confirmedLayouts";
 import { resolveRoomLayoutPreferredColorTone } from "../config/appliedColorTone";
-import { NATURAL_SCENARIO_SHOPPING_LIST } from "../config/naturalScenarioShoppingList";
 import {
   createAppliedRoomPreferences,
   readCurrentPreferences,
   saveRoomPreferences,
 } from "../config/roomPreferences";
 import { captureCanvasThumbnail, saveRoomThumbnail } from "../config/roomThumbnails";
-import { currentScenario } from "../config/scenarios";
 import { completeRoomSetupSession } from "../config/roomSetupSession";
 import { confirmActiveLayout, refreshActiveDraftNavigationState } from "../config/layoutEditingWorkflow";
 import { RecommendationFeasibilityError } from "../config/recommendationResult";
@@ -31,20 +22,6 @@ import {
   readActiveLayoutEditingSession,
   readLayoutNavigationState,
 } from "../config/layoutEditingSession";
-
-// Single-glyph icons instead of the .furniture-card-* illustrations — always
-// centered within their own viewBox by design, so every row's thumbnail
-// lines up the same way regardless of how "top-heavy" or "off-center" that
-// particular piece of furniture's shape is.
-const SHOPPING_LIST_ICONS: Record<string, typeof MdOutlineBed> = {
-  bed: MdOutlineBed,
-  plant: MdOutlineLocalFlorist,
-  desk: MdOutlineDesk,
-  sofa: MdOutlineWeekend,
-  lamp: MdOutlineLightbulb,
-  bookshelf: MdOutlineLibraryBooks,
-  rug: FaRug,
-};
 
 export default function LayoutConfirm() {
   const location = useLocation();
@@ -68,8 +45,28 @@ export default function LayoutConfirm() {
   const [showShoppingList, setShowShoppingList] = useState(false);
   const [isConfirming, setIsConfirming] = useState(false);
   const [confirmError, setConfirmError] = useState("");
+  const [products, setProducts] = useState<MockProductApiItem[]>([]);
+  const [productStatus, setProductStatus] = useState<ShoppingListLoadStatus>("loading");
+  const [productRequestVersion, setProductRequestVersion] = useState(0);
   const roomViewerContainerRef = useRef<HTMLDivElement>(null);
   const activeLayoutId = activeSession && hasMatchingDraft ? activeSession.activeLayoutId : null;
+
+  useEffect(() => {
+    let cancelled = false;
+    fetchMockProducts()
+      .then((items) => {
+        if (!cancelled) {
+          setProducts(items);
+          setProductStatus("success");
+        }
+      })
+      .catch(() => {
+        if (!cancelled) setProductStatus("error");
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [productRequestVersion]);
 
   useEffect(() => {
     if (roomLayout || activeLayoutId === null) return;
@@ -109,11 +106,6 @@ export default function LayoutConfirm() {
   // digit and doesn't match anything the user actually recognizes as "their
   // room."
   const roomSize = `${roomLayout.width}m × ${roomLayout.depth}m`;
-  // Real 오늘의집 product links only exist for the 네츄럴 톤 demo scenario
-  // (see naturalScenarioShoppingList.ts) — there's no product-matching
-  // backend to look these up generically for any other scenario/room.
-  const isNaturalScenario = currentScenario()?.id === "rest-natural-wood";
-
   const confirmLayout = async () => {
     if (isConfirming) return;
     setIsConfirming(true);
@@ -122,6 +114,7 @@ export default function LayoutConfirm() {
     try {
       const layoutToConfirm = await confirmActiveLayout(roomLayout);
 
+      setRoomLayout(layoutToConfirm);
       saveConfirmedLayout(layoutToConfirm.id, layoutToConfirm);
       localStorage.setItem("roomfit:selectedRoomLayout", JSON.stringify(layoutToConfirm));
       localStorage.setItem("roomfit:confirmedRoomLayout", JSON.stringify(layoutToConfirm));
@@ -294,37 +287,15 @@ export default function LayoutConfirm() {
                 </button>
               </div>
 
-              {isNaturalScenario ? (
-                <ul className="space-y-3">
-                  {NATURAL_SCENARIO_SHOPPING_LIST.map((entry) => {
-                    const Icon = SHOPPING_LIST_ICONS[entry.iconKey];
-
-                    return (
-                      <li key={entry.name}>
-                        <a
-                          href={entry.url}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="flex items-center gap-3.5 rounded-lg border border-[#eeeeee] p-3 transition-colors hover:border-[#111111] hover:bg-[#f9f9f9]"
-                        >
-                          <span className="grid h-14 w-14 shrink-0 place-items-center rounded-md bg-[#f3f0eb]">
-                            <Icon className="h-6 w-6 text-[#8b633d]" />
-                          </span>
-                          <span className="min-w-0 flex-1">
-                            <strong className="block truncate text-sm font-bold">{entry.name}</strong>
-                            <span className="mt-0.5 block truncate text-xs font-medium text-[#999999]">{entry.info}</span>
-                          </span>
-                          <FiExternalLink className="h-4 w-4 shrink-0 text-[#999999]" />
-                        </a>
-                      </li>
-                    );
-                  })}
-                </ul>
-              ) : (
-                <p className="text-sm font-semibold leading-6 text-[#777777]">
-                  이 스타일의 쇼핑 리스트는 아직 준비 중이에요.
-                </p>
-              )}
+              <ShoppingListPanel
+                furniture={roomLayout.furniture}
+                products={products}
+                status={productStatus}
+                onRetry={() => {
+                  setProductStatus("loading");
+                  setProductRequestVersion((current) => current + 1);
+                }}
+              />
             </div>
           </aside>
         </div>

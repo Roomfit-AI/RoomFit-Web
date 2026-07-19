@@ -1,4 +1,4 @@
-import type { LayoutResponse, LayoutValidationResult, ScoreSummary } from "../api/layouts";
+import type { LayoutResponse } from "../api/layouts";
 import type { RoomLayout } from "../types";
 
 const ACTIVE_LAYOUT_SESSION_KEY = "roomfit:activeLayoutEditingSession";
@@ -7,11 +7,6 @@ const SESSION_VERSION = 2;
 type SessionStorage = Pick<Storage, "getItem" | "setItem" | "removeItem">;
 
 export type LayoutEditingMode = "INITIAL_SETUP" | "REEDIT_DRAFT";
-
-export interface LocalRecommendationNavigationState {
-  scoreSummary: ScoreSummary;
-  validationResult: LayoutValidationResult;
-}
 
 export interface ActiveLayoutEditingSession {
   version: 2;
@@ -32,7 +27,6 @@ export interface LayoutNavigationState {
   editingMode: LayoutEditingMode;
   layoutResponse?: LayoutResponse;
   roomLayout?: RoomLayout;
-  localRecommendation?: LocalRecommendationNavigationState;
 }
 
 export function readActiveLayoutEditingSession(
@@ -132,18 +126,10 @@ export function readLayoutNavigationState(value: unknown): LayoutNavigationState
     || !isLayoutEditingMode(candidate.editingMode)
     || (candidate.roomLayout !== undefined && !isRoomLayout(candidate.roomLayout))
     || (candidate.layoutResponse !== undefined && !isLayoutResponse(candidate.layoutResponse))
-    || (candidate.localRecommendation !== undefined
-      && !isLocalRecommendationResult(candidate.localRecommendation))
   ) {
     return null;
   }
   return candidate as LayoutNavigationState;
-}
-
-function isLocalRecommendationResult(value: unknown): boolean {
-  if (!value || typeof value !== "object") return false;
-  const candidate = value as Partial<LocalRecommendationNavigationState>;
-  return Boolean(candidate.scoreSummary && candidate.validationResult);
 }
 
 export function createLayoutNavigationState(

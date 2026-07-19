@@ -47,6 +47,7 @@ export interface AgentContextRequestInput {
 const lifestyleGoalByPurpose: Readonly<Record<string, LifestyleGoalApiValue>> = {
   rest: "RELAX_FOCUSED",
   work: "STUDY_FOCUSED",
+  hobby: "RELAX_FOCUSED",
   storage: "STORAGE_FOCUSED",
 };
 
@@ -148,11 +149,7 @@ export function buildAgentContextRequest(input: AgentContextRequestInput): Agent
 
   const lifestyleGoal = resolveLifestyleGoal(input.purpose);
   if (lifestyleGoal === null) {
-    throw new AgentContextRequestValidationError(
-      input.purpose === "hobby"
-        ? "취미 라이프스타일은 현재 코랄 시나리오에서만 추천할 수 있습니다."
-        : "라이프스타일을 선택해 주세요.",
-    );
+    throw new AgentContextRequestValidationError("라이프스타일을 선택해 주세요.");
   }
 
   const designStyle = resolveDesignStyle(input.style);

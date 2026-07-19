@@ -115,33 +115,37 @@ describe("Draft layout editing workflow", () => {
     expect(api.recommendLayout).toHaveBeenCalledExactlyOnceWith(43, 51);
   });
 
-  it("generates the existing scripted Sample recommendation from the same CTA without a second Editor click", async () => {
-    vi.useFakeTimers();
+  it.each([
+    ["휴식/내추럴/우드", "rest", "natural", "brown"],
+    ["업무/모던/그레이", "work", "modern", "gray"],
+    ["취미/모던/핑크", "hobby", "modern", "pink"],
+    ["일반 저장/클래식/아이보리", "storage", "classic", "ivory"],
+  ])("routes %s through the same Backend recommendation CTA", async (_label, purpose, style, palette) => {
     const room = createRoom("api-room-9");
-    room.source = "SAMPLE";
+    room.source = "ROOMPLAN";
     const storage = selectedRoomStorage(room, 9);
-    storage.setItem("roomfit:selectedPurpose", "rest");
-    storage.setItem("roomfit:selectedPalette", "brown");
-    storage.setItem("roomfit:selectedStyle", "natural");
-    storage.setItem("roomfit:selectedAdditionalFurnitureIds", '["bed"]');
-    const browser = setupBrowserStorage(room.id, 9, "local-sample");
-    const api = fakeApi();
+    storage.setItem("roomfit:selectedPurpose", purpose);
+    storage.setItem("roomfit:selectedPalette", palette);
+    storage.setItem("roomfit:selectedStyle", style);
+    storage.setItem("roomfit:selectedAdditionalFurnitureIds", JSON.stringify([
+      "sofa", "nightstand", "side-table", "tv", "tv-console", "mood-light", "plant", "monitor",
+    ]));
+    const browser = setupBrowserStorage(room.id, 9, `backend-${purpose}`);
+    const api = fakeApi({ recommendation: recommendationResponse(72, "SUCCESS", { roomId: 9 }) });
 
-    try {
-      await prepareFurnitureSelectionForRecommendation(storage, api);
-      const generation = prepareAdditionalFurnitureForEditor(storage, api, browser);
-      await vi.advanceTimersByTimeAsync(4_999);
-      expect(storage.getItem("roomfit:selectedRoomLayout")).toBe(JSON.stringify(room));
-      await vi.advanceTimersByTimeAsync(1);
-      const generated = await generation;
+    await prepareFurnitureSelectionForRecommendation(storage, api);
+    expect(api.createDefaultAgentContext).not.toHaveBeenCalled();
+    expect(api.recommendLayout).not.toHaveBeenCalled();
 
-      expect(generated?.localRecommendation).toBeDefined();
-      expect(generated?.roomLayout?.furniture.some(({ id }) => id === "natural-wardrobe")).toBe(true);
-      expect(api.createDefaultAgentContext).not.toHaveBeenCalled();
-      expect(api.recommendLayout).not.toHaveBeenCalled();
-    } finally {
-      vi.useRealTimers();
-    }
+    const generated = await prepareRecommendationTransitionForEditor(storage, api, browser);
+
+    expect(api.createDefaultAgentContext).toHaveBeenCalledExactlyOnceWith(9);
+    expect(api.recommendLayout).toHaveBeenCalledExactlyOnceWith(9, 51);
+    expect(generated).toMatchObject({ roomId: 9, activeLayoutId: 72, editingMode: "INITIAL_SETUP" });
+    expect(storage.getItem("roomfit:selectedAdditionalFurnitureIds")).toBe(JSON.stringify([
+      "sofa", "nightstand", "side-table", "tv", "tv-console", "mood-light", "plant", "monitor",
+    ]));
+    expect(generated?.roomLayout?.furniture.some(({ id }) => id.startsWith("natural-"))).toBe(false);
   });
 
   it("resumes an existing initial recommendation instead of creating another Layout", async () => {
@@ -586,23 +590,29 @@ describe("Draft layout editing workflow", () => {
     expect(readActiveLayoutEditingSession(storage)?.activeLayoutId).toBe(54);
   });
 
-  it("leaves explicit scripted scenarios on the existing local Editor path", async () => {
+  it("does not impose an artificial fixed delay on a production-reachable recommendation", async () => {
     vi.useFakeTimers();
     const room = createRoom();
     const storage = selectedRoomStorage(room);
     storage.setItem("roomfit:selectedPurpose", "rest");
     storage.setItem("roomfit:selectedStyle", "natural");
     storage.setItem("roomfit:selectedPalette", "brown");
+    storage.setItem("roomfit:selectedAdditionalFurnitureIds", '["bed"]');
     const api = fakeApi({ latest: null });
 
     try {
-      const generation = prepareAdditionalFurnitureForEditor(storage, api, new MemoryStorage());
-      await vi.advanceTimersByTimeAsync(5_000);
-      const result = await generation;
+      let settled = false;
+      const generation = prepareAdditionalFurnitureForEditor(storage, api, new MemoryStorage())
+        .then((result) => {
+          settled = true;
+          return result;
+        });
+      await vi.advanceTimersByTimeAsync(0);
 
-      expect(result?.activeLayoutId).toBeNull();
-      expect(api.createDefaultAgentContext).not.toHaveBeenCalled();
-      expect(api.recommendLayout).not.toHaveBeenCalled();
+      expect(settled).toBe(true);
+      expect((await generation)?.activeLayoutId).toBe(51);
+      expect(api.createDefaultAgentContext).toHaveBeenCalledExactlyOnceWith(1);
+      expect(api.recommendLayout).toHaveBeenCalledExactlyOnceWith(1, 51);
     } finally {
       vi.useRealTimers();
     }
