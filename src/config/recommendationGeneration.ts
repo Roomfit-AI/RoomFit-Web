@@ -61,7 +61,7 @@ export function readRecommendationPreparation(
 }
 
 interface RecommendationGenerationControllerOptions {
-  generate: () => Promise<LayoutNavigationState | null>;
+  generate: (signal: AbortSignal) => Promise<LayoutNavigationState | null>;
   navigate: (path: string, options: { state: LayoutNavigationState; replace: boolean }) => void;
   onRunningChange: (running: boolean) => void;
   onFailure: (error: unknown | null) => void;
@@ -80,6 +80,7 @@ export function createRecommendationGenerationController({
   onFailure,
 }: RecommendationGenerationControllerOptions): RecommendationGenerationController {
   let inFlight: Promise<void> | null = null;
+  let activeRequest: AbortController | null = null;
   let disposed = false;
 
   return {
@@ -88,9 +89,11 @@ export function createRecommendationGenerationController({
       if (inFlight) return inFlight;
       onFailure(null);
       onRunningChange(true);
+      const request = new AbortController();
+      activeRequest = request;
       inFlight = (async () => {
         try {
-          const state = await generate();
+          const state = await generate(request.signal);
           if (!state) {
             throw new Error("MISSING_RECOMMENDATION_STATE");
           }
@@ -99,6 +102,7 @@ export function createRecommendationGenerationController({
           if (!disposed) onFailure(error);
         } finally {
           if (!disposed) onRunningChange(false);
+          if (activeRequest === request) activeRequest = null;
           inFlight = null;
         }
       })();
@@ -107,6 +111,7 @@ export function createRecommendationGenerationController({
     isRunning: () => inFlight !== null,
     dispose: () => {
       disposed = true;
+      activeRequest?.abort();
     },
   };
 }

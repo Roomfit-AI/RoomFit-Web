@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 
 import {
+  buildDefaultAgentContextRequest,
   toFurniturePositionRequest,
   type LayoutRecommendationResponse,
   type LayoutResponse,
@@ -9,6 +10,7 @@ import { applyBackendFurnitureToLayout, type BackendFurnitureApiItem } from "../
 import type { Furniture, RoomLayout } from "../../types";
 import {
   confirmActiveLayout,
+  createRecommendationFingerprintFromRequest,
   loadManagedFurnitureLayout,
   prepareAdditionalFurnitureForEditor,
   prepareFurnitureSelectionForRecommendation,
@@ -148,11 +150,28 @@ describe("Draft layout editing workflow", () => {
     expect(generated?.roomLayout?.furniture.some(({ id }) => id.startsWith("natural-"))).toBe(false);
   });
 
-  it("resumes an existing initial recommendation instead of creating another Layout", async () => {
+  it("reuses an existing initial recommendation only when the request fingerprint matches", async () => {
     const room = createRoom();
     const storage = selectedRoomStorage(room);
     storage.setItem("roomfit:selectedAdditionalFurnitureIds", '["plant"]');
     const browser = setupBrowserStorage(room.id, 1, "existing-recommendation");
+    const api = fakeApi({ recommendation: recommendationResponse(61, "SUCCESS") });
+
+    await prepareRecommendationTransitionForEditor(storage, api, browser);
+    vi.mocked(api.getLayout).mockResolvedValueOnce(response(61, false, null));
+
+    const resumed = await prepareRecommendationTransitionForEditor(storage, api, browser);
+
+    expect(resumed).toMatchObject({ roomId: 1, activeLayoutId: 61, editingMode: "INITIAL_SETUP" });
+    expect(api.createDefaultAgentContext).toHaveBeenCalledTimes(1);
+    expect(api.recommendLayout).toHaveBeenCalledTimes(1);
+  });
+
+  it("does not trust a legacy INITIAL_SETUP Layout without a request fingerprint", async () => {
+    const room = createRoom();
+    const storage = selectedRoomStorage(room);
+    storage.setItem("roomfit:selectedAdditionalFurnitureIds", '["plant"]');
+    const browser = setupBrowserStorage(room.id, 1, "legacy-recommendation");
     saveActiveLayoutEditingSession({
       roomLayoutId: room.id,
       backendRoomId: 1,
@@ -161,14 +180,155 @@ describe("Draft layout editing workflow", () => {
       editingMode: "INITIAL_SETUP",
       confirmed: false,
     }, storage);
-    const api = fakeApi({ active: response(61, false, null) });
+    const api = fakeApi({
+      active: response(61, false, null),
+      recommendation: recommendationResponse(62, "SUCCESS"),
+    });
 
     const resumed = await prepareRecommendationTransitionForEditor(storage, api, browser);
 
-    expect(resumed).toMatchObject({ roomId: 1, activeLayoutId: 61, editingMode: "INITIAL_SETUP" });
+    expect(resumed).toMatchObject({ roomId: 1, activeLayoutId: 62, editingMode: "INITIAL_SETUP" });
     expect(api.getLayout).toHaveBeenCalledExactlyOnceWith(61);
-    expect(api.createDefaultAgentContext).not.toHaveBeenCalled();
-    expect(api.recommendLayout).not.toHaveBeenCalled();
+    expect(api.recommendLayout).toHaveBeenCalledExactlyOnceWith(1, 51);
+  });
+
+  it.each([
+    ["lifestyle", "roomfit:selectedPurpose", "rest"],
+    ["style", "roomfit:selectedStyle", "natural"],
+    ["color", "roomfit:selectedPalette", "brown"],
+    ["selected items", "roomfit:selectedAdditionalFurnitureIds", '["bed","plant"]'],
+  ])("generates a new initial Layout when %s changes", async (_label, key, value) => {
+    const room = createRoom();
+    const storage = selectedRoomStorage(room);
+    storage.setItem("roomfit:selectedAdditionalFurnitureIds", '["plant"]');
+    const browser = setupBrowserStorage(room.id, 1, `changed-${key}`);
+    const api = fakeApi({ recommendation: recommendationResponse(61, "SUCCESS") });
+
+    await prepareRecommendationTransitionForEditor(storage, api, browser);
+    storage.setItem(key, value);
+    vi.mocked(api.getLayout).mockResolvedValueOnce(response(61, false, null));
+    vi.mocked(api.recommendLayout).mockResolvedValueOnce(recommendationResponse(62, "SUCCESS"));
+
+    const regenerated = await prepareRecommendationTransitionForEditor(storage, api, browser);
+
+    expect(regenerated?.activeLayoutId).toBe(62);
+    expect(api.recommendLayout).toHaveBeenCalledTimes(2);
+  });
+
+  it("generates a new Layout when selectedProductIds no longer match", async () => {
+    const room = createRoom();
+    const storage = selectedRoomStorage(room);
+    storage.setItem("roomfit:selectedAdditionalFurnitureIds", '["plant"]');
+    const browser = setupBrowserStorage(room.id, 1, "changed-products");
+    const clientId = "11111111-1111-4111-8111-111111111111";
+    browser.setItem("roomfit:activeClientScope:v1", JSON.stringify({
+      version: 1,
+      mode: "BROWSER_UUID",
+      clientId,
+      setupSessionId: "changed-products",
+      backendRoomId: 1,
+      roomLayoutId: room.id,
+    }));
+    const request = buildDefaultAgentContextRequest(1, storage);
+    saveActiveLayoutEditingSession({
+      roomLayoutId: room.id,
+      backendRoomId: 1,
+      activeLayoutId: 61,
+      sourceLayoutId: null,
+      editingMode: "INITIAL_SETUP",
+      confirmed: false,
+      recommendationFingerprint: createRecommendationFingerprintFromRequest({
+        roomLayoutId: room.id,
+        clientId,
+        request: { ...request, selectedProductIds: ["plant-old-product"] },
+      }),
+    }, storage);
+    const api = fakeApi({
+      active: response(61, false, null),
+      recommendation: recommendationResponse(62, "SUCCESS"),
+    });
+
+    const regenerated = await prepareRecommendationTransitionForEditor(storage, api, browser);
+
+    expect(regenerated?.activeLayoutId).toBe(62);
+    expect(api.recommendLayout).toHaveBeenCalledExactlyOnceWith(1, 51);
+  });
+
+  it("includes room, optional items, products, and client scope in the fingerprint", () => {
+    const base = {
+      roomLayoutId: "api-room-1",
+      clientId: "11111111-1111-4111-8111-111111111111",
+      request: {
+        ...buildDefaultAgentContextRequest(1, selectedRoomStorageWithPlant()),
+        optionalItems: [],
+        selectedProductIds: [],
+      },
+    };
+    const fingerprint = createRecommendationFingerprintFromRequest(base);
+
+    expect(createRecommendationFingerprintFromRequest({
+      ...base,
+      request: { ...base.request, roomId: 2 },
+    })).not.toBe(fingerprint);
+    expect(createRecommendationFingerprintFromRequest({
+      ...base,
+      request: { ...base.request, optionalItems: ["mood_lamp"] },
+    })).not.toBe(fingerprint);
+    expect(createRecommendationFingerprintFromRequest({
+      ...base,
+      request: { ...base.request, selectedProductIds: ["plant-product"] },
+    })).not.toBe(fingerprint);
+    expect(createRecommendationFingerprintFromRequest({
+      ...base,
+      clientId: "22222222-2222-4222-8222-222222222222",
+    })).not.toBe(fingerprint);
+  });
+
+  it("does not persist a recommendation when selections change in flight", async () => {
+    const room = createRoom();
+    const storage = selectedRoomStorage(room);
+    storage.setItem("roomfit:selectedAdditionalFurnitureIds", '["plant"]');
+    const browser = setupBrowserStorage(room.id, 1, "changed-in-flight");
+    const api = fakeApi();
+    const deferred = createDeferred<LayoutRecommendationResponse>();
+    vi.mocked(api.recommendLayout).mockReturnValueOnce(deferred.promise);
+
+    const pending = prepareRecommendationTransitionForEditor(storage, api, browser);
+    await vi.waitFor(() => expect(api.recommendLayout).toHaveBeenCalledTimes(1));
+    storage.setItem("roomfit:selectedPurpose", "rest");
+    deferred.resolve(recommendationResponse(61, "SUCCESS"));
+
+    await expect(pending).rejects.toMatchObject({ name: "AbortError" });
+    expect(readActiveLayoutEditingSession(storage)).toBeNull();
+    expect(readRoom(storage)).toEqual(room);
+  });
+
+  it("does not persist a recommendation when room and client scope change in flight", async () => {
+    const roomA = createRoom("api-room-1");
+    const storage = selectedRoomStorage(roomA, 1);
+    storage.setItem("roomfit:selectedAdditionalFurnitureIds", '["plant"]');
+    const browser = setupBrowserStorage(roomA.id, 1, "scope-in-flight");
+    const api = fakeApi();
+    const deferred = createDeferred<LayoutRecommendationResponse>();
+    vi.mocked(api.recommendLayout).mockReturnValueOnce(deferred.promise);
+
+    const pending = prepareRecommendationTransitionForEditor(storage, api, browser);
+    await vi.waitFor(() => expect(api.recommendLayout).toHaveBeenCalledTimes(1));
+    const roomB = createRoom("api-room-2");
+    selectRoom(storage, roomB, 2);
+    browser.setItem("roomfit:activeClientScope:v1", JSON.stringify({
+      version: 1,
+      mode: "APP_UUID",
+      clientId: "22222222-2222-4222-8222-222222222222",
+      setupSessionId: "scope-in-flight",
+      backendRoomId: 2,
+      roomLayoutId: roomB.id,
+    }));
+    deferred.resolve(recommendationResponse(61, "SUCCESS"));
+
+    await expect(pending).rejects.toMatchObject({ name: "AbortError" });
+    expect(readActiveLayoutEditingSession(storage)).toBeNull();
+    expect(readRoom(storage)).toEqual(roomB);
   });
 
   it("loads a newly created Room without making any Layout request", async () => {
@@ -562,6 +722,7 @@ describe("Draft layout editing workflow", () => {
   it("creates and persists an initial Layout before navigating to Editor", async () => {
     const room = createRoom();
     const storage = selectedRoomStorage(room);
+    storage.setItem("roomfit:selectedAdditionalFurnitureIds", '["plant"]');
     const browser = setupBrowserStorage(room.id, 1, "setup-success");
     const recommendation = recommendationResponse(51, "SUCCESS");
     const api = fakeApi({ latest: null, recommendation });
@@ -581,6 +742,7 @@ describe("Draft layout editing workflow", () => {
   it("keeps the legacy recommendation success flow when additive fields are absent", async () => {
     const room = createRoom();
     const storage = selectedRoomStorage(room);
+    storage.setItem("roomfit:selectedAdditionalFurnitureIds", '["plant"]');
     const legacy = response(54, false, null) as LayoutRecommendationResponse;
     const api = fakeApi({ latest: null, recommendation: legacy });
 
@@ -621,6 +783,7 @@ describe("Draft layout editing workflow", () => {
   it("persists PARTIAL_SUCCESS details for the same setup and applies placed furniture", async () => {
     const room = createRoom();
     const storage = selectedRoomStorage(room);
+    storage.setItem("roomfit:selectedAdditionalFurnitureIds", '["plant"]');
     const browser = setupBrowserStorage(room.id, 1, "setup-partial");
     const recommendation = recommendationResponse(52, "PARTIAL_SUCCESS", {
       requestedFurnitureCount: 3,
@@ -696,6 +859,7 @@ describe("Draft layout editing workflow", () => {
   it("does not overwrite an unrelated active Layout ID with a FAILED response", async () => {
     const room = createRoom("api-room-2");
     const storage = selectedRoomStorage(room, 2);
+    storage.setItem("roomfit:selectedAdditionalFurnitureIds", '["plant"]');
     saveDraftSession(storage, 88, 80, "api-room-1", 1);
     const browser = setupBrowserStorage(room.id, 2, "setup-room-2");
     const api = fakeApi({
@@ -712,6 +876,7 @@ describe("Draft layout editing workflow", () => {
   it("keeps the last partial Layout when a revised selection returns FAILED", async () => {
     const room = createRoom();
     const storage = selectedRoomStorage(room);
+    storage.setItem("roomfit:selectedAdditionalFurnitureIds", '["plant"]');
     const browser = setupBrowserStorage(room.id, 1, "setup-partial-retry");
     const api = fakeApi({
       latest: null,
@@ -740,6 +905,7 @@ describe("Draft layout editing workflow", () => {
   it("keeps a transport failure distinct from a normal feasibility result", async () => {
     const room = createRoom();
     const storage = selectedRoomStorage(room);
+    storage.setItem("roomfit:selectedAdditionalFurnitureIds", '["plant"]');
     const browser = setupBrowserStorage(room.id, 1, "setup-network");
     const api = fakeApi({ latest: null });
     vi.mocked(api.recommendLayout).mockRejectedValueOnce(new Error("network unavailable"));
@@ -818,6 +984,9 @@ describe("Draft layout editing workflow", () => {
 function selectedRoomStorage(room: RoomLayout, backendRoomId = 1): MemoryStorage {
   const storage = new MemoryStorage();
   selectRoom(storage, room, backendRoomId);
+  storage.setItem("roomfit:selectedPurpose", "work");
+  storage.setItem("roomfit:selectedStyle", "modern");
+  storage.setItem("roomfit:selectedPalette", "gray");
   return storage;
 }
 
@@ -1052,4 +1221,16 @@ function recommendationResponse(
     unplacedFurniture: [],
     ...overrides,
   };
+}
+
+function selectedRoomStorageWithPlant(): MemoryStorage {
+  const storage = selectedRoomStorage(createRoom());
+  storage.setItem("roomfit:selectedAdditionalFurnitureIds", '["plant"]');
+  return storage;
+}
+
+function createDeferred<T>() {
+  let resolve!: (value: T) => void;
+  const promise = new Promise<T>((resolver) => { resolve = resolver; });
+  return { promise, resolve };
 }

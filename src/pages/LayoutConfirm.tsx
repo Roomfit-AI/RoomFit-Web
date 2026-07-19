@@ -1,12 +1,18 @@
 import { useEffect, useRef, useState } from "react";
 import { FiCheck, FiChevronDown, FiChevronUp, FiHome, FiInfo, FiShoppingBag } from "react-icons/fi";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 
+import { getLatestConfirmedLayout, type LayoutResponse } from "../api/layouts";
 import { fetchMockProducts, type MockProductApiItem } from "../api/products";
+import { applyBackendFurnitureToLayout } from "../api/rooms";
 import ShoppingListPanel, { type ShoppingListLoadStatus } from "../components/layout/ShoppingListPanel";
 import RoomViewer from "../components/room/RoomViewer";
 import PageStepHeader from "../components/ui/PageStepHeader";
-import { resolveCurrentRoomLayout, saveConfirmedLayout } from "../config/confirmedLayouts";
+import {
+  getLiveMirrorForSelectedRoom,
+  resolveCurrentRoomLayout,
+  saveConfirmedLayout,
+} from "../config/confirmedLayouts";
 import { resolveRoomLayoutPreferredColorTone } from "../config/appliedColorTone";
 import {
   createAppliedRoomPreferences,
@@ -16,32 +22,42 @@ import {
 import { captureCanvasThumbnail, saveRoomThumbnail } from "../config/roomThumbnails";
 import { completeRoomSetupSession } from "../config/roomSetupSession";
 import { confirmActiveLayout, refreshActiveDraftNavigationState } from "../config/layoutEditingWorkflow";
+import { getActiveRequestClientId } from "../config/clientScope";
 import { RecommendationFeasibilityError } from "../config/recommendationResult";
 import {
   isSessionForRoom,
   readActiveLayoutEditingSession,
-  readLayoutNavigationState,
 } from "../config/layoutEditingSession";
+import type { RoomLayout } from "../types";
+
+// eslint-disable-next-line react-refresh/only-export-components
+export function resolveLatestConfirmedRoom(
+  fallbackRoom: RoomLayout,
+  backendRoomId: number,
+  response: Pick<LayoutResponse, "confirmed" | "roomId" | "recommendedFurniture"> | null,
+): RoomLayout | null {
+  if (!response?.confirmed || response.roomId !== backendRoomId) return null;
+  return applyBackendFurnitureToLayout(fallbackRoom, response.recommendedFurniture);
+}
 
 export default function LayoutConfirm() {
-  const location = useLocation();
   const navigate = useNavigate();
-  const routeState = readLayoutNavigationState(location.state);
-  const fallbackRoom = resolveCurrentRoomLayout();
-  const backendRoomId = Number(localStorage.getItem("roomfit:backendRoomId"));
+  const [fallbackRoom] = useState(resolveCurrentRoomLayout);
+  const [confirmedMirror] = useState(getLiveMirrorForSelectedRoom);
+  const rawBackendRoomId = Number(localStorage.getItem("roomfit:backendRoomId"));
+  const backendRoomId = Number.isInteger(rawBackendRoomId) && rawBackendRoomId > 0
+    ? rawBackendRoomId
+    : null;
   const activeSession = readActiveLayoutEditingSession();
-  const hasMatchingDraft = Number.isInteger(backendRoomId)
+  const hasMatchingDraft = fallbackRoom !== null
+    && backendRoomId !== null
     && isSessionForRoom(activeSession, fallbackRoom.id, backendRoomId)
     && !activeSession.confirmed;
-  const ownedRouteState = routeState
-    && routeState.roomId === backendRoomId
-    && routeState.roomLayoutId === fallbackRoom.id
-    && (!hasMatchingDraft || routeState.activeLayoutId === activeSession?.activeLayoutId)
-    ? routeState
-    : null;
-  const [roomLayout, setRoomLayout] = useState(() => ownedRouteState?.roomLayout ?? (hasMatchingDraft ? null : fallbackRoom));
-  const [loadError, setLoadError] = useState("");
-  const [justConfirmed, setJustConfirmed] = useState(false);
+  const [roomLayout, setRoomLayout] = useState(() => (hasMatchingDraft ? null : confirmedMirror));
+  const [loadError, setLoadError] = useState(() => (
+    fallbackRoom ? "" : "확정할 배치를 찾지 못했습니다. 방을 다시 선택해 주세요."
+  ));
+  const [justConfirmed, setJustConfirmed] = useState(Boolean(confirmedMirror && !hasMatchingDraft));
   const [showShoppingList, setShowShoppingList] = useState(false);
   const [isConfirming, setIsConfirming] = useState(false);
   const [confirmError, setConfirmError] = useState("");
@@ -52,6 +68,7 @@ export default function LayoutConfirm() {
   const activeLayoutId = activeSession && hasMatchingDraft ? activeSession.activeLayoutId : null;
 
   useEffect(() => {
+    if (!roomLayout) return;
     let cancelled = false;
     fetchMockProducts()
       .then((items) => {
@@ -66,33 +83,64 @@ export default function LayoutConfirm() {
     return () => {
       cancelled = true;
     };
-  }, [productRequestVersion]);
+  }, [productRequestVersion, roomLayout]);
 
   useEffect(() => {
-    if (roomLayout || activeLayoutId === null) return;
+    if (!fallbackRoom || backendRoomId === null) return;
     let cancelled = false;
-    refreshActiveDraftNavigationState()
+    const requestClientId = readRequestClientId();
+    const request = activeLayoutId !== null
+      ? refreshActiveDraftNavigationState()
+      : getLatestConfirmedLayout(backendRoomId).then((response) => {
+        const recovered = resolveLatestConfirmedRoom(fallbackRoom, backendRoomId, response);
+        return recovered ? { roomLayout: recovered, confirmed: true } : null;
+      });
+
+    request
       .then((state) => {
-        if (!cancelled && state?.roomLayout) {
+        if (cancelled
+          || !isCurrentConfirmScope(fallbackRoom.id, backendRoomId, requestClientId)) return;
+        if (state?.roomLayout) {
+          setLoadError("");
           setRoomLayout(state.roomLayout);
+          if ("confirmed" in state && state.confirmed) {
+            saveConfirmedLayout(state.roomLayout.id, state.roomLayout);
+            localStorage.setItem("roomfit:selectedRoomLayout", JSON.stringify(state.roomLayout));
+            localStorage.setItem("roomfit:confirmedRoomLayout", JSON.stringify(state.roomLayout));
+            setJustConfirmed(true);
+          }
+        } else {
+          setLoadError("현재 사용자 범위에서 확정된 배치를 찾지 못했습니다. Editor에서 다시 확인해 주세요.");
         }
       })
       .catch(() => {
-        if (!cancelled) {
+        if (!cancelled
+          && isCurrentConfirmScope(fallbackRoom.id, backendRoomId, requestClientId)) {
           setLoadError("편집 중인 배치를 불러오지 못했습니다. Editor에서 다시 저장해 주세요.");
         }
       });
     return () => {
       cancelled = true;
     };
-  }, [activeLayoutId, roomLayout]);
+  }, [activeLayoutId, backendRoomId, fallbackRoom]);
 
   if (!roomLayout) {
     return (
       <main className="grid min-h-[calc(100vh-76px)] place-items-center bg-[#fbfbfb] px-5 text-center">
-        <p role={loadError ? "alert" : undefined} className="font-bold text-[#777777]">
-          {loadError || "편집 중인 배치를 불러오는 중입니다..."}
-        </p>
+        <section>
+          <p role={loadError ? "alert" : undefined} className="font-bold text-[#777777]">
+            {loadError || "편집 중인 배치를 불러오는 중입니다..."}
+          </p>
+          {loadError && (
+            <button
+              type="button"
+              onClick={() => navigate("/rooms")}
+              className="mt-5 rounded-lg bg-[#111111] px-5 py-3 text-sm font-extrabold text-white"
+            >
+              방 선택으로 돌아가기
+            </button>
+          )}
+        </section>
       </main>
     );
   }
@@ -319,4 +367,22 @@ function SummaryItem({ label, value }: { label: string; value: string }) {
       <dd className="mt-3 break-keep text-lg font-semibold text-[#111111]">{value}</dd>
     </div>
   );
+}
+
+function readRequestClientId(): string | null {
+  try {
+    return getActiveRequestClientId();
+  } catch {
+    return null;
+  }
+}
+
+function isCurrentConfirmScope(
+  roomLayoutId: string,
+  backendRoomId: number,
+  requestClientId: string | null,
+): boolean {
+  return localStorage.getItem("roomfit:selectedRoomId") === roomLayoutId
+    && Number(localStorage.getItem("roomfit:backendRoomId")) === backendRoomId
+    && readRequestClientId() === requestClientId;
 }

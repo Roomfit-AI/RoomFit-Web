@@ -1,8 +1,17 @@
 import { describe, expect, it, vi } from "vitest";
 
 import type { RoomLayout } from "../../types";
-import { BROWSER_CLIENT_ID_KEY, activateAppClientScope } from "../clientScope";
-import { hasConfirmedLayout, resolveCurrentRoomLayout, saveConfirmedLayout } from "../confirmedLayouts";
+import {
+  BROWSER_CLIENT_ID_KEY,
+  activateAppClientScope,
+  activateBrowserClientScope,
+} from "../clientScope";
+import {
+  getLiveMirrorForSelectedRoom,
+  hasConfirmedLayout,
+  resolveCurrentRoomLayout,
+  saveConfirmedLayout,
+} from "../confirmedLayouts";
 
 const BROWSER_ID = "11111111-1111-4111-8111-111111111111";
 const APP_ID = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
@@ -20,6 +29,11 @@ describe("confirmed Layout scope ownership", () => {
 
     expect(hasConfirmedLayout(layout.id, local, APP_ID)).toBe(true);
     expect(hasConfirmedLayout(layout.id, local, BROWSER_ID)).toBe(false);
+
+    local.setItem("roomfit:selectedRoomId", layout.id);
+    local.setItem("roomfit:confirmedRoomLayout", JSON.stringify(layout));
+    activateBrowserClientScope("setup-browser", local, session);
+    expect(getLiveMirrorForSelectedRoom()).toBeNull();
     vi.unstubAllGlobals();
   });
 
@@ -46,6 +60,30 @@ describe("confirmed Layout scope ownership", () => {
     vi.stubGlobal("localStorage", local);
 
     expect(resolveCurrentRoomLayout()).toEqual(selected);
+    vi.unstubAllGlobals();
+  });
+
+  it("does not invent a Sample Layout when confirm has no selected room state", () => {
+    vi.stubGlobal("localStorage", memoryStorage());
+
+    expect(resolveCurrentRoomLayout()).toBeNull();
+    vi.unstubAllGlobals();
+  });
+
+  it("does not treat a legacy unowned confirmed mirror as scoped recovery evidence", () => {
+    const layout = room();
+    const local = memoryStorage({
+      [BROWSER_CLIENT_ID_KEY]: BROWSER_ID,
+      "roomfit:selectedRoomId": layout.id,
+      "roomfit:confirmedRoomLayout": JSON.stringify(layout),
+      "roomfit:confirmedLayoutsByRoomId": JSON.stringify({ [layout.id]: layout }),
+    });
+    const session = memoryStorage();
+    vi.stubGlobal("localStorage", local);
+    vi.stubGlobal("sessionStorage", session);
+    activateBrowserClientScope("setup-browser", local, session);
+
+    expect(getLiveMirrorForSelectedRoom()).toBeNull();
     vi.unstubAllGlobals();
   });
 });

@@ -20,7 +20,12 @@ export default function Recommendation() {
 
   useEffect(() => {
     const controller = createRecommendationGenerationController({
-      generate: prepareRecommendationTransitionForEditor,
+      generate: (signal) => prepareRecommendationTransitionForEditor(
+        localStorage,
+        undefined,
+        sessionStorage,
+        signal,
+      ),
       navigate,
       onRunningChange: setIsGenerating,
       onFailure: (error) => setErrorMessage(

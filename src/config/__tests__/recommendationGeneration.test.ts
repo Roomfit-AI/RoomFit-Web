@@ -119,6 +119,28 @@ describe("recommendation generation controller", () => {
     expect(controller.isRunning()).toBe(false);
   });
 
+  it("aborts the generation signal when the recommendation page unmounts", async () => {
+    const deferred = createDeferred<LayoutNavigationState | null>();
+    let requestSignal: AbortSignal | undefined;
+    const controller = createRecommendationGenerationController({
+      generate: (signal) => {
+        requestSignal = signal;
+        return deferred.promise;
+      },
+      navigate: vi.fn(),
+      onRunningChange: vi.fn(),
+      onFailure: vi.fn(),
+    });
+
+    const request = controller.run();
+    expect(requestSignal?.aborted).toBe(false);
+
+    controller.dispose();
+    expect(requestSignal?.aborted).toBe(true);
+    deferred.resolve(navigationState(9));
+    await request;
+  });
+
   it("does not generate merely because a user leaves and re-enters the page", () => {
     const generate = vi.fn();
     const options = {

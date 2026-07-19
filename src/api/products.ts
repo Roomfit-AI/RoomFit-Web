@@ -24,24 +24,50 @@ interface ApiResponse<T> {
   } | null;
 }
 
-let cachedProducts: MockProductApiItem[] | null = null;
-let productRequest: Promise<MockProductApiItem[]> | null = null;
+const PRODUCT_CACHE_TTL_MS = 5 * 60 * 1000;
+
+interface CachedProductCatalog {
+  products: MockProductApiItem[];
+  loadedAt: number;
+}
+
+const cachedProductsByBaseUrl = new Map<string, CachedProductCatalog>();
+const productRequestsByBaseUrl = new Map<string, Promise<MockProductApiItem[]>>();
 
 export async function fetchMockProducts(): Promise<MockProductApiItem[]> {
-  if (cachedProducts) return cachedProducts;
-  if (!productRequest) {
-    productRequest = apiClient
+  const cacheKey = readApiBaseUrlCacheKey();
+  const cached = cachedProductsByBaseUrl.get(cacheKey);
+  if (cached && Date.now() - cached.loadedAt <= PRODUCT_CACHE_TTL_MS) {
+    return cached.products;
+  }
+  if (cached) cachedProductsByBaseUrl.delete(cacheKey);
+
+  const pending = productRequestsByBaseUrl.get(cacheKey);
+  if (pending) return pending;
+
+  const request = apiClient
       .get<ApiResponse<MockProductApiItem[]>>("/api/products/mock")
       .then((response) => {
         if (!Array.isArray(response.data.data)) {
           throw new Error("Invalid mock product catalog response");
         }
-        cachedProducts = response.data.data;
-        return cachedProducts;
-      })
-      .finally(() => {
-        productRequest = null;
+        cachedProductsByBaseUrl.set(cacheKey, {
+          products: response.data.data,
+          loadedAt: Date.now(),
+        });
+        return response.data.data;
       });
+
+  productRequestsByBaseUrl.set(cacheKey, request);
+  try {
+    return await request;
+  } finally {
+    if (productRequestsByBaseUrl.get(cacheKey) === request) {
+      productRequestsByBaseUrl.delete(cacheKey);
+    }
   }
-  return productRequest;
+}
+
+function readApiBaseUrlCacheKey(): string {
+  return String(apiClient.defaults.baseURL ?? "").trim().replace(/\/+$/, "");
 }
