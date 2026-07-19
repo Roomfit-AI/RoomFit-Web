@@ -2,6 +2,7 @@ import { FiAlertTriangle, FiCheckCircle, FiHelpCircle, FiXCircle } from "react-i
 
 import type { FeedbackOperationStatus, FeedbackStatus } from "../../api/layouts";
 import {
+  getFeedbackClarificationGuidance,
   getFeedbackClarificationKind,
   getFeedbackOperationLabel,
   getFeedbackReasonMessage,
@@ -148,7 +149,7 @@ export default function FeedbackAgentResultPanel({
                     </ul>
                   )}
                   <p className="mt-2 text-xs font-semibold leading-5 text-[#666666]">
-                    {clarificationGuidance(kind)}
+                    {getFeedbackClarificationGuidance(clarification)}
                   </p>
                 </section>
               );
@@ -158,11 +159,4 @@ export default function FeedbackAgentResultPanel({
       )}
     </section>
   );
-}
-
-function clarificationGuidance(kind: ReturnType<typeof getFeedbackClarificationKind>): string {
-  if (kind === "TARGET") return "변경할 가구를 선택해 주세요.";
-  if (kind === "PRODUCT") return "제품 조건을 바꾸거나 요청 내용을 수정해 주세요.";
-  if (kind === "REFERENCE") return "기준이 되는 가구를 요청 문장에 구체적으로 적어 주세요.";
-  return "요청 내용을 더 구체적으로 적어 다시 시도해 주세요.";
 }
