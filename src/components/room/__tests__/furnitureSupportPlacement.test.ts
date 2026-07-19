@@ -38,15 +38,15 @@ describe("resolveFurnitureSupportPositions", () => {
       .toBe(monitor.dimensions.height / 2);
   });
 
-  it("keeps an oversized dependent on the floor", () => {
+  it("places a wider dependent on its matching support", () => {
     const desk = furniture("desk", "desk", { width: 1, depth: 0.5, height: 0.72 });
     const monitor = furniture("monitor", "monitor", { width: 1.1, depth: 0.2, height: 0.4 });
 
     expect(resolveFurnitureSupportPositions([desk, monitor]).get("monitor")?.[1])
-      .toBe(monitor.dimensions.height / 2);
+      .toBe(desk.dimensions.height + monitor.dimensions.height / 2);
   });
 
-  it("rejects differing rotations whose AABBs overlap but exact footprints do not fit", () => {
+  it("uses support height even when the dependent has a different rotation", () => {
     const desk = {
       ...furniture("desk", "desk", { width: 2, depth: 1, height: 0.72 }),
       rotationY: Math.PI / 4,
@@ -57,7 +57,7 @@ describe("resolveFurnitureSupportPositions", () => {
     };
 
     expect(resolveFurnitureSupportPositions([desk, monitor]).get("monitor")?.[1])
-      .toBe(monitor.dimensions.height / 2);
+      .toBe(desk.dimensions.height + monitor.dimensions.height / 2);
   });
 
   it("keeps a dependent moved by 0.01m on the floor", () => {
