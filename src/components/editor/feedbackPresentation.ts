@@ -18,6 +18,13 @@ export interface FeedbackPresentation {
   showPanel: boolean;
 }
 
+export type FeedbackClarificationKind = "TARGET" | "PRODUCT" | "REFERENCE" | "GENERIC";
+
+const PRODUCT_CLARIFICATION_REASONS = new Set([
+  "NO_SAFE_SWAP_CANDIDATE",
+  "NO_RENDERABLE_PRODUCT",
+]);
+
 const OPERATION_LABELS: Record<string, string> = {
   MOVE: "가구 이동",
   ROTATE: "가구 회전",
@@ -122,6 +129,22 @@ export function getFeedbackOperationLabel(operationType: string): string {
 
 export function getFeedbackReasonMessage(reasonCode: string): string {
   return REASON_MESSAGES[reasonCode] ?? `사유 코드: ${reasonCode}`;
+}
+
+export function getFeedbackClarificationKind(
+  clarification: FeedbackClarification,
+): FeedbackClarificationKind {
+  if (PRODUCT_CLARIFICATION_REASONS.has(clarification.reasonCode)) return "PRODUCT";
+  if (clarification.reasonCode === "AMBIGUOUS_REFERENCE_TARGET"
+    || clarification.requiredField === "referenceTargetFurnitureId") {
+    return "REFERENCE";
+  }
+  if ((clarification.reasonCode === "AMBIGUOUS_TARGET"
+      || clarification.requiredField === "targetFurnitureId")
+    && (clarification.candidates?.length ?? 0) > 0) {
+    return "TARGET";
+  }
+  return "GENERIC";
 }
 
 function deriveFeedbackStatus(
