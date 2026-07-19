@@ -6,6 +6,8 @@ import {
   ONBOARDING_SELECTION_EVENT,
 } from "../../config/onboardingSelection";
 import { getFurnitureAdditionErrorMessage } from "../../config/furnitureAdditionError";
+import FurnitureAdditionLimitDialog from "../furniture/FurnitureAdditionLimitDialog";
+import { isFurnitureAdditionLimitError } from "../../config/furnitureAdditionPolicy";
 
 interface NavigationStep {
   path: string;
@@ -63,6 +65,7 @@ export default function Navbar() {
   const nextStep = navigationSteps[safeStepIndex + 1];
   const [isNavigating, setIsNavigating] = useState(false);
   const [navigationError, setNavigationError] = useState("");
+  const [isFurnitureLimitDialogOpen, setIsFurnitureLimitDialogOpen] = useState(false);
   const navigationInFlightRef = useRef(false);
   // /preference·/reference-image에서 필수 선택이 끝났는지. 게이트 대상이 아닌
   // 단계에서는 항상 true라 기존 이동 동작에 영향이 없다.
@@ -129,6 +132,10 @@ export default function Navbar() {
         navigate(nextStep.path, { state: nextState ?? location.state });
       }
     } catch (error) {
+      if (isFurnitureAdditionLimitError(error)) {
+        setIsFurnitureLimitDialogOpen(true);
+        return;
+      }
       const furnitureAdditionMessage = getFurnitureAdditionErrorMessage(error);
       if (furnitureAdditionMessage) {
         setNavigationError(furnitureAdditionMessage);
@@ -187,6 +194,9 @@ export default function Navbar() {
         <p role="alert" className="absolute right-10 top-[70px] rounded-lg bg-[#fff1f1] px-4 py-3 text-sm font-bold text-[#b42318] shadow">
           {navigationError}
         </p>
+      )}
+      {isFurnitureLimitDialogOpen && (
+        <FurnitureAdditionLimitDialog onClose={() => setIsFurnitureLimitDialogOpen(false)} />
       )}
     </nav>
   );

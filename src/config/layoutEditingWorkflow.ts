@@ -40,6 +40,7 @@ import { getActiveRequestClientId } from "./clientScope";
 import { currentScenario, isCollectorRoom } from "./scenarios";
 import { isHobbyCoralRecommendationSelected } from "../mock/hobbyCoralRecommendation";
 import { readPreferredColorTone } from "./preferredColorTone";
+import { assertFurnitureAdditionAllowed } from "./furnitureAdditionPolicy";
 
 type WorkflowStorage = Pick<Storage, "getItem" | "setItem" | "removeItem">;
 
@@ -166,10 +167,15 @@ export async function prepareAdditionalFurnitureForEditor(
   api: LayoutWorkflowApi = defaultApi,
   browserSession: WorkflowStorage = sessionStorage,
 ): Promise<LayoutNavigationState | null> {
+  const selectedIds = readStringArray(storage.getItem("roomfit:selectedAdditionalFurnitureIds"));
+  assertFurnitureAdditionAllowed(readSelectedRoomLayout(storage), selectedIds);
+
   const current = await refreshActiveDraftNavigationState(storage, api);
   if (!current) {
     return current;
   }
+
+  assertFurnitureAdditionAllowed(current.roomLayout ?? readSelectedRoomLayout(storage), selectedIds);
 
   if (current.editingMode === "INITIAL_SETUP") {
     return prepareInitialRecommendation(current, storage, browserSession, api);
@@ -177,7 +183,6 @@ export async function prepareAdditionalFurnitureForEditor(
 
   if (current.editingMode !== "REEDIT_DRAFT" || current.activeLayoutId === null) return current;
 
-  const selectedIds = readStringArray(storage.getItem("roomfit:selectedAdditionalFurnitureIds"));
   if (resolveRequiredFurnitureTypes(selectedIds).length === 0) {
     return current;
   }

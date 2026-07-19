@@ -21,6 +21,7 @@ import {
   type UploadedRoomCard,
 } from "../api/rooms";
 import PairingDialog from "../components/rooms/PairingDialog";
+import { formatRoomCardDate } from "../config/roomCardDate";
 import { startAppRoomsPolling, type AppRoomsPollingController } from "../config/appRoomsPolling";
 import { clearBrowserRoomOrigin, getBrowserRoomOrigin } from "../config/browserRoomOrigins";
 import {
@@ -448,7 +449,7 @@ function OwnedRoomArticle({ card, selected, deleting, onSelect, onDelete }: { ca
   return (
     <article className={`group relative overflow-hidden rounded-lg border bg-white text-left transition-all hover:-translate-y-1 hover:shadow-[0_18px_35px_rgba(0,0,0,0.08)] ${selected ? "border-[#111111] shadow-[0_18px_35px_rgba(0,0,0,0.08)]" : "border-[#e5e5e5] hover:border-[#cfcfcf]"} ${deleting ? "opacity-65" : ""}`}>
       <button type="button" onClick={onSelect} aria-pressed={selected} disabled={deleting} className="block w-full p-5 text-left disabled:cursor-wait">
-        <div className="mb-4 flex min-h-6 items-center justify-between gap-3 pr-10"><Badge>{badge}</Badge><span className="text-xs font-medium text-[#777777]">{formatUploadedAt(room.createdAt)}</span></div>
+        <div className="mb-4 flex min-h-6 items-center justify-between gap-3 pr-10"><Badge>{badge}</Badge><span className="text-xs font-medium text-[#777777]">{formatRoomCardDate(room.createdAt)}</span></div>
         <RoomPreview tone={room.tone} thumbnailUrl={getRoomThumbnail(room.layoutId, card.clientId) ?? room.thumbnailUrl} alt={room.title} />
         <strong className="mt-5 block text-base font-bold text-[#151515]">{room.title}</strong>
         <span className="mt-1 block text-sm font-medium text-[#777777]">{room.dimensions}</span>
@@ -508,7 +509,6 @@ function Badge({ children }: { children: ReactNode }) { return <span className="
 function SelectedBadge() { return <span className="absolute right-4 top-5 z-10 inline-flex items-center gap-1 rounded-full bg-[#111111] px-3 py-1.5 text-xs font-bold text-white"><FiCheck className="h-3.5 w-3.5" />선택됨</span>; }
 
 function activeFilterValue(rooms: SampleRoomCard[], filter: string) { return filter === "전체" ? rooms : rooms.filter((room) => room.category === filter); }
-function formatUploadedAt(createdAt: string) { const date = new Date(createdAt); return Number.isNaN(date.getTime()) ? "최근 업로드" : new Intl.DateTimeFormat("ko-KR", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" }).format(date); }
 function getInitialSelectedCardKey() {
   initializeRoomSetupSession();
   const backendRoomId = Number(localStorage.getItem("roomfit:backendRoomId"));
