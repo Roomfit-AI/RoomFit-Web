@@ -5,7 +5,7 @@ import {
   type LayoutRecommendationResponse,
   type LayoutResponse,
 } from "../../api/layouts";
-import type { BackendFurnitureApiItem } from "../../api/rooms";
+import { applyBackendFurnitureToLayout, type BackendFurnitureApiItem } from "../../api/rooms";
 import type { Furniture, RoomLayout } from "../../types";
 import {
   confirmActiveLayout,
@@ -26,6 +26,12 @@ import {
   resolveRecommendationDecision,
   saveRecommendationResult,
 } from "../recommendationResult";
+import { FurnitureAdditionRequestError } from "../furnitureAdditionError";
+import { FurnitureAdditionLimitError } from "../furnitureAdditionPolicy";
+
+const EIGHT_ADDITIONAL_FURNITURE = [
+  "bed", "sofa", "desk", "nightstand", "side-table", "desk-chair", "bookshelf", "plant",
+];
 
 class MemoryStorage {
   private readonly values = new Map<string, string>();
@@ -271,6 +277,92 @@ describe("Draft layout editing workflow", () => {
     expect(readRoom(storage)?.furniture.map((item) => item.id)).toEqual(["bed-1", "desk-1"]);
     expect(readRoom(storage)?.furniture[0].position.x).toBeCloseTo(-0.6);
     expect(readActiveLayoutEditingSession(storage)?.activeLayoutId).toBe(11);
+  });
+
+  it.each([
+    [0, EIGHT_ADDITIONAL_FURNITURE],
+    [4, EIGHT_ADDITIONAL_FURNITURE],
+  ])("allows existing %i plus selections up to the final limit", async (existingCount, selectedIds) => {
+    const room = roomWithFurnitureCount(existingCount);
+    const storage = selectedRoomStorage(room);
+    storage.setItem("roomfit:selectedAdditionalFurnitureIds", JSON.stringify(selectedIds));
+    saveDraftSession(storage, 11, 10);
+    const active = response(11, false, 10, backendFurnitureFromRoom(room));
+    const api = fakeApi({ active, added: active });
+
+    await expect(prepareAdditionalFurnitureForEditor(storage, api)).resolves.not.toBeNull();
+
+    expect(api.createDefaultAgentContext).toHaveBeenCalledTimes(1);
+    expect(api.addFurnitureToDraft).toHaveBeenCalledWith(11, { contextId: 51 });
+  });
+
+  it.each([
+    [5, EIGHT_ADDITIONAL_FURNITURE],
+    [12, ["bed"]],
+    [0, [...EIGHT_ADDITIONAL_FURNITURE, "rug"]],
+  ])("blocks existing %i before every Backend request and preserves selection", async (existingCount, selectedIds) => {
+    const room = roomWithFurnitureCount(existingCount);
+    const storage = selectedRoomStorage(room);
+    const serializedSelection = JSON.stringify(selectedIds);
+    storage.setItem("roomfit:selectedAdditionalFurnitureIds", serializedSelection);
+    saveDraftSession(storage, 11, 10);
+    const api = fakeApi();
+
+    await expect(prepareAdditionalFurnitureForEditor(storage, api))
+      .rejects.toBeInstanceOf(FurnitureAdditionLimitError);
+
+    expect(api.getLayout).not.toHaveBeenCalled();
+    expect(api.getLatestConfirmedLayout).not.toHaveBeenCalled();
+    expect(api.createDefaultAgentContext).not.toHaveBeenCalled();
+    expect(api.addFurnitureToDraft).not.toHaveBeenCalled();
+    expect(api.recommendLayout).not.toHaveBeenCalled();
+    expect(storage.getItem("roomfit:selectedAdditionalFurnitureIds")).toBe(serializedSelection);
+    expect(readRoom(storage)?.furniture).toHaveLength(existingCount);
+  });
+
+  it("allows retry after the user closes the limit dialog and removes one selection", async () => {
+    const room = roomWithFurnitureCount(5);
+    const storage = selectedRoomStorage(room);
+    storage.setItem("roomfit:selectedAdditionalFurnitureIds", JSON.stringify(EIGHT_ADDITIONAL_FURNITURE));
+    saveDraftSession(storage, 11, 10);
+    const active = response(11, false, 10, backendFurnitureFromRoom(room));
+    const api = fakeApi({ active, added: active });
+
+    await expect(prepareAdditionalFurnitureForEditor(storage, api))
+      .rejects.toBeInstanceOf(FurnitureAdditionLimitError);
+    expect(storage.getItem("roomfit:selectedAdditionalFurnitureIds"))
+      .toBe(JSON.stringify(EIGHT_ADDITIONAL_FURNITURE));
+
+    storage.setItem(
+      "roomfit:selectedAdditionalFurnitureIds",
+      JSON.stringify(EIGHT_ADDITIONAL_FURNITURE.slice(0, 7)),
+    );
+    await expect(prepareAdditionalFurnitureForEditor(storage, api)).resolves.not.toBeNull();
+
+    expect(api.addFurnitureToDraft).toHaveBeenCalledTimes(1);
+  });
+
+  it("keeps Backend 422 as a retryable domain rejection without changing the Layout or selection", async () => {
+    const room = roomWithFurnitureCount(2);
+    const storage = selectedRoomStorage(room);
+    storage.setItem("roomfit:selectedAdditionalFurnitureIds", JSON.stringify(["plant"]));
+    saveDraftSession(storage, 11, 10);
+    const active = response(11, false, 10, backendFurnitureFromRoom(room));
+    const api = fakeApi({ active, added: active });
+    vi.mocked(api.addFurnitureToDraft).mockRejectedValueOnce(
+      new FurnitureAdditionRequestError("PLACEMENT_REJECTED"),
+    );
+
+    await expect(prepareAdditionalFurnitureForEditor(storage, api))
+      .rejects.toMatchObject({ kind: "PLACEMENT_REJECTED" });
+
+    expect(storage.getItem("roomfit:selectedAdditionalFurnitureIds")).toBe('["plant"]');
+    expect(JSON.stringify(readRoom(storage)))
+      .toBe(JSON.stringify(applyBackendFurnitureToLayout(room, active.recommendedFurniture)));
+    expect(readActiveLayoutEditingSession(storage)?.activeLayoutId).toBe(11);
+
+    await expect(prepareAdditionalFurnitureForEditor(storage, api)).resolves.not.toBeNull();
+    expect(api.addFurnitureToDraft).toHaveBeenCalledTimes(2);
   });
 
   it("uses Backend Draft over both stale selected and confirmed mirrors after refresh", async () => {
@@ -659,6 +751,13 @@ function createRoom(id = "api-room-1", x = -0.5, rotationY = 0): RoomLayout {
       furniture("desk-1", "desk", 0.7, 0),
     ],
   };
+}
+
+function roomWithFurnitureCount(count: number): RoomLayout {
+  const room = createRoom();
+  room.furniture = Array.from({ length: count }, (_, index) =>
+    furniture(`furniture-${index}`, "desk", -1.5 + (index % 4), 0));
+  return room;
 }
 
 function furniture(id: string, category: Furniture["category"], x: number, rotationY: number): Furniture {
