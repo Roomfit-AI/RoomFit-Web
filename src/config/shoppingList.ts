@@ -12,6 +12,21 @@ export interface ShoppingListEntry {
   purchaseUrl: string | null;
 }
 
+// A shopping list is what the user still has to buy, so furniture that was
+// already in the room before the recommendation does not belong in it.
+//
+// `status === "existing"` alone is not enough: ManageFurniture rewrites the
+// status of *any* piece the user drags or rotates to "user_modified" (see
+// markUserModified), so a pre-existing item would silently reappear here the
+// moment it is nudged. The durable marker is the catalog productId — the
+// backend only ever assigns one to furniture it recommended from the catalog,
+// while scanned uploads and the seeded sample carry none. An item with no
+// productId also has no product, price, or purchase link to show, so it was
+// never actionable on a shopping list to begin with.
+function isAlreadyOwned(item: Furniture): boolean {
+  return item.status === "existing" || !item.productId?.trim();
+}
+
 export function buildShoppingListEntries(
   furniture: Furniture[],
   products: MockProductApiItem[],
@@ -21,6 +36,7 @@ export function buildShoppingListEntries(
 
   for (const item of furniture) {
     if (item.status === "deleted") continue;
+    if (isAlreadyOwned(item)) continue;
 
     const productId = item.productId?.trim() || null;
     const key = productId ? `product:${productId}` : `furniture:${item.id}`;
