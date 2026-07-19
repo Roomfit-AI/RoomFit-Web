@@ -1,6 +1,4 @@
 import { useEffect, useRef, useState } from "react";
-import { isAxiosError } from "axios";
-import { FiRotateCcw, FiTrash2 } from "react-icons/fi";
 import { useLocation, useNavigate } from "react-router-dom";
 
 import {
@@ -18,13 +16,19 @@ import {
 } from "../api/agentContextRequest";
 import { applyBackendFurnitureToLayout } from "../api/rooms";
 import { ensureCustomRoomBackendRoom } from "../api/customRoomBackend";
-import FeedbackAgentResultPanel from "../components/editor/FeedbackAgentResultPanel";
+import EditorFeedbackPanel from "../components/editor/EditorFeedbackPanel";
+import {
+  createEmptyFeedbackResult,
+  createSuccessfulFeedbackPresentation,
+  readFeedbackErrorMessage,
+  type FeedbackResultState,
+} from "../components/editor/feedbackResultState";
 import RecommendationResultPanel from "../components/editor/RecommendationResultPanel";
 import ScoreSummaryPanel from "../components/editor/ScoreSummaryPanel";
+import SelectedFurnitureActions from "../components/editor/SelectedFurnitureActions";
 import {
   resolveFeedbackRoomLayout,
   resolveNextFeedbackLayoutId,
-  type FeedbackPresentation,
 } from "../components/editor/feedbackPresentation";
 import RoomViewer from "../components/room/RoomViewer";
 import { moveFurnitureInsideRoom, rotateFurnitureInsideRoom } from "../components/room/furnitureBoundary";
@@ -333,7 +337,7 @@ export default function EditorPlaceholder() {
   const [scoreSummary, setScoreSummary] = useState<ScoreSummary | null>(navigationState?.layoutResponse?.scoreSummary ?? null);
   const [validationResult, setValidationResult] = useState<LayoutValidationResult | null>(navigationState?.layoutResponse?.validationResult ?? null);
   const [interpretedIntent, setInterpretedIntent] = useState<InterpretedIntent | null>(null);
-  const [feedbackPresentation, setFeedbackPresentation] = useState<FeedbackPresentation | null>(null);
+  const [feedbackResult, setFeedbackResult] = useState<FeedbackResultState>(createEmptyFeedbackResult);
   const [recommendationNotice, setRecommendationNotice] = useState<RecommendationResultNotice | null>(
     readCurrentRecommendationNotice,
   );
@@ -601,17 +605,17 @@ export default function EditorPlaceholder() {
 
   const handleFeedback = async () => {
     if (!roomLayout) {
-      setErrorMessage("먼저 /rooms에서 샘플 방을 선택해 주세요.");
+      setFeedbackResult({ presentation: null, errorMessage: "먼저 /rooms에서 샘플 방을 선택해 주세요." });
       return;
     }
 
     if (!layoutId) {
-      setErrorMessage("먼저 AI 추천 생성을 실행해 주세요.");
+      setFeedbackResult({ presentation: null, errorMessage: "먼저 AI 추천 생성을 실행해 주세요." });
       return;
     }
 
     if (!feedback.trim()) {
-      setErrorMessage("피드백을 입력해 주세요.");
+      setFeedbackResult({ presentation: null, errorMessage: "피드백을 입력해 주세요." });
       return;
     }
 
@@ -622,7 +626,7 @@ export default function EditorPlaceholder() {
 
     setIsApplyingFeedback(true);
     setErrorMessage("");
-    setFeedbackPresentation(null);
+    setFeedbackResult(createEmptyFeedbackResult());
     setInterpretedIntent(null);
 
     if (layoutId === LOCAL_SCENARIO_LAYOUT_ID) {
@@ -633,7 +637,7 @@ export default function EditorPlaceholder() {
         const result = applyLocalFeedback(roomLayout, feedback, currentScenario()?.id);
 
         if ("error" in result) {
-          setErrorMessage(result.error);
+          setFeedbackResult({ presentation: null, errorMessage: result.error });
         } else {
           const { scoreSummary, validationResult } = buildScenarioValidation();
 
@@ -641,10 +645,17 @@ export default function EditorPlaceholder() {
           setInterpretedIntent(result.intent);
           setScoreSummary(scoreSummary);
           setValidationResult(validationResult);
+          setFeedbackResult({
+            presentation: createSuccessfulFeedbackPresentation(),
+            errorMessage: "",
+          });
         }
       } catch (error) {
         console.error(error);
-        setErrorMessage("피드백 요청을 처리하지 못했습니다. 잠시 후 다시 시도해 주세요.");
+        setFeedbackResult({
+          presentation: null,
+          errorMessage: "피드백 요청을 처리하지 못했습니다. 잠시 후 다시 시도해 주세요.",
+        });
       } finally {
         setIsApplyingFeedback(false);
         feedbackInFlightRef.current = false;
@@ -667,10 +678,10 @@ export default function EditorPlaceholder() {
       setScoreSummary(result.scoreSummary);
       setValidationResult(result.validationResult);
       setInterpretedIntent(result.interpretedIntent ?? null);
-      setFeedbackPresentation(nextFeedback.presentation);
+      setFeedbackResult({ presentation: nextFeedback.presentation, errorMessage: "" });
     } catch (error) {
       console.error(error);
-      setErrorMessage(readFeedbackErrorMessage(error));
+      setFeedbackResult({ presentation: null, errorMessage: readFeedbackErrorMessage(error) });
     } finally {
       setIsApplyingFeedback(false);
       feedbackInFlightRef.current = false;
@@ -690,6 +701,9 @@ export default function EditorPlaceholder() {
   }
 
   const warnings = validationResult?.warnings ?? [];
+  const selectedFurniture = selectedFurnitureId
+    ? roomLayout.furniture.find((item) => item.id === selectedFurnitureId && item.status !== "deleted")
+    : undefined;
 
   return (
     <main className="min-h-[calc(100vh-76px)] bg-[#fbfbfb] text-[#141414]">
@@ -717,6 +731,14 @@ export default function EditorPlaceholder() {
             </label>
           </div>
 
+          <SelectedFurnitureActions
+            selectedFurnitureId={selectedFurniture?.id ?? null}
+            selectedFurnitureName={selectedFurniture?.name}
+            onRotate={handleRotateFurniture}
+            onDelete={handleDeleteFurniture}
+            onReset={handleResetFurniture}
+          />
+
           <div className="manage-room flex-1">
             <RoomViewer
               room={roomLayout}
@@ -730,70 +752,19 @@ export default function EditorPlaceholder() {
               preferredColorTone={preferredColorTone}
             />
           </div>
-
-          <div className="absolute bottom-7 left-1/2 flex -translate-x-1/2 items-center gap-3 rounded-xl border border-[#e8e8e8] bg-white px-4 py-3 shadow-[0_10px_25px_rgba(0,0,0,0.08)]">
-            <EditorToolButton
-              label="90° 회전"
-              icon={<span className="text-[11px] font-extrabold leading-none">90°</span>}
-              onClick={selectedFurnitureId ? () => handleRotateFurniture(selectedFurnitureId) : undefined}
-            />
-            <EditorToolButton
-              label="가구 삭제"
-              icon={<FiTrash2 />}
-              onClick={selectedFurnitureId ? () => handleDeleteFurniture(selectedFurnitureId) : undefined}
-            />
-            <EditorToolButton label="초기화" icon={<FiRotateCcw />} onClick={handleResetFurniture} />
-          </div>
         </section>
 
         <aside className="space-y-5 border-t border-[#eeeeee] bg-[#fbfbfb] p-5 lg:border-l lg:border-t-0">
-          <section className="rounded-xl border border-[#e6e6e6] bg-white p-5">
-            <h2 className="text-lg font-extrabold">AI 피드백</h2>
-            {!layoutId ? (
-              <div className="mt-4 rounded-lg border border-dashed border-[#d8d8d8] bg-[#f7f7f7] p-4">
-                <strong className="block text-sm font-extrabold text-[#333333]">먼저 AI 추천 배치를 생성해 주세요</strong>
-                <p className="mt-2 text-sm font-semibold leading-6 text-[#777777]">
-                  추천 배치가 만들어진 뒤에 원하는 변경사항을 피드백으로 반영할 수 있습니다.
-                </p>
-                <button
-                  type="button"
-                  onClick={handleRecommend}
-                  disabled={isRecommending}
-                  className="mt-4 w-full rounded-lg bg-[#111111] px-5 py-3 text-sm font-extrabold text-white transition-colors hover:bg-[#333333] disabled:cursor-not-allowed disabled:bg-[#999999]"
-                >
-                  {isRecommending ? "AI 추천 생성 중..." : "AI 추천 생성하기"}
-                </button>
-              </div>
-            ) : (
-              <>
-                <p className="mt-2 text-sm font-medium leading-6 text-[#777777]">
-                  자연어 피드백을 LLM이 intent로 해석하고, 백엔드 규칙 기반 로직이 배치에 반영합니다.
-                </p>
-
-                <textarea
-                  value={feedback}
-                  onChange={(event) => setFeedback(event.target.value)}
-                  disabled={isApplyingFeedback}
-                  aria-busy={isApplyingFeedback}
-                  className="mt-4 min-h-28 w-full resize-none rounded-lg border border-[#dddddd] bg-[#fbfbfb] p-4 text-sm font-semibold outline-none focus:border-[#111111]"
-                  placeholder="(예) 책상을 조금 더 넓게 쓰고 싶어"
-                />
-
-                <button
-                  type="button"
-                  onClick={handleFeedback}
-                  disabled={isApplyingFeedback}
-                  className="mt-3 w-full rounded-lg bg-[#111111] px-5 py-3 text-sm font-extrabold text-white transition-colors hover:bg-[#333333] disabled:cursor-not-allowed disabled:bg-[#bbbbbb]"
-                >
-                  {isApplyingFeedback ? "피드백 반영 중..." : "피드백 반영"}
-                </button>
-              </>
-            )}
-          </section>
-
-          {feedbackPresentation?.showPanel && (
-            <FeedbackAgentResultPanel presentation={feedbackPresentation} />
-          )}
+          <EditorFeedbackPanel
+            layoutReady={Boolean(layoutId)}
+            feedback={feedback}
+            isApplyingFeedback={isApplyingFeedback}
+            isRecommending={isRecommending}
+            result={feedbackResult}
+            onFeedbackChange={setFeedback}
+            onApplyFeedback={handleFeedback}
+            onRecommend={handleRecommend}
+          />
 
           {recommendationNotice && (
             <RecommendationResultPanel
@@ -822,7 +793,7 @@ export default function EditorPlaceholder() {
           )}
 
           {validationResult && (
-            <section className="rounded-xl border border-[#e6e6e6] bg-white p-5">
+            <section data-editor-section="validation" className="rounded-xl border border-[#e6e6e6] bg-white p-5">
               <h2 className="text-lg font-extrabold">검증 결과</h2>
               <div className="mt-4 space-y-2 text-sm font-semibold">
                 <CheckLine label="충돌 없음" ok={validationResult.collisionFree} />
@@ -860,21 +831,6 @@ function markUserModified(item: Furniture): Furniture {
   return item.status === "deleted" ? item : { ...item, status: "user_modified" };
 }
 
-function readFeedbackErrorMessage(error: unknown): string {
-  if (isAxiosError(error)) {
-    const payload: unknown = error.response?.data;
-    if (payload && typeof payload === "object" && !Array.isArray(payload)) {
-      const apiError = (payload as Record<string, unknown>).error;
-      if (apiError && typeof apiError === "object" && !Array.isArray(apiError)) {
-        const message = (apiError as Record<string, unknown>).message;
-        if (typeof message === "string" && message.trim()) return message;
-      }
-    }
-  }
-
-  return "피드백 요청을 처리하지 못했습니다. 잠시 후 다시 시도해 주세요.";
-}
-
 function InfoItem({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex items-center justify-between gap-4">
@@ -890,28 +846,5 @@ function CheckLine({ label, ok }: { label: string; ok: boolean }) {
       <span>{label}</span>
       <span className={ok ? "text-[#16803a]" : "text-[#d35400]"}>{ok ? "양호" : "경고"}</span>
     </div>
-  );
-}
-
-function EditorToolButton({
-  icon,
-  label,
-  onClick,
-}: {
-  icon: React.ReactNode;
-  label: string;
-  onClick?: () => void;
-}) {
-  return (
-    <button
-      type="button"
-      title={label}
-      aria-label={label}
-      onClick={onClick}
-      disabled={!onClick}
-      className="grid h-8 w-8 place-items-center rounded-full text-[#222222] hover:bg-[#f2f2f2] disabled:cursor-not-allowed disabled:opacity-40"
-    >
-      {icon}
-    </button>
   );
 }

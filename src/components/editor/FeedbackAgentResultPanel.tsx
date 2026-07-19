@@ -69,7 +69,6 @@ export default function FeedbackAgentResultPanel({
 
   return (
     <section
-      aria-live="polite"
       aria-label="피드백 처리 결과"
       className={`rounded-xl border p-5 ${statusDetails.className}`}
     >
