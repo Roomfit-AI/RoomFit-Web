@@ -176,13 +176,36 @@ describe("feedback Agent presentation", () => {
     expect(button?.props.disabled).toBe(true);
   });
 
-  it("does not offer target buttons for product or reference ambiguity", () => {
-    const product = {
-      reasonCode: "NO_SAFE_SWAP_CANDIDATE",
-      question: "조건에 맞는 제품이 없습니다.",
+  it.each([
+    ["NO_SAFE_SWAP_CANDIDATE", "제품 조건을 바꾸거나 요청 내용을 수정해 주세요."],
+    ["NO_LARGER_PRODUCT_AVAILABLE", "현재 가구보다 큰 교체 제품이 없습니다."],
+    ["NO_SMALLER_PRODUCT_AVAILABLE", "현재 가구보다 작은 교체 제품이 없습니다."],
+  ])("does not offer target selection for product failure %s", (reasonCode, guidance) => {
+    const current = createRoom();
+    const clarification = {
+      reasonCode,
+      question: "조건에 맞는 교체 제품이 없습니다.",
       requiredField: "targetFurnitureId",
-      candidates: [{ furnitureId: "bookshelf-1", label: "책장" }],
+      candidates: [{ furnitureId: "desk-1", label: "현재 책상" }],
     };
+    const result = resolveFeedbackRoomLayout(current, createResponse({
+      feedbackStatus: "NEEDS_CLARIFICATION",
+      clarification,
+    }));
+    const onSelectCandidate = vi.fn();
+    const element = FeedbackAgentResultPanel({
+      presentation: result.presentation,
+      onSelectCandidate,
+    });
+
+    expect(getFeedbackClarificationKind(clarification)).toBe("PRODUCT");
+    expect(collectElements(element, "button")).toHaveLength(0);
+    expect(collectText(element).join(" ")).toContain(guidance);
+    expect(onSelectCandidate).not.toHaveBeenCalled();
+    expect(result.roomLayout).toBe(current);
+  });
+
+  it("does not treat reference ambiguity as target selection", () => {
     const reference = {
       reasonCode: "AMBIGUOUS_REFERENCE_TARGET",
       question: "기준 책상을 선택해야 합니다.",
@@ -191,16 +214,16 @@ describe("feedback Agent presentation", () => {
     };
     const presentation = normalizeFeedbackPresentation(createResponse({
       feedbackStatus: "NEEDS_CLARIFICATION",
-      clarifications: [product, reference],
+      clarification: reference,
     }));
-    const element = FeedbackAgentResultPanel({ presentation, onSelectCandidate: vi.fn() });
+    const onSelectCandidate = vi.fn();
+    const element = FeedbackAgentResultPanel({ presentation, onSelectCandidate });
     const text = collectText(element);
 
-    expect(getFeedbackClarificationKind(product)).toBe("PRODUCT");
     expect(getFeedbackClarificationKind(reference)).toBe("REFERENCE");
     expect(collectElements(element, "button")).toHaveLength(0);
-    expect(text).toContain("제품 조건을 바꾸거나 요청 내용을 수정해 주세요.");
     expect(text).toContain("기준이 되는 가구를 요청 문장에 구체적으로 적어 주세요.");
+    expect(onSelectCandidate).not.toHaveBeenCalled();
   });
 
   it("applies successful furniture changes for PARTIAL_SUCCESS with clarification", () => {
