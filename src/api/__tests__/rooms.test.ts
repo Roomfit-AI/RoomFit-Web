@@ -4,12 +4,14 @@ import {
   getRoomById,
   getRecentUploadedRooms,
   getSampleRooms,
+  replaceRoomFurniture,
+  toRoomFurnitureReplaceRequest,
   toRoomUploadRequest,
   uploadRoomLayout,
   type BackendFurnitureApiItem,
 } from "../rooms";
 import { apiClient } from "../client";
-import type { RoomLayout } from "../../types";
+import type { Furniture, RoomLayout } from "../../types";
 
 const baseLayout: RoomLayout = {
   id: "api-room-1",
@@ -126,6 +128,17 @@ describe("applyBackendFurnitureToLayout", () => {
     });
   });
 
+  it("preserves Backend canonical source type separately from render category", () => {
+    const result = applyBackendFurnitureToLayout(baseLayout, [
+      createBackendFurniture({ type: "MEDIA_CONSOLE" }),
+    ]);
+
+    expect(result.furniture[0]).toMatchObject({
+      category: "cabinet",
+      sourceType: "media_console",
+    });
+  });
+
   it("rejects an unknown Backend status instead of changing it to recommended", () => {
     expect(() => applyBackendFurnitureToLayout(baseLayout, [
       createBackendFurniture({ status: "FUTURE_STATUS" }),
@@ -154,6 +167,7 @@ describe("applyBackendFurnitureToLayout", () => {
     ]);
 
     expect(result.furniture[0].category).toBe("unsupported");
+    expect(result.furniture[0].sourceType).toBeUndefined();
   });
 
   it("preserves a midcentury desk product and variant for the registered renderer", () => {
@@ -362,3 +376,84 @@ describe("toRoomUploadRequest", () => {
     }
   });
 });
+
+describe("Room furniture replacement API", () => {
+  it("replaces the complete Room furniture snapshot without losing DELETED", async () => {
+    const room = roomWithFurniture([
+      furniture({
+        id: "console-1",
+        sourceType: "media_console",
+        status: "existing",
+        position: { x: -1.25, z: 0.5 },
+        rotationY: Math.PI / 2,
+      }),
+      furniture({ id: "tv-1", sourceType: "tv", status: "deleted" }),
+    ]);
+    const put = vi.spyOn(apiClient, "put").mockResolvedValue({
+      data: {
+        success: true,
+        data: {
+          roomId: 12,
+          name: room.name,
+          room: { width: room.width, depth: room.depth, height: 2.4, unit: "meter" },
+          openings: [],
+          furniture: [],
+          source: "ROOMPLAN",
+          createdAt: "2026-07-20T00:00:00Z",
+        },
+        error: null,
+      },
+    });
+
+    try {
+      await replaceRoomFurniture(12, room);
+
+      expect(put).toHaveBeenCalledWith("/api/rooms/12/layout", {
+        furniture: expect.arrayContaining([
+          expect.objectContaining({
+            id: "console-1",
+            type: "media_console",
+            status: "EXISTING",
+            position: { x: 0.75, z: 2 },
+            rotation: 270,
+          }),
+          expect.objectContaining({ id: "tv-1", type: "tv", status: "DELETED" }),
+        ]),
+      });
+    } finally {
+      put.mockRestore();
+    }
+  });
+
+  it("serializes every furniture status without collapsing source type or pose", () => {
+    const room = roomWithFurniture([
+      furniture({ status: "recommended" }),
+      furniture({ id: "modified", status: "user_modified", rotationY: -Math.PI / 2 }),
+    ]);
+
+    expect(toRoomFurnitureReplaceRequest(room).furniture).toEqual([
+      expect.objectContaining({ type: "desk", status: "RECOMMENDED" }),
+      expect.objectContaining({ id: "modified", status: "USER_MODIFIED", rotation: 90 }),
+    ]);
+  });
+});
+
+function roomWithFurniture(items: Furniture[]): RoomLayout {
+  return { ...baseLayout, furniture: items };
+}
+
+function furniture(overrides: Partial<Furniture> = {}): Furniture {
+  return {
+    id: "desk-1",
+    name: "책상",
+    category: "desk",
+    dimensions: { width: 1, depth: 0.6, height: 0.7 },
+    position: { x: 0, z: 0 },
+    rotationY: 0,
+    color: "#fff",
+    material: "wood",
+    status: "existing",
+    removable: true,
+    ...overrides,
+  };
+}
