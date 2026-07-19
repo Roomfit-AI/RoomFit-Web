@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useReducer, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 
 import {
@@ -26,12 +26,18 @@ import RecommendationResultPanel from "../components/editor/RecommendationResult
 import ScoreSummaryPanel from "../components/editor/ScoreSummaryPanel";
 import SelectedFurnitureActions from "../components/editor/SelectedFurnitureActions";
 import {
+  canUndoEditorLayout,
+  createEditorLayoutHistory,
+  reduceEditorLayoutHistory,
+} from "../components/editor/editorLayoutHistory";
+import {
   resolveFeedbackRoomLayout,
   resolveNextFeedbackLayoutId,
 } from "../components/editor/feedbackPresentation";
 import RoomViewer from "../components/room/RoomViewer";
 import { moveFurnitureInsideRoom, rotateFurnitureInsideRoom } from "../components/room/furnitureBoundary";
 import { getLiveMirrorForSelectedRoom } from "../config/confirmedLayouts";
+import { readActiveClientScope } from "../config/clientScope";
 import {
   resolveRoomLayoutPreferredColorTone,
   withAppliedPreferredColorTone,
@@ -125,14 +131,28 @@ export default function EditorPlaceholder() {
   const matchingSessionBackendRoomId = matchingSession?.backendRoomId ?? null;
   const matchingSessionEditingMode = matchingSession?.editingMode;
   const navigationHasSavedDraft = Boolean(navigationState?.roomLayout && navigationState.layoutResponse);
-  const [roomLayout, setRoomLayout] = useState<RoomLayout | null>(() =>
-    resolveEditorInitialRoomLayout({
+  const activeClientScope = readActiveClientScope();
+  const editorScopeKey = JSON.stringify({
+    roomLayoutId: selectedBaseline?.id ?? null,
+    backendRoomId,
+    clientMode: activeClientScope?.mode ?? null,
+    clientId: activeClientScope?.clientId ?? null,
+    setupSessionId: activeClientScope?.setupSessionId ?? null,
+    scopedRoomLayoutId: activeClientScope?.roomLayoutId ?? null,
+    scopedBackendRoomId: activeClientScope?.backendRoomId ?? null,
+  });
+  const [layoutHistory, dispatchLayoutHistory] = useReducer(
+    reduceEditorLayoutHistory,
+    undefined,
+    () => createEditorLayoutHistory(resolveEditorInitialRoomLayout({
       navigationState,
       activeSession: matchingSession,
       selectedRoomLayout: selectedBaseline,
       liveMirror: getLiveMirrorForSelectedRoom(),
-    }),
+    }), editorScopeKey),
   );
+  const roomLayout = layoutHistory.roomLayout;
+  const canUndo = canUndoEditorLayout(layoutHistory, editorScopeKey);
   const preferredColorTone = roomLayout
     ? resolveRoomLayoutPreferredColorTone(roomLayout)
     : null;
@@ -170,7 +190,7 @@ export default function EditorPlaceholder() {
         const baseline = loadSelectedRoomLayout();
         if (!baseline || response.roomId !== matchingSessionBackendRoomId) return;
         const restored = applyBackendFurnitureToLayout(baseline, response.recommendedFurniture);
-        setRoomLayout(restored);
+        dispatchLayoutHistory({ type: "replace", roomLayout: restored, scopeKey: editorScopeKey });
         setLayoutId(response.layoutId);
         setScoreSummary(response.scoreSummary);
         setValidationResult(response.validationResult);
@@ -186,7 +206,7 @@ export default function EditorPlaceholder() {
     return () => {
       cancelled = true;
     };
-  }, [matchingSessionBackendRoomId, matchingSessionEditingMode, matchingSessionLayoutId, navigationHasSavedDraft]);
+  }, [editorScopeKey, matchingSessionBackendRoomId, matchingSessionEditingMode, matchingSessionLayoutId, navigationHasSavedDraft]);
 
   useEffect(() => {
     if (!roomLayout) {
@@ -197,65 +217,59 @@ export default function EditorPlaceholder() {
   }, [roomLayout]);
 
   const handleMoveFurniture = (id: string, position: Vector2D) => {
-    setRoomLayout((current) => {
-      if (!current) {
-        return current;
-      }
-
-      return {
+    dispatchLayoutHistory({
+      type: "updateEdit",
+      scopeKey: editorScopeKey,
+      update: (current) => ({
         ...current,
         furniture: current.furniture.map((item) =>
           item.id === id
             ? markUserModified(moveFurnitureInsideRoom(current, item, position))
             : item,
         ),
-      };
+      }),
     });
   };
 
-  const handleRotateFurniture = (id: string) => {
-    setRoomLayout((current) => {
-      if (!current) {
-        return current;
-      }
+  const handleBeginMoveFurniture = () => {
+    dispatchLayoutHistory({ type: "beginEdit", scopeKey: editorScopeKey });
+  };
 
-      return {
+  const handleEndMoveFurniture = () => {
+    dispatchLayoutHistory({ type: "endEdit", scopeKey: editorScopeKey });
+  };
+
+  const handleRotateFurniture = (id: string) => {
+    dispatchLayoutHistory({
+      type: "edit",
+      scopeKey: editorScopeKey,
+      update: (current) => ({
         ...current,
         furniture: current.furniture.map((item) =>
           item.id === id
             ? markUserModified(rotateFurnitureInsideRoom(current, item, item.rotationY + Math.PI / 2))
             : item,
         ),
-      };
+      }),
     });
   };
 
   const handleDeleteFurniture = (id: string) => {
-    setRoomLayout((current) => {
-      if (!current) {
-        return current;
-      }
-
-      return {
+    dispatchLayoutHistory({
+      type: "edit",
+      scopeKey: editorScopeKey,
+      update: (current) => ({
         ...current,
         furniture: current.furniture.map((item) => (
           item.id === id ? { ...item, status: "deleted" } : item
         )),
-      };
+      }),
     });
     setSelectedFurnitureId(null);
   };
 
-  // Reset to the latest active Draft mirror. Backend persistence on the next
-  // route transition remains the source of truth.
-  const handleResetFurniture = () => {
-    const saved = loadSelectedRoomLayout();
-
-    if (!saved) {
-      return;
-    }
-
-    setRoomLayout((current) => (current ? { ...current, furniture: saved.furniture } : current));
+  const handleUndoFurnitureEdit = () => {
+    dispatchLayoutHistory({ type: "undo", scopeKey: editorScopeKey });
     setSelectedFurnitureId(null);
   };
 
@@ -323,7 +337,11 @@ export default function EditorPlaceholder() {
       }
 
       const recommendedLayout = applyBackendFurnitureToLayout(roomLayout, result.recommendedFurniture);
-      setRoomLayout(withAppliedPreferredColorTone(recommendedLayout, recommendationColorTone));
+      dispatchLayoutHistory({
+        type: "replace",
+        roomLayout: withAppliedPreferredColorTone(recommendedLayout, recommendationColorTone),
+        scopeKey: editorScopeKey,
+      });
       setLayoutId(result.layoutId);
       saveLayoutResponseSession(roomLayout.id, { ...result, layoutId: result.layoutId });
       setScoreSummary(result.scoreSummary);
@@ -379,7 +397,11 @@ export default function EditorPlaceholder() {
       const nextFeedback = resolveFeedbackRoomLayout(roomLayout, result);
 
       if (nextFeedback.roomLayout !== roomLayout) {
-        setRoomLayout(nextFeedback.roomLayout);
+        dispatchLayoutHistory({
+          type: "replace",
+          roomLayout: nextFeedback.roomLayout,
+          scopeKey: editorScopeKey,
+        });
       }
       const nextLayoutId = resolveNextFeedbackLayoutId(layoutId, result.layoutId);
       if (nextLayoutId !== null) {
@@ -447,7 +469,8 @@ export default function EditorPlaceholder() {
             selectedFurnitureName={selectedFurniture?.name}
             onRotate={handleRotateFurniture}
             onDelete={handleDeleteFurniture}
-            onReset={handleResetFurniture}
+            onUndo={handleUndoFurnitureEdit}
+            canUndo={canUndo}
           />
 
           <div className="manage-room flex-1">
@@ -457,6 +480,8 @@ export default function EditorPlaceholder() {
               selectedFurnitureId={selectedFurnitureId}
               onSelectFurniture={setSelectedFurnitureId}
               onMoveFurniture={handleMoveFurniture}
+              onBeginMoveFurniture={handleBeginMoveFurniture}
+              onEndMoveFurniture={handleEndMoveFurniture}
               hideEntranceWalls={hideEntranceWalls}
               alignCameraToEntrance
               showEditingHelpers

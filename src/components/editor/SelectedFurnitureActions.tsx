@@ -1,11 +1,12 @@
-import { FiRotateCcw, FiTrash2 } from "react-icons/fi";
+import { FiCornerUpLeft, FiRotateCw, FiTrash2 } from "react-icons/fi";
 
 interface SelectedFurnitureActionsProps {
   selectedFurnitureId: string | null;
   selectedFurnitureName?: string;
   onRotate: (id: string) => void;
   onDelete: (id: string) => void;
-  onReset: () => void;
+  onUndo: () => void;
+  canUndo: boolean;
 }
 
 export default function SelectedFurnitureActions({
@@ -13,7 +14,8 @@ export default function SelectedFurnitureActions({
   selectedFurnitureName,
   onRotate,
   onDelete,
-  onReset,
+  onUndo,
+  canUndo,
 }: SelectedFurnitureActionsProps) {
   const hasSelection = selectedFurnitureId !== null;
 
@@ -32,7 +34,7 @@ export default function SelectedFurnitureActions({
       <div className="flex flex-wrap items-center gap-2">
         <EditorToolButton
           label="90° 회전"
-          icon={<span className="text-[11px] font-extrabold leading-none">90°</span>}
+          icon={<FiRotateCw aria-hidden="true" />}
           onClick={hasSelection ? () => onRotate(selectedFurnitureId) : undefined}
         />
         <EditorToolButton
@@ -40,7 +42,11 @@ export default function SelectedFurnitureActions({
           icon={<FiTrash2 aria-hidden="true" />}
           onClick={hasSelection ? () => onDelete(selectedFurnitureId) : undefined}
         />
-        <EditorToolButton label="초기화" icon={<FiRotateCcw aria-hidden="true" />} onClick={onReset} />
+        <EditorToolButton
+          label="이전"
+          icon={<FiCornerUpLeft aria-hidden="true" />}
+          onClick={canUndo ? onUndo : undefined}
+        />
       </div>
     </section>
   );
