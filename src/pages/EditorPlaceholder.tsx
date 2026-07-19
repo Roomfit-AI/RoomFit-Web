@@ -51,6 +51,10 @@ import {
   saveLayoutResponseSession,
 } from "../config/layoutEditingSession";
 import {
+  flushEditorLayoutPersistence,
+  persistEditorLayoutSnapshot,
+} from "../config/layoutEditingWorkflow";
+import {
   clearRecommendationResult,
   readRecommendationResult,
   resolveRecommendationDecision,
@@ -184,7 +188,8 @@ export default function EditorPlaceholder() {
     if (matchingSessionLayoutId === null || matchingSessionBackendRoomId === null || navigationHasSavedDraft) return;
     let cancelled = false;
 
-    getLayout(matchingSessionLayoutId)
+    flushEditorLayoutPersistence()
+      .then(() => getLayout(matchingSessionLayoutId))
       .then((response) => {
         if (cancelled) return;
         const baseline = loadSelectedRoomLayout();
@@ -215,6 +220,23 @@ export default function EditorPlaceholder() {
 
     localStorage.setItem("roomfit:selectedRoomLayout", JSON.stringify(roomLayout));
   }, [roomLayout]);
+
+  useEffect(() => {
+    const request = layoutHistory.persistenceRequest;
+    if (!request) return;
+    let active = true;
+
+    persistEditorLayoutSnapshot(request.roomLayout)
+      .catch(() => {
+        if (active) {
+          setErrorMessage("편집 내용을 저장하지 못했습니다. 현재 화면에서 다시 시도해 주세요.");
+        }
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [layoutHistory.persistenceRequest]);
 
   const handleMoveFurniture = (id: string, position: Vector2D) => {
     dispatchLayoutHistory({
@@ -318,6 +340,7 @@ export default function EditorPlaceholder() {
     setInterpretedIntent(null);
 
     try {
+      await flushEditorLayoutPersistence();
       const context = await createDefaultAgentContext(roomId);
       const result = await recommendLayout(roomId, context.contextId);
 
@@ -393,6 +416,7 @@ export default function EditorPlaceholder() {
     setInterpretedIntent(null);
 
     try {
+      await flushEditorLayoutPersistence();
       const result = await applyLayoutFeedback(layoutId, feedback.trim());
       const nextFeedback = resolveFeedbackRoomLayout(roomLayout, result);
 

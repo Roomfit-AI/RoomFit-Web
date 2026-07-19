@@ -17,17 +17,24 @@ describe("editorLayoutHistory", () => {
     });
 
     expect(edited.roomLayout?.furniture[0].rotationY).toBe(Math.PI / 2);
+    expect(edited.persistenceRequest?.roomLayout).toBe(edited.roomLayout);
     expect(canUndoEditorLayout(edited, "room-1:client-a")).toBe(true);
 
     const undone = reduceEditorLayoutHistory(edited, { type: "undo", scopeKey: "room-1:client-a" });
 
     expect(undone.roomLayout).toEqual(initial);
+    expect(undone.persistenceRequest?.roomLayout).toBe(undone.roomLayout);
     expect(canUndoEditorLayout(undone, "room-1:client-a")).toBe(false);
     expect(reduceEditorLayoutHistory(undone, { type: "undo", scopeKey: "room-1:client-a" })).toBe(undone);
   });
 
   it("restores a deleted furniture item with its previous position and status", () => {
-    const initial = room([furniture("desk-1", { position: { x: 1.2, z: -0.4 } })]);
+    const initial = room([furniture("desk-1", {
+      position: { x: 1.2, z: -0.4 },
+      rotationY: Math.PI / 4,
+      productId: "desk-product",
+      variantId: "desk-compact",
+    })]);
     const edited = reduceEditorLayoutHistory(createEditorLayoutHistory(initial, "room-1:client-a"), {
       type: "edit",
       scopeKey: "room-1:client-a",
@@ -35,10 +42,12 @@ describe("editorLayoutHistory", () => {
     });
 
     expect(edited.roomLayout?.furniture[0].status).toBe("deleted");
+    expect(edited.persistenceRequest?.roomLayout).toBe(edited.roomLayout);
 
     const undone = reduceEditorLayoutHistory(edited, { type: "undo", scopeKey: "room-1:client-a" });
 
     expect(undone.roomLayout?.furniture[0]).toEqual(initial.furniture[0]);
+    expect(undone.persistenceRequest?.roomLayout).toBe(undone.roomLayout);
   });
 
   it("undoes only the most recent edit when a different furniture is selected next", () => {
@@ -76,11 +85,41 @@ describe("editorLayoutHistory", () => {
       scopeKey: "room-1:client-a",
       update: (current) => updateFurniture(current, "desk-1", { position: { x: 1, z: 0.5 } }),
     });
+    expect(movedAgain.persistenceRequest).toBeNull();
     const ended = reduceEditorLayoutHistory(movedAgain, { type: "endEdit", scopeKey: "room-1:client-a" });
+    expect(ended.persistenceRequest?.roomLayout).toBe(ended.roomLayout);
 
     const undone = reduceEditorLayoutHistory(ended, { type: "undo", scopeKey: "room-1:client-a" });
 
     expect(undone.roomLayout).toEqual(initial);
+    expect(undone.persistenceRequest?.roomLayout).toBe(undone.roomLayout);
+  });
+
+  it("does not create history or persistence for a drag without movement", () => {
+    const initial = room([furniture("desk-1")]);
+    const started = reduceEditorLayoutHistory(createEditorLayoutHistory(initial, "room-1:client-a"), {
+      type: "beginEdit",
+      scopeKey: "room-1:client-a",
+    });
+    const ended = reduceEditorLayoutHistory(started, { type: "endEdit", scopeKey: "room-1:client-a" });
+
+    expect(canUndoEditorLayout(ended, "room-1:client-a")).toBe(false);
+    expect(ended.persistenceRequest).toBeNull();
+  });
+
+  it("ignores move updates outside an active drag", () => {
+    const initial = room([furniture("desk-1")]);
+    const state = createEditorLayoutHistory(initial, "room-1:client-a");
+
+    const updated = reduceEditorLayoutHistory(state, {
+      type: "updateEdit",
+      scopeKey: "room-1:client-a",
+      update: (current) => updateFurniture(current, "desk-1", { position: { x: 1, z: 1 } }),
+    });
+
+    expect(updated).toBe(state);
+    expect(canUndoEditorLayout(updated, "room-1:client-a")).toBe(false);
+    expect(updated.persistenceRequest).toBeNull();
   });
 
   it("does not restore a snapshot for another room or client scope", () => {

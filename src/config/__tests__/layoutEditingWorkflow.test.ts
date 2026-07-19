@@ -11,11 +11,13 @@ import type { Furniture, RoomLayout } from "../../types";
 import {
   confirmActiveLayout,
   createRecommendationFingerprintFromRequest,
+  flushEditorLayoutPersistence,
   loadManagedFurnitureLayout,
   prepareAdditionalFurnitureForEditor,
   prepareFurnitureSelectionForRecommendation,
   prepareRecommendationTransitionForEditor,
   prepareManagedFurnitureDraft,
+  persistEditorLayoutSnapshot,
   refreshActiveDraftNavigationState,
   type LayoutWorkflowApi,
 } from "../layoutEditingWorkflow";
@@ -936,6 +938,118 @@ describe("Draft layout editing workflow", () => {
       status: "USER_MODIFIED",
     });
     expect(request[1].status).toBe("DELETED");
+  });
+
+  it("persists editor rotation, deletion, movement, and their undo before refresh and confirm", async () => {
+    const original = createRoom();
+    const storage = selectedRoomStorage(original);
+    saveDraftSession(storage, 31, 10);
+    let backendDraft = response(31, false, 10, backendFurnitureFromRoom(original));
+    const api = fakeApi({ active: backendDraft, saved: backendDraft });
+    vi.mocked(api.getLayout).mockImplementation(async () => backendDraft);
+    vi.mocked(api.updateLayout).mockImplementation(async (layoutId, nextRoom) => {
+      backendDraft = response(layoutId, false, 10, backendFurnitureFromRoom(nextRoom));
+      return backendDraft;
+    });
+
+    const persist = async (nextRoom: RoomLayout) => {
+      storage.setItem("roomfit:selectedRoomLayout", JSON.stringify(nextRoom));
+      await persistEditorLayoutSnapshot(nextRoom, storage, api);
+    };
+
+    const rotated = {
+      ...original,
+      furniture: original.furniture.map((item) => item.id === "bed-1"
+        ? { ...item, rotationY: Math.PI / 2 }
+        : item),
+    };
+    await persist(rotated);
+    expect(backendDraft.recommendedFurniture[0].rotation).toBe(270);
+    await persist(original);
+    const rotationRefresh = await refreshActiveDraftNavigationState(storage, api);
+    expectEquivalentRotation(rotationRefresh?.roomLayout?.furniture[0].rotationY, original.furniture[0].rotationY);
+
+    const deleted = {
+      ...original,
+      furniture: original.furniture.map((item) => item.id === "desk-1"
+        ? { ...item, status: "deleted" as const }
+        : item),
+    };
+    await persist(deleted);
+    expect(backendDraft.recommendedFurniture[1].status).toBe("DELETED");
+    await persist(original);
+    const deletionRefresh = await refreshActiveDraftNavigationState(storage, api);
+    expect(deletionRefresh?.roomLayout?.furniture[1]).toMatchObject({
+      status: "user_modified",
+      productId: original.furniture[1].productId,
+      variantId: original.furniture[1].variantId,
+    });
+    expect(deletionRefresh?.roomLayout?.furniture[1].position.x).toBeCloseTo(original.furniture[1].position.x);
+    expect(deletionRefresh?.roomLayout?.furniture[1].position.z).toBeCloseTo(original.furniture[1].position.z);
+    expectEquivalentRotation(
+      deletionRefresh?.roomLayout?.furniture[1].rotationY,
+      original.furniture[1].rotationY,
+    );
+
+    const moved = {
+      ...original,
+      furniture: original.furniture.map((item) => item.id === "bed-1"
+        ? { ...item, position: { x: 1.1, z: -0.6 } }
+        : item),
+    };
+    await persist(moved);
+    expect(backendDraft.recommendedFurniture[0].position).toEqual({ x: 3.1, z: 0.9 });
+    await persist(original);
+    const moveRefresh = await refreshActiveDraftNavigationState(storage, api);
+    expect(moveRefresh?.roomLayout?.furniture[0].position).toEqual(original.furniture[0].position);
+
+    const confirmed = await confirmActiveLayout(moveRefresh!.roomLayout!, storage, api);
+    expect(confirmed.furniture).toEqual(moveRefresh?.roomLayout?.furniture);
+    expect(api.confirmLayout).toHaveBeenCalledWith(31);
+  });
+
+  it("drops a queued editor snapshot when the client scope changes", async () => {
+    const room = createRoom();
+    const storage = selectedRoomStorage(room);
+    saveDraftSession(storage, 31, 10);
+    const browser = setupBrowserStorage(room.id, 1, "scope-a");
+    const activeScope = (clientId: string, setupSessionId: string) => JSON.stringify({
+      version: 1,
+      mode: "APP_UUID",
+      clientId,
+      setupSessionId,
+      backendRoomId: 1,
+      roomLayoutId: room.id,
+    });
+    browser.setItem("roomfit:activeClientScope:v1", activeScope(
+      "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+      "scope-a",
+    ));
+    const api = fakeApi();
+
+    const pending = persistEditorLayoutSnapshot(room, storage, api, browser);
+    browser.setItem("roomfit:activeClientScope:v1", activeScope(
+      "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
+      "scope-b",
+    ));
+
+    await expect(pending).resolves.toBeNull();
+    expect(api.updateLayout).not.toHaveBeenCalled();
+  });
+
+  it("surfaces the latest editor persistence failure before dependent requests", async () => {
+    const room = createRoom();
+    const storage = selectedRoomStorage(room);
+    saveDraftSession(storage, 31, 10);
+    const api = fakeApi();
+    vi.mocked(api.updateLayout).mockRejectedValueOnce(new Error("save failed"));
+
+    await expect(persistEditorLayoutSnapshot(room, storage, api)).rejects.toThrow("save failed");
+    await expect(flushEditorLayoutPersistence()).rejects.toThrow("save failed");
+
+    vi.mocked(api.updateLayout).mockResolvedValueOnce(response(31, false, 10));
+    await expect(persistEditorLayoutSnapshot(room, storage, api)).resolves.not.toBeNull();
+    await expect(flushEditorLayoutPersistence()).resolves.toBeUndefined();
   });
 
   it("confirms only the active Draft and clears the editing session only after success", async () => {

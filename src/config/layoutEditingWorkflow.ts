@@ -72,6 +72,16 @@ const defaultApi: LayoutWorkflowApi = {
   confirmLayout,
 };
 
+interface EditorPersistenceOwner {
+  roomLayoutId: string;
+  backendRoomId: number;
+  activeLayoutId: number;
+  clientId: string | null;
+}
+
+let pendingEditorLayoutPersistence: Promise<void> = Promise.resolve();
+let latestEditorLayoutPersistence: Promise<unknown> = Promise.resolve();
+
 export async function loadManagedFurnitureLayout(
   room: RoomLayout,
   backendRoomId: number,
@@ -441,20 +451,93 @@ export async function persistActiveEditorLayout(
   api: LayoutWorkflowApi = defaultApi,
   browserSession: WorkflowStorage | null = defaultBrowserSession(),
 ): Promise<LayoutNavigationState | null> {
+  await pendingEditorLayoutPersistence;
   const room = readSelectedRoomLayout(storage);
-  const backendRoomId = parseBackendRoomId(storage.getItem("roomfit:backendRoomId"));
-  if (!room || backendRoomId === null) return null;
+  if (!room) return null;
+  const owner = readEditorPersistenceOwner(room, storage, browserSession);
+  if (!owner) return null;
+
+  return persistEditorLayoutNow(room, owner, storage, api, browserSession, true);
+}
+
+export function persistEditorLayoutSnapshot(
+  room: RoomLayout,
+  storage: WorkflowStorage = localStorage,
+  api: LayoutWorkflowApi = defaultApi,
+  browserSession: WorkflowStorage | null = defaultBrowserSession(),
+): Promise<LayoutNavigationState | null> {
+  const owner = readEditorPersistenceOwner(room, storage, browserSession);
+  if (!owner) return Promise.resolve(null);
+
+  const persist = () => persistEditorLayoutNow(room, owner, storage, api, browserSession, false);
+  const request = pendingEditorLayoutPersistence.then(persist, persist);
+  pendingEditorLayoutPersistence = request.then(() => undefined, () => undefined);
+  latestEditorLayoutPersistence = request;
+  return request;
+}
+
+export async function flushEditorLayoutPersistence(): Promise<void> {
+  await latestEditorLayoutPersistence;
+}
+
+async function persistEditorLayoutNow(
+  room: RoomLayout,
+  owner: EditorPersistenceOwner,
+  storage: WorkflowStorage,
+  api: LayoutWorkflowApi,
+  browserSession: WorkflowStorage | null,
+  persistMirror: boolean,
+): Promise<LayoutNavigationState | null> {
+  if (!isEditorPersistenceOwnerCurrent(owner, storage, browserSession)) return null;
   assertRecommendationCanBeConfirmed(room, storage, browserSession);
 
-  const session = readActiveLayoutEditingSession(storage);
-  if (!isSessionForRoom(session, room.id, backendRoomId) || session.confirmed) return null;
+  const saved = await api.updateLayout(owner.activeLayoutId, room);
+  assertActiveDraftResponse(saved, owner.activeLayoutId, owner.backendRoomId);
+  if (!isEditorPersistenceOwnerCurrent(owner, storage, browserSession)) return null;
 
-  const saved = await api.updateLayout(session.activeLayoutId, room);
-  assertActiveDraftResponse(saved, session.activeLayoutId, backendRoomId);
   const savedRoom = applyBackendFurnitureToLayout(room, saved.recommendedFurniture);
-  persistActiveDraftMirror(savedRoom, storage);
-  const savedSession = saveLayoutResponseSession(room.id, saved, storage, session.editingMode);
+  if (persistMirror) persistActiveDraftMirror(savedRoom, storage);
+  const session = readActiveLayoutEditingSession(storage);
+  const savedSession = saveLayoutResponseSession(room.id, saved, storage, session?.editingMode);
   return createLayoutNavigationState(savedSession, saved, savedRoom);
+}
+
+function readEditorPersistenceOwner(
+  room: RoomLayout,
+  storage: WorkflowStorage,
+  browserSession: WorkflowStorage | null,
+): EditorPersistenceOwner | null {
+  const backendRoomId = parseBackendRoomId(storage.getItem("roomfit:backendRoomId"));
+  const session = readActiveLayoutEditingSession(storage);
+  if (backendRoomId === null
+    || !isSessionForRoom(session, room.id, backendRoomId)
+    || session.confirmed) {
+    return null;
+  }
+
+  return {
+    roomLayoutId: room.id,
+    backendRoomId,
+    activeLayoutId: session.activeLayoutId,
+    clientId: browserSession ? getActiveRequestClientId(storage, browserSession) : null,
+  };
+}
+
+function isEditorPersistenceOwnerCurrent(
+  owner: EditorPersistenceOwner,
+  storage: WorkflowStorage,
+  browserSession: WorkflowStorage | null,
+): boolean {
+  const selected = readSelectedRoomLayout(storage);
+  const backendRoomId = parseBackendRoomId(storage.getItem("roomfit:backendRoomId"));
+  const session = readActiveLayoutEditingSession(storage);
+  const clientId = browserSession ? getActiveRequestClientId(storage, browserSession) : null;
+  return selected?.id === owner.roomLayoutId
+    && backendRoomId === owner.backendRoomId
+    && isSessionForRoom(session, owner.roomLayoutId, owner.backendRoomId)
+    && !session.confirmed
+    && session.activeLayoutId === owner.activeLayoutId
+    && clientId === owner.clientId;
 }
 
 export async function confirmActiveLayout(
