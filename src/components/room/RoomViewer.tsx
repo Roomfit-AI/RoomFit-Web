@@ -8,6 +8,7 @@ import Lighting from "./Lighting";
 import Wall from "./Wall";
 import Window from "./Window";
 import { entranceViewCamera, interiorViewWallIds } from "./roomViewGeometry";
+import { isWindowAnchoredFurniture, resolveWindowBlindPlacements } from "./windowBlindPlacement";
 import type { Furniture, RoomLayout, Vector2D, WallSegment } from "../../types";
 import type { PreferredColorToneId } from "../../config/preferredColorTone";
 
@@ -44,6 +45,8 @@ export function RoomViewer({
   };
   const activeCamera = alignCameraToEntrance ? entranceViewCamera(room, camera) : camera;
   const cameraMode = alignCameraToEntrance ? `entrance-${room.id}` : `default-${room.id}`;
+  const visibleFurniture = furniture.filter((item) => item.status !== "deleted");
+  const blindPlacements = resolveWindowBlindPlacements(room, visibleFurniture);
 
   return (
     <div className="viewer-shell">
@@ -85,19 +88,28 @@ export function RoomViewer({
             cameraPosition={activeCamera.position}
           />
 
-          {furniture.filter((item) => item.status !== "deleted").map((item) => (
-            <FurnitureMesh
-              key={item.id}
-              item={item}
-              room={room}
-              isSelected={selectedFurnitureId === item.id}
-              canTransform={showEditingHelpers}
-              showSelectionIndicator={showEditingHelpers}
-              onSelect={onSelectFurniture}
-              onMove={onMoveFurniture}
-              preferredColorTone={preferredColorTone}
-            />
-          ))}
+          {visibleFurniture.map((item) => {
+            const blindPlacement = blindPlacements.get(item.id);
+            // A blind has no free-standing fallback: a room without a window,
+            // or with no remaining unused window, cannot render one mid-room.
+            if (isWindowAnchoredFurniture(item) && !blindPlacement) return null;
+            return (
+              <FurnitureMesh
+                key={item.id}
+                item={item}
+                room={room}
+                isSelected={selectedFurnitureId === item.id}
+                canTransform={showEditingHelpers && !blindPlacement}
+                showSelectionIndicator={showEditingHelpers && !blindPlacement}
+                onSelect={onSelectFurniture}
+                onMove={onMoveFurniture}
+                preferredColorTone={preferredColorTone}
+                layoutPosition={blindPlacement?.position}
+                layoutRotationY={blindPlacement?.rotationY}
+                visualScale={blindPlacement?.scale}
+              />
+            );
+          })}
 
           <ContactShadows opacity={0.24} scale={8} blur={3.2} far={5} position={[0, 0.015, 0]} />
           <OrbitControls

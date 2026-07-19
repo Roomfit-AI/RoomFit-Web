@@ -610,14 +610,9 @@ function toOpening(
       transmission: opening.type === "window" ? 0.28 : 0,
       opacity: opening.type === "window" ? 0.24 : 1,
     },
-    blind:
-      opening.type === "window"
-        ? {
-            enabled: true,
-            type: "wood",
-            slats: 14,
-          }
-        : undefined,
+    // A window opening has no implicit blind. Blinds are independent furniture
+    // and are only rendered after the user selects one.
+    blind: undefined,
   };
 }
 

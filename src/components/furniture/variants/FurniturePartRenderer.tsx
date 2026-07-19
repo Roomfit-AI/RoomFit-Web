@@ -5,22 +5,27 @@ import { resolveMaterialPreset } from "./materialResolver";
 import type { MaterialPresetCatalog } from "./materialResolver";
 import type { ValidatedFurniturePart } from "./types";
 import type { PreferredColorToneId } from "../../../config/preferredColorTone";
+import type { ThemeTarget } from "../../../config/furnitureBehaviorPolicy";
 
 interface FurniturePartRendererProps {
   part: ValidatedFurniturePart;
   materialPresets: Readonly<MaterialPresetCatalog>;
   preferredColorTone?: PreferredColorToneId | null;
+  themeTarget?: ThemeTarget | null;
+  themeKey?: string;
 }
 
 export function FurniturePartRenderer({
   part,
   materialPresets,
   preferredColorTone,
+  themeTarget,
+  themeKey,
 }: FurniturePartRendererProps) {
   const geometry = useMemo(() => createFurniturePartGeometry(part), [part]);
   const material = useMemo(
-    () => resolveMaterialPreset(part.material, materialPresets, preferredColorTone),
-    [materialPresets, part.material, preferredColorTone],
+    () => resolveMaterialPreset(part.material, materialPresets, preferredColorTone, themeTarget, themeKey),
+    [materialPresets, part.material, preferredColorTone, themeKey, themeTarget],
   );
 
   useEffect(() => () => geometry.dispose(), [geometry]);

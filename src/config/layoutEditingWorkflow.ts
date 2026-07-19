@@ -41,6 +41,7 @@ import { currentScenario, isCollectorRoom } from "./scenarios";
 import { isHobbyCoralRecommendationSelected } from "../mock/hobbyCoralRecommendation";
 import { readPreferredColorTone } from "./preferredColorTone";
 import { assertFurnitureAdditionAllowed } from "./furnitureAdditionPolicy";
+import { hasDeskLoftConflict, DESK_LOFT_CONFLICT_MESSAGE } from "./furnitureSelectionPolicy";
 
 type WorkflowStorage = Pick<Storage, "getItem" | "setItem" | "removeItem">;
 
@@ -183,6 +184,9 @@ export async function prepareAdditionalFurnitureForEditor(
 
   if (current.editingMode !== "REEDIT_DRAFT" || current.activeLayoutId === null) return current;
 
+  if (hasDeskLoftConflict(selectedIds, current.roomLayout?.furniture ?? [])) {
+    throw new Error(DESK_LOFT_CONFLICT_MESSAGE);
+  }
   if (resolveRequiredFurnitureTypes(selectedIds).length === 0) {
     return current;
   }

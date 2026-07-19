@@ -4,6 +4,7 @@ import {
 } from "../config/preferredColorTone";
 import type { CanonicalFurnitureType } from "../config/canonicalFurnitureType";
 import { FURNITURE_TYPE_BY_UI_ID } from "../config/furnitureSelectionCatalog";
+import { hasDeskLoftConflict, DESK_LOFT_CONFLICT_MESSAGE } from "../config/furnitureSelectionPolicy";
 
 export type LifestyleGoalApiValue =
   | "STUDY_FOCUSED"
@@ -137,6 +138,9 @@ export function normalizeSelectedImageIds(value: unknown): number[] {
 }
 
 export function buildAgentContextRequest(input: AgentContextRequestInput): AgentContextRequest {
+  if (Array.isArray(input.additionalFurnitureIds) && hasDeskLoftConflict(input.additionalFurnitureIds)) {
+    throw new AgentContextRequestValidationError(DESK_LOFT_CONFLICT_MESSAGE);
+  }
   const roomId = normalizeBackendRoomId(input.roomId);
   if (roomId === null) {
     throw new AgentContextRequestValidationError("유효한 백엔드 방을 다시 선택해 주세요.");
