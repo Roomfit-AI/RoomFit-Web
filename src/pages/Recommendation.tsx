@@ -1,8 +1,8 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 
 import RecommendationGenerationPanel from "../components/recommendation/RecommendationGenerationPanel";
-import { prepareAdditionalFurnitureForEditor } from "../config/layoutEditingWorkflow";
+import { prepareRecommendationTransitionForEditor } from "../config/layoutEditingWorkflow";
 import {
   createRecommendationGenerationController,
   getRecommendationGenerationErrorMessage,
@@ -18,16 +18,21 @@ export default function Recommendation() {
   const [errorMessage, setErrorMessage] = useState(preparation.message);
   const controllerRef = useRef<RecommendationGenerationController | null>(null);
 
-  if (controllerRef.current == null) {
-    controllerRef.current = createRecommendationGenerationController({
-      generate: prepareAdditionalFurnitureForEditor,
+  useEffect(() => {
+    const controller = createRecommendationGenerationController({
+      generate: prepareRecommendationTransitionForEditor,
       navigate,
       onRunningChange: setIsGenerating,
       onFailure: (error) => setErrorMessage(
         error ? getRecommendationGenerationErrorMessage(error) : "",
       ),
     });
-  }
+    controllerRef.current = controller;
+    return () => {
+      controller.dispose();
+      if (controllerRef.current === controller) controllerRef.current = null;
+    };
+  }, [navigate]);
 
   return (
     <main className="grid min-h-[calc(100vh-76px)] place-items-center bg-[#fbfbfb] px-5 py-10 text-[#141414] sm:px-8">

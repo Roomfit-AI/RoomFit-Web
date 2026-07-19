@@ -10,6 +10,7 @@ import {
   resolveClientScopeForHandoff,
   savePendingClientHandoff,
 } from "../../config/clientScope";
+import { commitRoomHandoff } from "../../config/roomHandoff";
 
 const BROWSER_ID = "11111111-1111-4111-8111-111111111111";
 const APP_ID = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
@@ -24,6 +25,21 @@ describe("apiClient client scope header", () => {
     savePendingClientHandoff(resolveClientScopeForHandoff({ roomId: 42, clientId: APP_ID })!, session);
 
     expect(await requestHeader()).toBe(APP_ID);
+    expect(local.getItem(BROWSER_CLIENT_ID_KEY)).toBe(BROWSER_ID);
+  });
+
+  it("keeps the committed App handoff UUID and payload on the scoped Agent Context request", async () => {
+    const { local, session } = installStorage();
+    const handoff = resolveClientScopeForHandoff({ roomId: 42, clientId: APP_ID })!;
+    commitRoomHandoff(uploadedRoom(42), handoff, local, session, "setup-app");
+    const request = await capturePost("/api/agent/context", {
+      roomId: 42,
+      selectedProductIds: [],
+    });
+
+    expect(request.url).toBe("/api/agent/context");
+    expect(request.headers.get(CLIENT_ID_HEADER)?.toString()).toBe(APP_ID);
+    expect(JSON.parse(String(request.data))).toEqual({ roomId: 42, selectedProductIds: [] });
     expect(local.getItem(BROWSER_CLIENT_ID_KEY)).toBe(BROWSER_ID);
   });
 
@@ -105,6 +121,24 @@ async function requestHeader(
   return requestConfig?.headers.get(CLIENT_ID_HEADER)?.toString();
 }
 
+async function capturePost(url: string, data: unknown): Promise<InternalAxiosRequestConfig> {
+  let requestConfig: InternalAxiosRequestConfig | undefined;
+  await apiClient.post(url, data, {
+    adapter: async (config) => {
+      requestConfig = config;
+      return {
+        data: null,
+        status: 200,
+        statusText: "OK",
+        headers: new AxiosHeaders(),
+        config,
+      };
+    },
+  });
+  if (!requestConfig) throw new Error("Request config was not captured.");
+  return requestConfig;
+}
+
 interface MemoryStorage extends Pick<Storage, "getItem" | "setItem" | "removeItem"> {
   values: Map<string, string>;
 }
@@ -116,5 +150,31 @@ function createMemoryStorage(initial: Record<string, string> = {}): MemoryStorag
     getItem: (key) => values.get(key) ?? null,
     setItem: (key, value) => { values.set(key, value); },
     removeItem: (key) => { values.delete(key); },
+  };
+}
+
+function uploadedRoom(roomId: number) {
+  return {
+    roomId,
+    title: "App 업로드 방",
+    size: "12㎡",
+    dimensions: "4m × 3m",
+    tone: "bright",
+    category: "업로드 방",
+    source: "ROOMPLAN",
+    createdAt: "2026-07-19T00:00:00Z",
+    layoutId: `api-room-${roomId}`,
+    layout: {
+      id: `api-room-${roomId}`,
+      name: "App 업로드 방",
+      width: 4,
+      depth: 3,
+      height: 2.4,
+      source: "ROOMPLAN" as const,
+      walls: [],
+      doors: [],
+      windows: [],
+      furniture: [],
+    },
   };
 }

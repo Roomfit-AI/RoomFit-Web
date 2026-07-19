@@ -62,7 +62,10 @@ describe("recommendation generation controller", () => {
     deferred.resolve(navigationState(42));
     await Promise.all([first, second]);
 
-    expect(navigate).toHaveBeenCalledExactlyOnceWith("/editor", { state: navigationState(42) });
+    expect(navigate).toHaveBeenCalledExactlyOnceWith("/editor", {
+      state: navigationState(42),
+      replace: true,
+    });
     expect(running).toEqual([true, false]);
     expect(controller.isRunning()).toBe(false);
   });
@@ -87,7 +90,33 @@ describe("recommendation generation controller", () => {
 
     await controller.run();
     expect(generate).toHaveBeenCalledTimes(2);
-    expect(navigate).toHaveBeenCalledExactlyOnceWith("/editor", { state: navigationState(7) });
+    expect(navigate).toHaveBeenCalledExactlyOnceWith("/editor", {
+      state: navigationState(7),
+      replace: true,
+    });
+  });
+
+  it("ignores a stale completion after the recommendation page unmounts", async () => {
+    const deferred = createDeferred<LayoutNavigationState | null>();
+    const navigate = vi.fn();
+    const running: boolean[] = [];
+    const failure = vi.fn();
+    const controller = createRecommendationGenerationController({
+      generate: () => deferred.promise,
+      navigate,
+      onRunningChange: (value) => running.push(value),
+      onFailure: failure,
+    });
+
+    const request = controller.run();
+    controller.dispose();
+    deferred.resolve(navigationState(9));
+    await request;
+
+    expect(navigate).not.toHaveBeenCalled();
+    expect(failure).toHaveBeenCalledExactlyOnceWith(null);
+    expect(running).toEqual([true]);
+    expect(controller.isRunning()).toBe(false);
   });
 
   it("does not generate merely because a user leaves and re-enters the page", () => {
@@ -101,6 +130,29 @@ describe("recommendation generation controller", () => {
     createRecommendationGenerationController(options);
     createRecommendationGenerationController(options);
     expect(generate).not.toHaveBeenCalled();
+  });
+
+  it("does not let a disposed mount block a fresh controller instance", async () => {
+    const generate = vi.fn().mockResolvedValue(navigationState(11));
+    const navigate = vi.fn();
+    const options = {
+      generate,
+      navigate,
+      onRunningChange: vi.fn(),
+      onFailure: vi.fn(),
+    };
+    const disposedMount = createRecommendationGenerationController(options);
+    disposedMount.dispose();
+    await disposedMount.run();
+
+    const activeMount = createRecommendationGenerationController(options);
+    await activeMount.run();
+
+    expect(generate).toHaveBeenCalledTimes(1);
+    expect(navigate).toHaveBeenCalledExactlyOnceWith("/editor", {
+      state: navigationState(11),
+      replace: true,
+    });
   });
 });
 

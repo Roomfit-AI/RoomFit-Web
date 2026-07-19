@@ -12,6 +12,7 @@ import {
   loadManagedFurnitureLayout,
   prepareAdditionalFurnitureForEditor,
   prepareFurnitureSelectionForRecommendation,
+  prepareRecommendationTransitionForEditor,
   prepareManagedFurnitureDraft,
   refreshActiveDraftNavigationState,
   type LayoutWorkflowApi,
@@ -115,6 +116,7 @@ describe("Draft layout editing workflow", () => {
   });
 
   it("generates the existing scripted Sample recommendation from the same CTA without a second Editor click", async () => {
+    vi.useFakeTimers();
     const room = createRoom("api-room-9");
     room.source = "SAMPLE";
     const storage = selectedRoomStorage(room, 9);
@@ -125,11 +127,42 @@ describe("Draft layout editing workflow", () => {
     const browser = setupBrowserStorage(room.id, 9, "local-sample");
     const api = fakeApi();
 
-    await prepareFurnitureSelectionForRecommendation(storage, api);
-    const generated = await prepareAdditionalFurnitureForEditor(storage, api, browser);
+    try {
+      await prepareFurnitureSelectionForRecommendation(storage, api);
+      const generation = prepareAdditionalFurnitureForEditor(storage, api, browser);
+      await vi.advanceTimersByTimeAsync(4_999);
+      expect(storage.getItem("roomfit:selectedRoomLayout")).toBe(JSON.stringify(room));
+      await vi.advanceTimersByTimeAsync(1);
+      const generated = await generation;
 
-    expect(generated?.localRecommendation).toBeDefined();
-    expect(generated?.roomLayout?.furniture.some(({ id }) => id === "natural-wardrobe")).toBe(true);
+      expect(generated?.localRecommendation).toBeDefined();
+      expect(generated?.roomLayout?.furniture.some(({ id }) => id === "natural-wardrobe")).toBe(true);
+      expect(api.createDefaultAgentContext).not.toHaveBeenCalled();
+      expect(api.recommendLayout).not.toHaveBeenCalled();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("resumes an existing initial recommendation instead of creating another Layout", async () => {
+    const room = createRoom();
+    const storage = selectedRoomStorage(room);
+    storage.setItem("roomfit:selectedAdditionalFurnitureIds", '["plant"]');
+    const browser = setupBrowserStorage(room.id, 1, "existing-recommendation");
+    saveActiveLayoutEditingSession({
+      roomLayoutId: room.id,
+      backendRoomId: 1,
+      activeLayoutId: 61,
+      sourceLayoutId: null,
+      editingMode: "INITIAL_SETUP",
+      confirmed: false,
+    }, storage);
+    const api = fakeApi({ active: response(61, false, null) });
+
+    const resumed = await prepareRecommendationTransitionForEditor(storage, api, browser);
+
+    expect(resumed).toMatchObject({ roomId: 1, activeLayoutId: 61, editingMode: "INITIAL_SETUP" });
+    expect(api.getLayout).toHaveBeenCalledExactlyOnceWith(61);
     expect(api.createDefaultAgentContext).not.toHaveBeenCalled();
     expect(api.recommendLayout).not.toHaveBeenCalled();
   });
@@ -554,6 +587,7 @@ describe("Draft layout editing workflow", () => {
   });
 
   it("leaves explicit scripted scenarios on the existing local Editor path", async () => {
+    vi.useFakeTimers();
     const room = createRoom();
     const storage = selectedRoomStorage(room);
     storage.setItem("roomfit:selectedPurpose", "rest");
@@ -561,11 +595,17 @@ describe("Draft layout editing workflow", () => {
     storage.setItem("roomfit:selectedPalette", "brown");
     const api = fakeApi({ latest: null });
 
-    const result = await prepareAdditionalFurnitureForEditor(storage, api, new MemoryStorage());
+    try {
+      const generation = prepareAdditionalFurnitureForEditor(storage, api, new MemoryStorage());
+      await vi.advanceTimersByTimeAsync(5_000);
+      const result = await generation;
 
-    expect(result?.activeLayoutId).toBeNull();
-    expect(api.createDefaultAgentContext).not.toHaveBeenCalled();
-    expect(api.recommendLayout).not.toHaveBeenCalled();
+      expect(result?.activeLayoutId).toBeNull();
+      expect(api.createDefaultAgentContext).not.toHaveBeenCalled();
+      expect(api.recommendLayout).not.toHaveBeenCalled();
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it("persists PARTIAL_SUCCESS details for the same setup and applies placed furniture", async () => {

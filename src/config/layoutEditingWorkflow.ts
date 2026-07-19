@@ -71,6 +71,8 @@ const defaultApi: LayoutWorkflowApi = {
   confirmLayout,
 };
 
+const LOCAL_RECOMMENDATION_DELAY_MS = 5_000;
+
 export async function loadManagedFurnitureLayout(
   room: RoomLayout,
   backendRoomId: number,
@@ -207,6 +209,18 @@ export async function prepareAdditionalFurnitureForEditor(
   return createLayoutNavigationState(session, response, restored);
 }
 
+export async function prepareRecommendationTransitionForEditor(
+  storage: WorkflowStorage = localStorage,
+  api: LayoutWorkflowApi = defaultApi,
+  browserSession: WorkflowStorage = sessionStorage,
+): Promise<LayoutNavigationState | null> {
+  const current = await refreshActiveDraftNavigationState(storage, api);
+  if (current?.editingMode === "INITIAL_SETUP" && current.activeLayoutId !== null) {
+    return current;
+  }
+  return prepareAdditionalFurnitureForEditor(storage, api, browserSession);
+}
+
 export async function prepareFurnitureSelectionForRecommendation(
   storage: WorkflowStorage = localStorage,
   api: LayoutWorkflowApi = defaultApi,
@@ -237,6 +251,7 @@ async function prepareInitialRecommendation(
 
   const localRecommendation = createLocalRecommendation(baseline, storage);
   if (localRecommendation) {
+    await new Promise((resolve) => setTimeout(resolve, LOCAL_RECOMMENDATION_DELAY_MS));
     persistActiveDraftMirror(localRecommendation.roomLayout, storage);
     const owner = resolveRecommendationOwner(current, browserSession);
     if (owner) clearRecommendationResult(browserSession, owner);
