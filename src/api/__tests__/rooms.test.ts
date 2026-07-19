@@ -378,6 +378,28 @@ describe("toRoomUploadRequest", () => {
 });
 
 describe("Room furniture replacement API", () => {
+  it("round-trips the Backend legacy storage type instead of renderer-only cabinet", () => {
+    const room = applyBackendFurnitureToLayout(baseLayout, [
+      createBackendFurniture({
+        id: "storage-1",
+        type: "storage",
+        label: "수납장",
+        productId: null,
+        variantId: null,
+        styleTags: [],
+      }),
+    ]);
+
+    expect(room.furniture[0]).toMatchObject({
+      category: "cabinet",
+      sourceType: "storage",
+    });
+    expect(toRoomFurnitureReplaceRequest(room).furniture[0]).toMatchObject({
+      id: "storage-1",
+      type: "storage",
+    });
+  });
+
   it("replaces the complete Room furniture snapshot without losing DELETED", async () => {
     const room = roomWithFurniture([
       furniture({

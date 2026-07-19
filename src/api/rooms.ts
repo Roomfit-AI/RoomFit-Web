@@ -681,6 +681,11 @@ function toFurniture(
   const normalizedItem = normalizeBackendFurnitureApiItem(item);
   const category = toFurnitureCategory(normalizedItem.type);
   const canonicalType = normalizeCanonicalFurnitureType(normalizedItem.type);
+  // `storage` is the one legacy Backend type that is intentionally accepted
+  // outside the generated canonical catalog. Keep it as the persistence type:
+  // falling back to the renderer category (`cabinet`) makes a no-op Room
+  // furniture save fail with INVALID_FURNITURE_TYPE.
+  const sourceType = canonicalType ?? (normalizedItem.type === "storage" ? "storage" : null);
   const materialType = materialByCategory(category);
   const collectorAppearance = collectorAppearanceById[normalizedItem.id.replace(/^studio-/, "collector-")];
   const color = collectorAppearance?.color ?? colorByCategory(category);
@@ -691,7 +696,7 @@ function toFurniture(
     id: normalizedItem.id,
     name: normalizedItem.label,
     category,
-    ...(canonicalType ? { sourceType: canonicalType } : {}),
+    ...(sourceType ? { sourceType } : {}),
     productId: normalizedItem.productId,
     variantId: normalizedItem.variantId,
     styleTags: [...normalizedItem.styleTags],
