@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { FiMoreHorizontal, FiRotateCcw, FiTrash2, FiZoomIn } from "react-icons/fi";
+import { FiRotateCcw, FiTrash2, FiZoomIn } from "react-icons/fi";
 
 import { getSampleRoomLayouts } from "../api/rooms";
 import { RoomViewer } from "../components/room/RoomViewer";
@@ -277,34 +277,48 @@ export default function ManageFurniture() {
         />
 
         <aside className="border-t border-[#eeeeee] bg-[#fbfbfb] p-5 lg:border-l-0 lg:border-t-0">
-          <div className="rounded-xl border border-[#e8e8e8] bg-white p-4">
-            <div className="mb-5 flex items-center justify-between">
-              <h2 className="text-base font-extrabold">가구 현황</h2>
-              <button type="button" aria-label="더보기" className="rounded-full p-2 hover:bg-[#f3f3f3]">
-                <FiMoreHorizontal />
-              </button>
-            </div>
-
-            <div className="max-h-[calc(100vh-320px)] space-y-4 overflow-y-auto pr-1">
-              {visibleFurniture.map((item) => (
-                <FurnitureRow
-                  key={item.id}
-                  item={item}
-                  selected={selectedFurnitureId === item.id}
-                  onSelect={() => setSelectedFurnitureId(item.id)}
-                  onRemove={() => removeFurniture(item.id)}
-                />
-              ))}
-            </div>
-
-          </div>
+          <FurnitureStatusPanel
+            items={visibleFurniture}
+            selectedFurnitureId={selectedFurnitureId}
+            onSelect={setSelectedFurnitureId}
+            onRemove={removeFurniture}
+          />
         </aside>
       </div>
     </main>
   );
 }
 
-function FurnitureRow({
+export function FurnitureStatusPanel({
+  items,
+  selectedFurnitureId,
+  onSelect,
+  onRemove,
+}: {
+  items: Furniture[];
+  selectedFurnitureId: string | null;
+  onSelect: (id: string) => void;
+  onRemove: (id: string) => void;
+}) {
+  return (
+    <div className="rounded-xl border border-[#e8e8e8] bg-white p-4">
+      <h2 className="mb-5 text-base font-extrabold">가구 현황</h2>
+      <div className="max-h-[calc(100vh-320px)] space-y-4 overflow-y-auto pr-1">
+        {items.map((item) => (
+          <FurnitureRow
+            key={item.id}
+            item={item}
+            selected={selectedFurnitureId === item.id}
+            onSelect={() => onSelect(item.id)}
+            onRemove={() => onRemove(item.id)}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+export function FurnitureRow({
   item,
   selected,
   onSelect,

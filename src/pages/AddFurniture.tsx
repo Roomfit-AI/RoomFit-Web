@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { FiCheck, FiPlus } from "react-icons/fi";
 
 import FurnitureVisual from "../components/ui/FurnitureVisual";
+import InlineSelectionValidation from "../components/ui/InlineSelectionValidation";
 import RecommendationResultPanel from "../components/editor/RecommendationResultPanel";
 import {
   readRecommendationResult,
@@ -18,11 +19,16 @@ import {
   getFurnitureSelectionBlockReason,
   parseStoredRoomLayout,
 } from "../config/furnitureSelectionPolicy";
+import {
+  getFurnitureSelectionGuidanceMessage,
+  ONBOARDING_VALIDATION_EVENT,
+} from "../config/onboardingSelection";
 const addFurnitureVisitedKey = "roomfit:visited:add-furniture";
 
 export default function AddFurniture() {
   const [activeCategory, setActiveCategory] = useState("전체");
   const [selectionNotice, setSelectionNotice] = useState<string | null>(null);
+  const [validationMessage, setValidationMessage] = useState("");
   const [room] = useState(() => parseStoredRoomLayout(localStorage.getItem("roomfit:selectedRoomLayout")));
   const [recommendationNotice, setRecommendationNotice] = useState<RecommendationResultNotice | null>(
     readCurrentRecommendationNotice,
@@ -62,6 +68,16 @@ export default function AddFurniture() {
     setRecommendationNotice(readCurrentRecommendationNotice());
   }), []);
 
+  useEffect(() => {
+    const showValidation = (event: Event) => {
+      const detail = (event as CustomEvent<{ pathname?: string }>).detail;
+      if (detail?.pathname !== "/add-furniture") return;
+      setValidationMessage(getFurnitureSelectionGuidanceMessage(selectedIds));
+    };
+    window.addEventListener(ONBOARDING_VALIDATION_EVENT, showValidation);
+    return () => window.removeEventListener(ONBOARDING_VALIDATION_EVENT, showValidation);
+  }, [selectedIds]);
+
   const toggleFurniture = (id: string) => {
     const isSelected = selectedIds.includes(id);
     const reason = !isSelected ? getFurnitureSelectionBlockReason(id, selectedIds, room) : null;
@@ -72,6 +88,7 @@ export default function AddFurniture() {
     setSelectedIds((current) =>
       current.includes(id) ? current.filter((itemId) => itemId !== id) : [...current, id],
     );
+    setValidationMessage("");
   };
 
   return (
@@ -92,6 +109,7 @@ export default function AddFurniture() {
             <RecommendationResultPanel notice={recommendationNotice} />
           </div>
         )}
+        <InlineSelectionValidation message={validationMessage} />
         {selectionNotice && (
           <div role="alert" className="mb-8 rounded-xl border border-[#d7b7b1] bg-[#fff8f6] px-5 py-4 text-sm font-semibold text-[#6f3329]">
             <strong className="block">함께 배치할 수 없는 가구예요</strong>

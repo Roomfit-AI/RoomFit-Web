@@ -9,6 +9,7 @@ const EditorPlaceholder = lazy(() => import("./pages/EditorPlaceholder"));
 const Preference = lazy(() => import("./pages/Preference"));
 const ReferenceImage = lazy(() => import("./pages/ReferenceImage"));
 const AddFurniture = lazy(() => import("./pages/AddFurniture"));
+const Recommendation = lazy(() => import("./pages/Recommendation"));
 const LayoutConfirm = lazy(() => import("./pages/LayoutConfirm"));
 
 export default function App() {
@@ -25,6 +26,7 @@ export default function App() {
             <Route path="/preference" element={<Preference />} />
             <Route path="/reference-image" element={<ReferenceImage />} />
             <Route path="/add-furniture" element={<AddFurniture />} />
+            <Route path="/recommendation" element={<Recommendation />} />
             <Route path="/editor" element={<EditorPlaceholder />} />
             <Route path="/layout-confirm" element={<LayoutConfirm />} />
           </Routes>

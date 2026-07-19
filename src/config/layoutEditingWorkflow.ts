@@ -10,7 +10,10 @@ import {
   type LayoutRecommendationResponse,
   type LayoutResponse,
 } from "../api/layouts";
-import { resolveRequiredFurnitureTypes } from "../api/agentContextRequest";
+import {
+  AgentContextRequestValidationError,
+  resolveRequiredFurnitureTypes,
+} from "../api/agentContextRequest";
 import { applyBackendFurnitureToLayout, getRoomById } from "../api/rooms";
 import type { RoomLayout } from "../types";
 import {
@@ -37,11 +40,10 @@ import {
 import { clearConfirmedLayout, hasConfirmedLayout } from "./confirmedLayouts";
 import { bindRoomToSetupSession, readRoomSetupSession } from "./roomSetupSession";
 import { getActiveRequestClientId } from "./clientScope";
-import { currentScenario, isCollectorRoom } from "./scenarios";
-import { isHobbyCoralRecommendationSelected } from "../mock/hobbyCoralRecommendation";
 import { readPreferredColorTone } from "./preferredColorTone";
 import { assertFurnitureAdditionAllowed } from "./furnitureAdditionPolicy";
 import { hasDeskLoftConflict, DESK_LOFT_CONFLICT_MESSAGE } from "./furnitureSelectionPolicy";
+import { createLocalRecommendation } from "./localRecommendation";
 
 type WorkflowStorage = Pick<Storage, "getItem" | "setItem" | "removeItem">;
 
@@ -205,6 +207,25 @@ export async function prepareAdditionalFurnitureForEditor(
   return createLayoutNavigationState(session, response, restored);
 }
 
+export async function prepareFurnitureSelectionForRecommendation(
+  storage: WorkflowStorage = localStorage,
+  api: LayoutWorkflowApi = defaultApi,
+): Promise<LayoutNavigationState | null> {
+  const selectedIds = readStringArray(storage.getItem("roomfit:selectedAdditionalFurnitureIds"));
+  const selectedRoom = readSelectedRoomLayout(storage);
+  assertFurnitureAdditionAllowed(selectedRoom, selectedIds);
+  assertRecommendationSelectionReady(selectedIds);
+
+  const current = await refreshActiveDraftNavigationState(storage, api);
+  if (!current) return null;
+
+  assertFurnitureAdditionAllowed(current.roomLayout ?? selectedRoom, selectedIds);
+  if (hasDeskLoftConflict(selectedIds, current.roomLayout?.furniture ?? [])) {
+    throw new AgentContextRequestValidationError(DESK_LOFT_CONFLICT_MESSAGE);
+  }
+  return current;
+}
+
 async function prepareInitialRecommendation(
   current: LayoutNavigationState,
   storage: WorkflowStorage,
@@ -212,7 +233,22 @@ async function prepareInitialRecommendation(
   api: LayoutWorkflowApi,
 ): Promise<LayoutNavigationState> {
   const baseline = current.roomLayout ?? readSelectedRoomLayout(storage);
-  if (!baseline || shouldUseLocalScenario(baseline, storage)) return current;
+  if (!baseline) return current;
+
+  const localRecommendation = createLocalRecommendation(baseline, storage);
+  if (localRecommendation) {
+    persistActiveDraftMirror(localRecommendation.roomLayout, storage);
+    const owner = resolveRecommendationOwner(current, browserSession);
+    if (owner) clearRecommendationResult(browserSession, owner);
+    return {
+      ...current,
+      roomLayout: localRecommendation.roomLayout,
+      localRecommendation: {
+        scoreSummary: localRecommendation.scoreSummary,
+        validationResult: localRecommendation.validationResult,
+      },
+    };
+  }
 
   const context = await api.createDefaultAgentContext(current.roomId);
   const response = await api.recommendLayout(current.roomId, context.contextId);
@@ -417,11 +453,6 @@ function defaultBrowserSession(): WorkflowStorage | null {
   return typeof sessionStorage === "undefined" ? null : sessionStorage;
 }
 
-function shouldUseLocalScenario(room: RoomLayout, storage: WorkflowStorage): boolean {
-  if (isHobbyCoralRecommendationSelected(storage)) return true;
-  return room.source !== "CUSTOM" && !isCollectorRoom(room) && Boolean(currentScenario(storage));
-}
-
 function resolveRecommendationOwner(
   current: LayoutNavigationState,
   browserSession: WorkflowStorage,
@@ -437,6 +468,12 @@ function resolveRecommendationOwner(
     roomLayoutId: current.roomLayoutId,
     backendRoomId: current.roomId,
   };
+}
+
+function assertRecommendationSelectionReady(selectedIds: string[]): void {
+  if (resolveRequiredFurnitureTypes(selectedIds).length === 0) {
+    throw new AgentContextRequestValidationError("추천에 포함할 가구를 하나 이상 선택해 주세요.");
+  }
 }
 
 function requirePersistedRecommendation(response: LayoutRecommendationResponse): LayoutResponse {

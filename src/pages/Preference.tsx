@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { FiBookOpen, FiBriefcase, FiCheck, FiCoffee, FiHome } from "react-icons/fi";
 import PageStepHeader from "../components/ui/PageStepHeader";
+import InlineSelectionValidation from "../components/ui/InlineSelectionValidation";
 import {
   normalizePreferredColorToneId,
   PREFERRED_COLOR_TONE_OPTIONS,
@@ -14,6 +15,7 @@ import {
   getPreferenceGuidanceMessage,
   normalizeLifestyleId,
   notifyOnboardingSelectionChanged,
+  ONBOARDING_VALIDATION_EVENT,
 } from "../config/onboardingSelection";
 
 const purposes = [
@@ -31,6 +33,7 @@ export default function Preference() {
   const [selectedPalette, setSelectedPalette] = useState<PreferredColorToneId | "">(
     initialPreferences.palette,
   );
+  const [validationMessage, setValidationMessage] = useState("");
 
   useEffect(() => {
     if (selectedPurpose) {
@@ -50,10 +53,18 @@ export default function Preference() {
     notifyOnboardingSelectionChanged();
   }, [selectedPurpose, selectedPalette]);
 
-  const guidanceMessage = getPreferenceGuidanceMessage({
-    purpose: normalizeLifestyleId(selectedPurpose),
-    palette: normalizePreferredColorToneId(selectedPalette),
-  });
+  useEffect(() => {
+    const showValidation = (event: Event) => {
+      const detail = (event as CustomEvent<{ pathname?: string }>).detail;
+      if (detail?.pathname !== "/preference") return;
+      setValidationMessage(getPreferenceGuidanceMessage({
+        purpose: normalizeLifestyleId(selectedPurpose),
+        palette: normalizePreferredColorToneId(selectedPalette),
+      }));
+    };
+    window.addEventListener(ONBOARDING_VALIDATION_EVENT, showValidation);
+    return () => window.removeEventListener(ONBOARDING_VALIDATION_EVENT, showValidation);
+  }, [selectedPalette, selectedPurpose]);
 
   return (
     <main className="min-h-[calc(100vh-76px)] bg-[#fbfbfb] px-5 py-8 text-[#141414] sm:px-8 lg:px-10">
@@ -65,13 +76,7 @@ export default function Preference() {
           <p className="mt-3 text-sm font-semibold text-[#777777]">정확한 추천을 위해 생활 패턴을 입력해주세요.</p>
         </header>
 
-        <div role="status" aria-live="polite" className="mb-8 flex justify-center">
-          {guidanceMessage && (
-            <p className="rounded-lg bg-[#fff8e6] px-4 py-3 text-sm font-bold text-[#8a5a00]">
-              {guidanceMessage}
-            </p>
-          )}
-        </div>
+        <InlineSelectionValidation message={validationMessage} />
 
         <section className="mb-10">
           <h2 className="mb-4 text-base font-extrabold">라이프스타일</h2>
@@ -84,7 +89,7 @@ export default function Preference() {
                 <button
                   key={purpose.id}
                   type="button"
-                  onClick={() => setSelectedPurpose(purpose.id)}
+                  onClick={() => { setSelectedPurpose(purpose.id); setValidationMessage(""); }}
                   className={`relative flex items-center gap-4 rounded-lg border bg-white px-5 py-4 text-left transition-all hover:border-[#111111] ${
                     selected ? "border-[#111111] shadow-[0_14px_28px_rgba(0,0,0,0.08)]" : "border-[#e5e5e5]"
                   }`}
@@ -115,7 +120,7 @@ export default function Preference() {
                 <button
                   key={palette.id}
                   type="button"
-                  onClick={() => setSelectedPalette(palette.id)}
+                  onClick={() => { setSelectedPalette(palette.id); setValidationMessage(""); }}
                   className="flex flex-col items-center gap-3 text-center"
                 >
                   <span

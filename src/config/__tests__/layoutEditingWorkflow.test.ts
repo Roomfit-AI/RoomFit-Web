@@ -11,6 +11,7 @@ import {
   confirmActiveLayout,
   loadManagedFurnitureLayout,
   prepareAdditionalFurnitureForEditor,
+  prepareFurnitureSelectionForRecommendation,
   prepareManagedFurnitureDraft,
   refreshActiveDraftNavigationState,
   type LayoutWorkflowApi,
@@ -50,6 +51,89 @@ class MemoryStorage {
 }
 
 describe("Draft layout editing workflow", () => {
+  it.each([
+    ["App 업로드", 41, "app-client"],
+    ["Web 직접 생성", 42, "browser-client"],
+    ["Sample private copy", 43, "browser-client"],
+  ])("keeps the %s room and waits for the explicit recommendation CTA", async (_source, roomId, scope) => {
+    const room = createRoom(`api-room-${roomId}`);
+    room.width = 4.7;
+    room.depth = 3.6;
+    room.doors = [{
+      id: "door-1", label: "문", position: { x: 0, z: -1.8 },
+      dimensions: { width: 0.9, depth: 0.1, height: 2 }, rotationY: 0,
+    }];
+    const storage = selectedRoomStorage(room, roomId);
+    storage.setItem("roomfit:selectedAdditionalFurnitureIds", '["plant"]');
+    const browser = setupBrowserStorage(room.id, roomId, `${scope}-${roomId}`);
+    const activeScope = JSON.stringify({
+      version: 1,
+      mode: scope === "app-client" ? "APP_UUID" : "BROWSER_UUID",
+      clientId: scope === "app-client"
+        ? "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa"
+        : "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
+      setupSessionId: `${scope}-${roomId}`,
+      backendRoomId: roomId,
+      roomLayoutId: room.id,
+    });
+    browser.setItem("roomfit:activeClientScope:v1", activeScope);
+    const recommendation = recommendationResponse(51, "SUCCESS", { roomId });
+    const api = fakeApi({ recommendation });
+
+    const prepared = await prepareFurnitureSelectionForRecommendation(storage, api);
+
+    expect(prepared).toMatchObject({ roomId, roomLayoutId: room.id, activeLayoutId: null });
+    expect(api.createDefaultAgentContext).not.toHaveBeenCalled();
+    expect(api.recommendLayout).not.toHaveBeenCalled();
+    expect(readRoom(storage)).toMatchObject({ id: room.id, width: 4.7, depth: 3.6 });
+    expect(readRoom(storage)?.doors).toEqual(room.doors);
+    expect(browser.getItem("roomfit:activeClientScope:v1")).toBe(activeScope);
+
+    const generated = await prepareAdditionalFurnitureForEditor(storage, api, browser);
+    expect(api.createDefaultAgentContext).toHaveBeenCalledExactlyOnceWith(roomId);
+    expect(api.recommendLayout).toHaveBeenCalledExactlyOnceWith(roomId, 51);
+    expect(generated).toMatchObject({ roomId, roomLayoutId: room.id, activeLayoutId: 51 });
+    expect(storage.getItem("roomfit:selectedAdditionalFurnitureIds")).toBe('["plant"]');
+  });
+
+  it("keeps the public Sample template unchanged and generates its existing private target only once", async () => {
+    const publicTemplate = createRoom("sample-template");
+    publicTemplate.source = "SAMPLE";
+    const originalTemplate = JSON.stringify(publicTemplate);
+    const privateCopy = { ...publicTemplate, id: "api-room-43", source: "ROOMPLAN" };
+    const storage = selectedRoomStorage(privateCopy, 43);
+    storage.setItem("roomfit:selectedAdditionalFurnitureIds", '["plant"]');
+    const browser = setupBrowserStorage(privateCopy.id, 43, "sample-private-copy");
+    const api = fakeApi({ recommendation: recommendationResponse(71, "SUCCESS", { roomId: 43 }) });
+
+    await prepareFurnitureSelectionForRecommendation(storage, api);
+    await prepareAdditionalFurnitureForEditor(storage, api, browser);
+
+    expect(JSON.stringify(publicTemplate)).toBe(originalTemplate);
+    expect(storage.getItem("roomfit:backendRoomId")).toBe("43");
+    expect(api.recommendLayout).toHaveBeenCalledExactlyOnceWith(43, 51);
+  });
+
+  it("generates the existing scripted Sample recommendation from the same CTA without a second Editor click", async () => {
+    const room = createRoom("api-room-9");
+    room.source = "SAMPLE";
+    const storage = selectedRoomStorage(room, 9);
+    storage.setItem("roomfit:selectedPurpose", "rest");
+    storage.setItem("roomfit:selectedPalette", "brown");
+    storage.setItem("roomfit:selectedStyle", "natural");
+    storage.setItem("roomfit:selectedAdditionalFurnitureIds", '["bed"]');
+    const browser = setupBrowserStorage(room.id, 9, "local-sample");
+    const api = fakeApi();
+
+    await prepareFurnitureSelectionForRecommendation(storage, api);
+    const generated = await prepareAdditionalFurnitureForEditor(storage, api, browser);
+
+    expect(generated?.localRecommendation).toBeDefined();
+    expect(generated?.roomLayout?.furniture.some(({ id }) => id === "natural-wardrobe")).toBe(true);
+    expect(api.createDefaultAgentContext).not.toHaveBeenCalled();
+    expect(api.recommendLayout).not.toHaveBeenCalled();
+  });
+
   it("loads a newly created Room without making any Layout request", async () => {
     const room = createRoom("api-room-42");
     room.furniture = [];

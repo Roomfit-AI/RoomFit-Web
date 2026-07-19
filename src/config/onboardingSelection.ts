@@ -2,6 +2,7 @@ import {
   normalizePreferredColorToneId,
   type PreferredColorToneId,
 } from "./preferredColorTone";
+import { FURNITURE_TYPE_BY_UI_ID } from "./furnitureSelectionCatalog";
 
 type ReadableStorage = Pick<Storage, "getItem">;
 
@@ -11,6 +12,7 @@ type ReadableStorage = Pick<Storage, "getItem">;
 export const PURPOSE_STORAGE_KEY = "roomfit:selectedPurpose";
 export const PALETTE_STORAGE_KEY = "roomfit:selectedPalette";
 export const STYLE_STORAGE_KEY = "roomfit:selectedStyle";
+export const ADDITIONAL_FURNITURE_STORAGE_KEY = "roomfit:selectedAdditionalFurnitureIds";
 
 // 라이프스타일(생활 목적) 유효 id — Preference.tsx의 선택 카드 id와 동일하게
 // 유지해야 한다. 지원하지 않는/오래된 값은 미선택으로 취급한다.
@@ -107,8 +109,29 @@ export function getReferenceStyleGuidanceMessage(style: InteriorStyleId | null):
   return style === null ? "인테리어 스타일을 선택해 주세요." : "";
 }
 
+export function readAdditionalFurnitureSelection(
+  storage: ReadableStorage = localStorage,
+): string[] {
+  try {
+    const raw = storage.getItem(ADDITIONAL_FURNITURE_STORAGE_KEY);
+    if (!raw) return [];
+    const parsed: unknown = JSON.parse(raw);
+    return Array.isArray(parsed)
+      ? parsed.filter((item): item is string => (
+        typeof item === "string" && item in FURNITURE_TYPE_BY_UI_ID
+      ))
+      : [];
+  } catch {
+    return [];
+  }
+}
+
+export function getFurnitureSelectionGuidanceMessage(selectedIds: string[]): string {
+  return selectedIds.length > 0 ? "" : "추천에 포함할 가구를 하나 이상 선택해 주세요.";
+}
+
 // 이 두 단계에서만 선택 검증으로 "다음 단계" 이동을 막는다. 그 외 단계는 영향 없음.
-export const ONBOARDING_GATED_PATHS = ["/preference", "/reference-image"] as const;
+export const ONBOARDING_GATED_PATHS = ["/preference", "/reference-image", "/add-furniture"] as const;
 
 /**
  * 현재 경로에서 다음 단계로 이동해도 되는지 계산한다 — 게이트 대상이 아닌
@@ -121,6 +144,7 @@ export function canAdvanceFromPath(
 ): boolean {
   if (pathname === "/preference") return isPreferenceSelectionComplete(storage);
   if (pathname === "/reference-image") return isReferenceStyleSelectionComplete(storage);
+  if (pathname === "/add-furniture") return readAdditionalFurnitureSelection(storage).length > 0;
   return true;
 }
 
@@ -128,9 +152,16 @@ export function canAdvanceFromPath(
 // 다시 계산하도록 알린다(같은 문서 내 localStorage 쓰기는 storage 이벤트를
 // 발생시키지 않으므로 커스텀 이벤트를 쓴다).
 export const ONBOARDING_SELECTION_EVENT = "roomfit:onboarding-selection-changed";
+export const ONBOARDING_VALIDATION_EVENT = "roomfit:onboarding-validation-requested";
 
 export function notifyOnboardingSelectionChanged(): void {
   if (typeof window !== "undefined") {
     window.dispatchEvent(new Event(ONBOARDING_SELECTION_EVENT));
+  }
+}
+
+export function requestOnboardingValidation(pathname: string): void {
+  if (typeof window !== "undefined") {
+    window.dispatchEvent(new CustomEvent(ONBOARDING_VALIDATION_EVENT, { detail: { pathname } }));
   }
 }

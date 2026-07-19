@@ -463,11 +463,11 @@ function OwnedRoomArticle({ card, selected, deleting, onSelect, onDelete }: { ca
   );
 }
 
-function PublicRoomCard({ room, selected, onSelect }: { room: SampleRoomCard; selected: boolean; onSelect(): void }) {
+export function PublicRoomCard({ room, selected, onSelect }: { room: SampleRoomCard; selected: boolean; onSelect(): void }) {
   return (
-    <button type="button" onClick={onSelect} aria-pressed={selected} className={`group relative overflow-hidden rounded-lg border bg-white p-5 text-left transition-all hover:-translate-y-1 hover:shadow-[0_18px_35px_rgba(0,0,0,0.08)] ${selected ? "border-[#111111] shadow-[0_18px_35px_rgba(0,0,0,0.08)]" : "border-[#e5e5e5] hover:border-[#cfcfcf]"}`}>
+    <button type="button" onClick={onSelect} aria-pressed={selected} data-room-id={room.roomId} className={`group relative overflow-hidden rounded-lg border p-5 text-left transition-all hover:-translate-y-1 hover:shadow-[0_18px_35px_rgba(0,0,0,0.08)] ${selected ? "border-[#111111] bg-[#fafafa] ring-2 ring-[#111111] shadow-[0_18px_35px_rgba(0,0,0,0.08)]" : "border-[#e5e5e5] bg-white hover:border-[#cfcfcf]"}`}>
       <div className="mb-4"><Badge>공개 샘플</Badge></div>
-      {selected && <SelectedBadge />}
+      <SelectionMark selected={selected} />
       <RoomPreview tone={room.tone} thumbnailUrl={getRoomThumbnail(room.layoutId, "PUBLIC") ?? room.thumbnailUrl} alt={room.title} />
       <strong className="mt-5 block text-base font-bold text-[#151515]">{room.title}</strong>
       <span className="mt-1 block text-sm font-medium text-[#777777]">{room.category} · {room.size}</span>
@@ -507,6 +507,7 @@ function LoadingRow({ message }: { message: string }) { return <div role="status
 function LoadingCard({ message }: { message: string }) { return <div role="status" className="flex min-h-63.5 items-center justify-center rounded-lg border border-[#e5e5e5] bg-white px-5 text-center"><span className="text-sm font-semibold text-[#777777]">{message}</span></div>; }
 function Badge({ children }: { children: ReactNode }) { return <span className="inline-flex rounded-full bg-[#f0f0f0] px-2.5 py-1 text-xs font-bold text-[#444444]">{children}</span>; }
 function SelectedBadge() { return <span className="absolute right-4 top-5 z-10 inline-flex items-center gap-1 rounded-full bg-[#111111] px-3 py-1.5 text-xs font-bold text-white"><FiCheck className="h-3.5 w-3.5" />선택됨</span>; }
+function SelectionMark({ selected }: { selected: boolean }) { return <span aria-hidden="true" className={`absolute right-4 top-5 z-10 grid h-6 w-6 place-items-center rounded-full border ${selected ? "border-[#111111] bg-[#111111] text-white" : "border-[#d8d8d8] bg-white text-transparent"}`}><FiCheck className="h-4 w-4" /></span>; }
 
 function activeFilterValue(rooms: SampleRoomCard[], filter: string) { return filter === "전체" ? rooms : rooms.filter((room) => room.category === filter); }
 function getInitialSelectedCardKey() {
