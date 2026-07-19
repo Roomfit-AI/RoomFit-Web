@@ -3,6 +3,7 @@ import type {
   RecommendationStatus,
   ScoreSummary,
 } from "../../api/layouts";
+import { resolveLayoutQuality } from "../../config/layoutQuality";
 import { normalizeTotalScoreForDisplay } from "../../config/recommendationScore";
 
 interface ScoreSummaryPanelProps {
@@ -42,18 +43,6 @@ export default function ScoreSummaryPanel({
       </div>
     </section>
   );
-}
-
-export function resolveLayoutQuality(
-  totalScore: number,
-  validation: LayoutValidationResult,
-): "양호" | "개선 필요" {
-  const allChecksPassed = validation.collisionFree
-    && validation.boundaryValid
-    && validation.doorClearance
-    && validation.windowClearance
-    && validation.pathSecured;
-  return allChecksPassed && totalScore >= 80 ? "양호" : "개선 필요";
 }
 
 function Score({ label, value }: { label: string; value: number }) {

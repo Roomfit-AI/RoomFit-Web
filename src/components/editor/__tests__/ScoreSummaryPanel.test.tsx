@@ -2,7 +2,8 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 
 import type { LayoutValidationResult, ScoreSummary } from "../../../api/layouts";
-import ScoreSummaryPanel, { resolveLayoutQuality } from "../ScoreSummaryPanel";
+import ScoreSummaryPanel from "../ScoreSummaryPanel";
+import { resolveLayoutQuality } from "../../../config/layoutQuality";
 
 describe("ScoreSummaryPanel", () => {
   it.each([

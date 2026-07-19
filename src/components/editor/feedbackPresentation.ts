@@ -18,6 +18,15 @@ export interface FeedbackPresentation {
   showPanel: boolean;
 }
 
+export type FeedbackClarificationKind = "TARGET" | "PRODUCT" | "REFERENCE" | "GENERIC";
+
+const PRODUCT_CLARIFICATION_REASONS = new Set([
+  "NO_SAFE_SWAP_CANDIDATE",
+  "NO_RENDERABLE_PRODUCT",
+  "NO_LARGER_PRODUCT_AVAILABLE",
+  "NO_SMALLER_PRODUCT_AVAILABLE",
+]);
+
 const OPERATION_LABELS: Record<string, string> = {
   MOVE: "가구 이동",
   ROTATE: "가구 회전",
@@ -36,6 +45,8 @@ const REASON_MESSAGES: Record<string, string> = {
   AMBIGUOUS_REFERENCE_TARGET: "기준 가구가 여러 개라 하나를 선택해야 합니다.",
   UNSUPPORTED_LOCATION_HINT: "해당 위치 표현은 아직 지원하지 않습니다.",
   NO_RENDERABLE_PRODUCT: "표시할 수 있는 제품 후보가 없습니다.",
+  NO_LARGER_PRODUCT_AVAILABLE: "현재 가구보다 큰 교체 제품이 없습니다.",
+  NO_SMALLER_PRODUCT_AVAILABLE: "현재 가구보다 작은 교체 제품이 없습니다.",
   NO_VALID_ADD_PLACEMENT: "새 가구를 안전하게 배치할 공간이 없습니다.",
   NO_VALID_SWAP_PLACEMENT: "교체 가구를 안전하게 배치할 수 없습니다.",
   NO_VALID_REPLACE_PLACEMENT: "변경할 제품을 안전하게 배치할 수 없습니다.",
@@ -124,6 +135,38 @@ export function getFeedbackReasonMessage(reasonCode: string): string {
   return REASON_MESSAGES[reasonCode] ?? `사유 코드: ${reasonCode}`;
 }
 
+export function getFeedbackClarificationKind(
+  clarification: FeedbackClarification,
+): FeedbackClarificationKind {
+  if (PRODUCT_CLARIFICATION_REASONS.has(clarification.reasonCode)) return "PRODUCT";
+  if (clarification.reasonCode === "AMBIGUOUS_REFERENCE_TARGET"
+    || clarification.requiredField === "referenceTargetFurnitureId") {
+    return "REFERENCE";
+  }
+  if ((clarification.reasonCode === "AMBIGUOUS_TARGET"
+      || clarification.requiredField === "targetFurnitureId")
+    && (clarification.candidates?.length ?? 0) > 0) {
+    return "TARGET";
+  }
+  return "GENERIC";
+}
+
+export function getFeedbackClarificationGuidance(
+  clarification: FeedbackClarification,
+): string {
+  if (clarification.reasonCode === "NO_LARGER_PRODUCT_AVAILABLE") {
+    return "현재 가구보다 큰 교체 제품이 없습니다. 제품 조건을 바꾸거나 요청 내용을 수정해 주세요.";
+  }
+  if (clarification.reasonCode === "NO_SMALLER_PRODUCT_AVAILABLE") {
+    return "현재 가구보다 작은 교체 제품이 없습니다. 제품 조건을 바꾸거나 요청 내용을 수정해 주세요.";
+  }
+
+  const kind = getFeedbackClarificationKind(clarification);
+  if (kind === "TARGET") return "변경할 가구를 선택해 주세요.";
+  if (kind === "PRODUCT") return "제품 조건을 바꾸거나 요청 내용을 수정해 주세요.";
+  if (kind === "REFERENCE") return "기준이 되는 가구를 요청 문장에 구체적으로 적어 주세요.";
+  return "요청 내용을 더 구체적으로 적어 다시 시도해 주세요.";
+}
 function deriveFeedbackStatus(
   operationResults: FeedbackOperationResult[],
   clarifications: FeedbackClarification[],

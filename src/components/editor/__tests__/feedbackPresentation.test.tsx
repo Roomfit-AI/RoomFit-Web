@@ -1,10 +1,11 @@
-import { isValidElement, type ReactNode } from "react";
-import { describe, expect, it } from "vitest";
+import { isValidElement, type ReactElement, type ReactNode } from "react";
+import { describe, expect, it, vi } from "vitest";
 
 import type { FeedbackOperationResult, FeedbackResponse } from "../../../api/layouts";
 import type { RoomLayout } from "../../../types";
 import FeedbackAgentResultPanel from "../FeedbackAgentResultPanel";
 import {
+  getFeedbackClarificationKind,
   getFeedbackOperationLabel,
   getFeedbackReasonMessage,
   normalizeFeedbackPresentation,
@@ -79,7 +80,7 @@ describe("feedback Agent presentation", () => {
     expect(text).toContain("다른 가구와 충돌합니다.");
   });
 
-  it("shows clarification candidates in stable order without an action button", () => {
+  it("shows clarification candidates as selectable labels without internal identifiers", () => {
     const presentation = normalizeFeedbackPresentation(createResponse({
       feedbackStatus: "NEEDS_CLARIFICATION",
       operationResults: [
@@ -99,8 +100,136 @@ describe("feedback Agent presentation", () => {
 
     expect(text).toContain("어떤 의자를 옮길까요?");
     expect(text.indexOf("책상 의자")).toBeLessThan(text.indexOf("보조 의자"));
-    expect(collectElementTypes(element)).not.toContain("button");
+    expect(collectElementTypes(element)).toContain("button");
+    expect(text.join(" ")).not.toContain("chair-1");
+    expect(text.join(" ")).not.toContain("desk_chair");
     expect(shouldApplyFeedbackFurniture(presentation)).toBe(false);
+  });
+
+  it("selects either target candidate by its internal id while rendering labels only", () => {
+    const presentation = normalizeFeedbackPresentation(createResponse({
+      feedbackStatus: "NEEDS_CLARIFICATION",
+      clarification: {
+        reasonCode: "AMBIGUOUS_TARGET",
+        question: "어떤 의자를 삭제할까요?",
+        requiredField: "targetFurnitureId",
+        candidates: [
+          { furnitureId: "chair-1", type: "desk_chair", label: "창가 쪽 의자" },
+          { furnitureId: "chair-2", type: "desk_chair", label: "책상 오른쪽 의자" },
+        ],
+      },
+    }));
+    const onSelectCandidate = vi.fn();
+    const element = FeedbackAgentResultPanel({ presentation, onSelectCandidate });
+    const buttons = collectElements(element, "button");
+
+    buttons[0]?.props.onClick?.();
+    buttons[1]?.props.onClick?.();
+
+    expect(onSelectCandidate.mock.calls).toEqual([["chair-1"], ["chair-2"]]);
+    expect(collectText(element).join(" ")).not.toContain("chair-");
+  });
+
+  it.each([
+    ["REMOVE", "어느 의자를 삭제할까요?"],
+    ["ROTATE", "어느 의자를 회전할까요?"],
+    ["CHANGE_MATERIAL", "어느 의자의 재질을 바꿀까요?"],
+    ["SWAP_PRODUCT", "어느 의자를 다른 제품으로 바꿀까요?"],
+  ])("uses the same explicit target selection flow for %s", (operationType, question) => {
+    const presentation = normalizeFeedbackPresentation(createResponse({
+      feedbackStatus: "NEEDS_CLARIFICATION",
+      operationResults: [
+        createOperation("op-1", operationType, "NEEDS_CLARIFICATION", question, "AMBIGUOUS_TARGET"),
+      ],
+      clarification: {
+        reasonCode: "AMBIGUOUS_TARGET",
+        question,
+        requiredField: "targetFurnitureId",
+        candidates: [{ furnitureId: "chair-1", label: "창가 쪽 의자" }],
+      },
+    }));
+    const onSelectCandidate = vi.fn();
+    const button = collectElements(FeedbackAgentResultPanel({ presentation, onSelectCandidate }), "button")[0];
+
+    button?.props.onClick?.();
+
+    expect(onSelectCandidate).toHaveBeenCalledOnce();
+    expect(onSelectCandidate).toHaveBeenCalledWith("chair-1");
+  });
+
+  it("disables candidate buttons while a selection retry is pending", () => {
+    const presentation = normalizeFeedbackPresentation(createResponse({
+      feedbackStatus: "NEEDS_CLARIFICATION",
+      clarification: {
+        reasonCode: "AMBIGUOUS_TARGET",
+        question: "어떤 의자를 선택할까요?",
+        requiredField: "targetFurnitureId",
+        candidates: [{ furnitureId: "chair-1", label: "첫 번째 의자" }],
+      },
+    }));
+    const button = collectElements(FeedbackAgentResultPanel({
+      presentation,
+      onSelectCandidate: vi.fn(),
+      isSelectingCandidate: true,
+    }), "button")[0];
+
+    expect(button?.props.disabled).toBe(true);
+  });
+
+  it.each([
+    ["NO_SAFE_SWAP_CANDIDATE", "제품 조건을 바꾸거나 요청 내용을 수정해 주세요."],
+    ["NO_LARGER_PRODUCT_AVAILABLE", "현재 가구보다 큰 교체 제품이 없습니다."],
+    ["NO_SMALLER_PRODUCT_AVAILABLE", "현재 가구보다 작은 교체 제품이 없습니다."],
+  ])("does not offer target selection for product failure %s", (reasonCode, guidance) => {
+    const current = createRoom();
+    const clarification = {
+      reasonCode,
+      question: "조건에 맞는 교체 제품이 없습니다.",
+      requiredField: "targetFurnitureId",
+      candidates: [{ furnitureId: "desk-1", label: "현재 책상" }],
+    };
+    const result = resolveFeedbackRoomLayout(current, createResponse({
+      feedbackStatus: "NEEDS_CLARIFICATION",
+      clarification,
+    }));
+    const onSelectCandidate = vi.fn();
+    const element = FeedbackAgentResultPanel({
+      presentation: result.presentation,
+      onSelectCandidate,
+    });
+
+    expect(getFeedbackClarificationKind(clarification)).toBe("PRODUCT");
+    expect(collectElements(element, "button")).toHaveLength(0);
+    expect(collectText(element).join(" ")).toContain(guidance);
+    expect(onSelectCandidate).not.toHaveBeenCalled();
+    expect(result.roomLayout).toBe(current);
+  });
+
+  it("does not offer target buttons for product or reference ambiguity", () => {
+    const product = {
+      reasonCode: "NO_SAFE_SWAP_CANDIDATE",
+      question: "조건에 맞는 제품이 없습니다.",
+      requiredField: "targetFurnitureId",
+      candidates: [{ furnitureId: "bookshelf-1", label: "책장" }],
+    };
+    const reference = {
+      reasonCode: "AMBIGUOUS_REFERENCE_TARGET",
+      question: "기준 책상을 선택해야 합니다.",
+      requiredField: "referenceTargetFurnitureId",
+      candidates: [{ furnitureId: "desk-1", label: "창가 책상" }],
+    };
+    const presentation = normalizeFeedbackPresentation(createResponse({
+      feedbackStatus: "NEEDS_CLARIFICATION",
+      clarifications: [product, reference],
+    }));
+    const element = FeedbackAgentResultPanel({ presentation, onSelectCandidate: vi.fn() });
+    const text = collectText(element);
+
+    expect(getFeedbackClarificationKind(product)).toBe("PRODUCT");
+    expect(getFeedbackClarificationKind(reference)).toBe("REFERENCE");
+    expect(collectElements(element, "button")).toHaveLength(0);
+    expect(text).toContain("제품 조건을 바꾸거나 요청 내용을 수정해 주세요.");
+    expect(text).toContain("기준이 되는 가구를 요청 문장에 구체적으로 적어 주세요.");
   });
 
   it("applies successful furniture changes for PARTIAL_SUCCESS with clarification", () => {
@@ -321,4 +450,14 @@ function collectElementTypes(node: ReactNode): string[] {
   if (Array.isArray(node)) return node.flatMap(collectElementTypes);
   if (!isValidElement<{ children?: ReactNode }>(node)) return [];
   return [typeof node.type === "string" ? node.type : "component", ...collectElementTypes(node.props.children)];
+}
+
+function collectElements(
+  node: ReactNode,
+  type: string,
+): Array<ReactElement<{ onClick?: () => void; disabled?: boolean }>> {
+  if (Array.isArray(node)) return node.flatMap((child) => collectElements(child, type));
+  if (!isValidElement<{ children?: ReactNode; onClick?: () => void; disabled?: boolean }>(node)) return [];
+  const current = node.type === type ? [node] : [];
+  return [...current, ...collectElements(node.props.children, type)];
 }

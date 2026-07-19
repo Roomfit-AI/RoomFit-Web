@@ -2,6 +2,8 @@ import { FiAlertTriangle, FiCheckCircle, FiHelpCircle, FiXCircle } from "react-i
 
 import type { FeedbackOperationStatus, FeedbackStatus } from "../../api/layouts";
 import {
+  getFeedbackClarificationGuidance,
+  getFeedbackClarificationKind,
   getFeedbackOperationLabel,
   getFeedbackReasonMessage,
   type FeedbackPresentation,
@@ -55,8 +57,12 @@ const OPERATION_STATUS_CLASSES: Record<FeedbackOperationStatus, string> = {
 
 export default function FeedbackAgentResultPanel({
   presentation,
+  onSelectCandidate,
+  isSelectingCandidate = false,
 }: {
   presentation: FeedbackPresentation;
+  onSelectCandidate?: (furnitureId: string) => void;
+  isSelectingCandidate?: boolean;
 }) {
   if (!presentation.showPanel || !presentation.feedbackStatus) return null;
 
@@ -90,7 +96,6 @@ export default function FeedbackAgentResultPanel({
           <h3 className="text-sm font-extrabold text-[#333333]">작업별 결과</h3>
           <ol className="mt-3 divide-y divide-[#e5e5e5]">
             {presentation.operationResults.map((operation, index) => {
-              const furnitureId = operation.resultFurnitureId ?? operation.targetFurnitureId;
               return (
                 <li key={`${operation.operationId}-${index}`} className="py-3 first:pt-0 last:pb-0">
                   <div className="flex min-w-0 flex-wrap items-center justify-between gap-2">
@@ -109,11 +114,6 @@ export default function FeedbackAgentResultPanel({
                       {getFeedbackReasonMessage(operation.reasonCode)}
                     </p>
                   )}
-                  {furnitureId && (
-                    <p className="mt-1 truncate text-[11px] font-medium text-[#888888]" title={furnitureId}>
-                      대상 ID: {furnitureId}
-                    </p>
-                  )}
                 </li>
               );
             })}
@@ -125,29 +125,36 @@ export default function FeedbackAgentResultPanel({
         <div className="mt-5 border-t border-current/15 pt-4">
           <h3 className="text-sm font-extrabold text-[#333333]">확인이 필요해요</h3>
           <div className="mt-3 space-y-4">
-            {presentation.clarifications.map((clarification, clarificationIndex) => (
-              <section key={`${clarification.operationId ?? "plan"}-${clarificationIndex}`}>
-                <p className="break-words text-base font-extrabold leading-6 text-[#222222]">
-                  {clarification.question}
-                </p>
-                {clarification.candidates && clarification.candidates.length > 0 && (
-                  <ul className="mt-2 max-h-40 space-y-2 overflow-y-auto pr-1">
-                    {clarification.candidates.map((candidate, candidateIndex) => (
-                      <li
-                        key={`${candidate.furnitureId}-${candidateIndex}`}
-                        className="rounded-lg border border-[#dbe3ef] bg-white/70 px-3 py-2 text-sm font-bold text-[#333333]"
-                      >
-                        {candidate.label || candidate.type || candidate.furnitureId}
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </section>
-            ))}
+            {presentation.clarifications.map((clarification, clarificationIndex) => {
+              const kind = getFeedbackClarificationKind(clarification);
+              return (
+                <section key={`${clarification.operationId ?? "plan"}-${clarificationIndex}`}>
+                  <p className="break-words text-base font-extrabold leading-6 text-[#222222]">
+                    {clarification.question}
+                  </p>
+                  {kind === "TARGET" && clarification.candidates && clarification.candidates.length > 0 && (
+                    <ul className="mt-2 max-h-40 space-y-2 overflow-y-auto pr-1">
+                      {clarification.candidates.map((candidate, candidateIndex) => (
+                        <li key={`${candidate.furnitureId}-${candidateIndex}`}>
+                          <button
+                            type="button"
+                            onClick={() => onSelectCandidate?.(candidate.furnitureId)}
+                            disabled={!onSelectCandidate || isSelectingCandidate}
+                            className="w-full rounded-lg border border-[#dbe3ef] bg-white/70 px-3 py-2 text-left text-sm font-bold text-[#333333] transition-colors hover:bg-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#315f9b] disabled:cursor-not-allowed disabled:opacity-60"
+                          >
+                            {candidate.label?.trim() || `가구 ${candidateIndex + 1}`}
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                  <p className="mt-2 text-xs font-semibold leading-5 text-[#666666]">
+                    {getFeedbackClarificationGuidance(clarification)}
+                  </p>
+                </section>
+              );
+            })}
           </div>
-          <p className="mt-3 text-xs font-semibold leading-5 text-[#666666]">
-            대상을 구체적으로 적어 다시 요청해 주세요.
-          </p>
         </div>
       )}
     </section>

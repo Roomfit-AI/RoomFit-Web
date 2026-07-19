@@ -18,8 +18,10 @@ import { applyBackendFurnitureToLayout } from "../api/rooms";
 import { ensureCustomRoomBackendRoom } from "../api/customRoomBackend";
 import EditorFeedbackPanel from "../components/editor/EditorFeedbackPanel";
 import {
+  beginFeedbackRequest,
   createEmptyFeedbackResult,
   readFeedbackErrorMessage,
+  shouldAcceptFeedbackResponse,
   type FeedbackResultState,
 } from "../components/editor/feedbackResultState";
 import RecommendationResultPanel from "../components/editor/RecommendationResultPanel";
@@ -181,7 +183,23 @@ export default function EditorPlaceholder() {
   );
   const recommendationInFlightRef = useRef(false);
   const feedbackInFlightRef = useRef(false);
+  const feedbackRequestSequenceRef = useRef(0);
+  const activeLayoutIdRef = useRef(layoutId);
+  const isMountedRef = useRef(true);
   const customRoomCreationRef = useRef<Promise<number> | null>(null);
+
+  useEffect(() => {
+    activeLayoutIdRef.current = layoutId;
+  }, [layoutId]);
+
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+      feedbackRequestSequenceRef.current += 1;
+      feedbackInFlightRef.current = false;
+    };
+  }, []);
 
   useEffect(() => {
     if (matchingSessionLayoutId === null || matchingSessionBackendRoomId === null || navigationHasSavedDraft) return;
@@ -414,7 +432,7 @@ export default function EditorPlaceholder() {
     }
   };
 
-  const handleFeedback = async () => {
+  const handleFeedback = async (selectedFurnitureIdOverride?: string | null) => {
     if (!roomLayout) {
       setFeedbackResult({ presentation: null, errorMessage: "먼저 /rooms에서 샘플 방을 선택해 주세요." });
       return;
@@ -430,10 +448,17 @@ export default function EditorPlaceholder() {
       return;
     }
 
-    if (feedbackInFlightRef.current) {
+    if (!beginFeedbackRequest(feedbackInFlightRef)) {
       return;
     }
-    feedbackInFlightRef.current = true;
+    const selectedFurnitureForFeedback = selectedFurnitureIdOverride
+      && roomLayout.furniture.some((item) => item.id === selectedFurnitureIdOverride && item.status !== "deleted")
+      ? selectedFurnitureIdOverride
+      : null;
+    const requestSequence = feedbackRequestSequenceRef.current + 1;
+    const requestedLayoutId = layoutId;
+    const requestedFeedback = feedback.trim();
+    feedbackRequestSequenceRef.current = requestSequence;
 
     setIsApplyingFeedback(true);
     setErrorMessage("");
@@ -442,9 +467,20 @@ export default function EditorPlaceholder() {
 
     try {
       await flushEditorLayoutPersistence();
-      const result = await applyLayoutFeedback(layoutId, feedback.trim());
+      const result = await applyLayoutFeedback(requestedLayoutId, requestedFeedback, {
+        selectedFurnitureId: selectedFurnitureForFeedback,
+      });
+      if (!shouldAcceptFeedbackResponse({
+        isMounted: isMountedRef.current,
+        currentSequence: feedbackRequestSequenceRef.current,
+        requestSequence,
+        activeLayoutId: activeLayoutIdRef.current,
+        requestedLayoutId,
+      })) {
+        return;
+      }
       const nextFeedback = resolveFeedbackRoomLayout(roomLayout, result);
-      const nextLayoutId = resolveNextFeedbackLayoutId(layoutId, result.layoutId);
+      const nextLayoutId = resolveNextFeedbackLayoutId(requestedLayoutId, result.layoutId);
 
       if (nextFeedback.roomLayout !== roomLayout) {
         dispatchEditorLayout({
@@ -453,7 +489,7 @@ export default function EditorPlaceholder() {
           scopeKey: createEditorLayoutScopeKey({
             roomLayoutId: roomLayout.id,
             backendRoomId,
-            activeLayoutId: nextLayoutId ?? layoutId,
+            activeLayoutId: nextLayoutId ?? requestedLayoutId,
             clientMode: activeClientScope?.mode ?? null,
             clientId: activeClientScope?.clientId ?? null,
             setupSessionId: activeClientScope?.setupSessionId ?? null,
@@ -472,11 +508,29 @@ export default function EditorPlaceholder() {
       setFeedbackResult({ presentation: nextFeedback.presentation, errorMessage: "" });
     } catch (error) {
       console.error(error);
-      setFeedbackResult({ presentation: null, errorMessage: readFeedbackErrorMessage(error) });
+      if (shouldAcceptFeedbackResponse({
+        isMounted: isMountedRef.current,
+        currentSequence: feedbackRequestSequenceRef.current,
+        requestSequence,
+        activeLayoutId: activeLayoutIdRef.current,
+        requestedLayoutId,
+      })) {
+        setFeedbackResult({ presentation: null, errorMessage: readFeedbackErrorMessage(error) });
+      }
     } finally {
-      setIsApplyingFeedback(false);
       feedbackInFlightRef.current = false;
+      if (isMountedRef.current && feedbackRequestSequenceRef.current === requestSequence) {
+        setIsApplyingFeedback(false);
+      }
     }
+  };
+
+  const handleClarificationCandidate = (furnitureId: string) => {
+    if (!roomLayout?.furniture.some((item) => item.id === furnitureId && item.status !== "deleted")) {
+      return;
+    }
+    setSelectedFurnitureId(furnitureId);
+    void handleFeedback(furnitureId);
   };
 
   if (!roomLayout) {
@@ -559,8 +613,9 @@ export default function EditorPlaceholder() {
             isRecommending={isRecommending}
             result={feedbackResult}
             onFeedbackChange={setFeedback}
-            onApplyFeedback={handleFeedback}
+            onApplyFeedback={() => void handleFeedback()}
             onRecommend={handleRecommend}
+            onSelectCandidate={handleClarificationCandidate}
           />
 
           {recommendationNotice && (
