@@ -16,7 +16,7 @@ import {
   AgentContextRequestValidationError,
   resolveRequiredFurnitureTypes,
 } from "../api/agentContextRequest";
-import { applyBackendFurnitureToLayout, getRoomById } from "../api/rooms";
+import { applyBackendFurnitureToLayout, getRoomById, replaceRoomFurniture } from "../api/rooms";
 import type { RoomLayout } from "../types";
 import {
   resolveRoomLayoutPreferredColorTone,
@@ -50,6 +50,7 @@ type WorkflowStorage = Pick<Storage, "getItem" | "setItem" | "removeItem">;
 
 export interface LayoutWorkflowApi {
   getRoomLayout: (roomId: number) => Promise<RoomLayout>;
+  replaceRoomFurniture: typeof replaceRoomFurniture;
   getLayout: typeof getLayout;
   getLatestConfirmedLayout: typeof getLatestConfirmedLayout;
   createLayoutDraft: typeof createLayoutDraft;
@@ -62,6 +63,7 @@ export interface LayoutWorkflowApi {
 
 const defaultApi: LayoutWorkflowApi = {
   getRoomLayout: async (roomId) => (await getRoomById(roomId)).layout,
+  replaceRoomFurniture,
   getLayout,
   getLatestConfirmedLayout,
   createLayoutDraft,
@@ -81,6 +83,35 @@ interface EditorPersistenceOwner {
 
 let pendingEditorLayoutPersistence: Promise<void> = Promise.resolve();
 let latestEditorLayoutPersistence: Promise<unknown> = Promise.resolve();
+let pendingManagedFurniturePersistence: Promise<void> = Promise.resolve();
+let latestManagedFurniturePersistence: Promise<unknown> = Promise.resolve();
+
+export function persistManagedFurnitureSnapshot(
+  room: RoomLayout,
+  storage: WorkflowStorage = localStorage,
+  api: LayoutWorkflowApi = defaultApi,
+): Promise<RoomLayout | null> {
+  const task = pendingManagedFurniturePersistence.then(async () => {
+    const backendRoomId = parseBackendRoomId(storage.getItem("roomfit:backendRoomId"));
+    if (backendRoomId === null) return null;
+    const session = readActiveLayoutEditingSession(storage);
+    const saved = isSessionForRoom(session, room.id, backendRoomId) && !session.confirmed
+      ? applyBackendFurnitureToLayout(
+        room,
+        (await api.updateLayout(session.activeLayoutId, room)).recommendedFurniture,
+      )
+      : await api.replaceRoomFurniture(backendRoomId, room);
+    persistActiveDraftMirror(saved, storage);
+    return saved;
+  });
+  pendingManagedFurniturePersistence = task.then(() => undefined, () => undefined);
+  latestManagedFurniturePersistence = task;
+  return task;
+}
+
+export async function flushManagedFurniturePersistence(): Promise<void> {
+  await latestManagedFurniturePersistence;
+}
 
 export async function loadManagedFurnitureLayout(
   room: RoomLayout,
@@ -124,6 +155,7 @@ export async function prepareManagedFurnitureDraft(
   api: LayoutWorkflowApi = defaultApi,
   browserSession: WorkflowStorage | null = defaultBrowserSession(),
 ): Promise<LayoutNavigationState | null> {
+  await flushManagedFurniturePersistence();
   const room = readSelectedRoomLayout(storage);
   const backendRoomId = parseBackendRoomId(storage.getItem("roomfit:backendRoomId"));
   if (!room || backendRoomId === null) return null;
@@ -136,8 +168,10 @@ export async function prepareManagedFurnitureDraft(
       : null;
 
   if (!active) {
+    const savedRoom = await api.replaceRoomFurniture(backendRoomId, room);
+    persistActiveDraftMirror(savedRoom, storage);
     recoverInitialSetupSession(room.id, backendRoomId, storage, browserSession);
-    return createInitialSetupNavigationState(room.id, backendRoomId, room);
+    return createInitialSetupNavigationState(room.id, backendRoomId, savedRoom);
   }
   assertLayoutOwner(active, backendRoomId);
 

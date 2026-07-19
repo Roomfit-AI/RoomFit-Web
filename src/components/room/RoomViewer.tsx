@@ -8,6 +8,7 @@ import Lighting from "./Lighting";
 import Wall from "./Wall";
 import Window from "./Window";
 import { entranceViewCamera, interiorViewWallIds } from "./roomViewGeometry";
+import { resolveFurnitureSupportPositions } from "./furnitureSupportPlacement";
 import { isWindowAnchoredFurniture, resolveWindowBlindPlacements } from "./windowBlindPlacement";
 import type { Furniture, RoomLayout, Vector2D, WallSegment } from "../../types";
 import type { PreferredColorToneId } from "../../config/preferredColorTone";
@@ -51,6 +52,7 @@ export function RoomViewer({
   const cameraMode = alignCameraToEntrance ? `entrance-${room.id}` : `default-${room.id}`;
   const visibleFurniture = furniture.filter((item) => item.status !== "deleted");
   const blindPlacements = resolveWindowBlindPlacements(room, visibleFurniture);
+  const supportPositions = resolveFurnitureSupportPositions(visibleFurniture);
 
   return (
     <div className="viewer-shell">
@@ -94,6 +96,7 @@ export function RoomViewer({
 
           {visibleFurniture.map((item) => {
             const blindPlacement = blindPlacements.get(item.id);
+            const supportPosition = supportPositions.get(item.id);
             // A blind has no free-standing fallback: a room without a window,
             // or with no remaining unused window, cannot render one mid-room.
             if (isWindowAnchoredFurniture(item) && !blindPlacement) return null;
@@ -110,7 +113,7 @@ export function RoomViewer({
                 onMoveStart={onBeginMoveFurniture}
                 onMoveEnd={onEndMoveFurniture}
                 preferredColorTone={preferredColorTone}
-                layoutPosition={blindPlacement?.position}
+                layoutPosition={blindPlacement?.position ?? supportPosition}
                 layoutRotationY={blindPlacement?.rotationY}
                 visualScale={blindPlacement?.scale}
               />

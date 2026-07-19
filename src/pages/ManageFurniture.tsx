@@ -9,7 +9,10 @@ import {
 } from "../components/room/furnitureBoundary";
 import { resolveRoomLayoutPreferredColorTone } from "../config/appliedColorTone";
 import { getLiveMirrorForSelectedRoom } from "../config/confirmedLayouts";
-import { loadManagedFurnitureLayout } from "../config/layoutEditingWorkflow";
+import {
+  loadManagedFurnitureLayout,
+  persistManagedFurnitureSnapshot,
+} from "../config/layoutEditingWorkflow";
 import { captureCanvasThumbnail, saveRoomThumbnail } from "../config/roomThumbnails";
 import { sampleRoomLayouts } from "../mock/interiorPlacementMock";
 import { sampleRoom } from "../mock/sampleRoom";
@@ -33,9 +36,13 @@ export default function ManageFurniture() {
     [selectedRoom],
   );
   const [furniture, setFurniture] = useState<Furniture[]>(() => cloneFurniture(selectedRoom.furniture));
+  const latestRoomRef = useRef<RoomLayout>({
+    ...selectedRoom,
+    furniture: cloneFurniture(selectedRoom.furniture),
+  });
   // The as-uploaded baseline for the "초기화" button. Kept out of localStorage
-  // on purpose — the persist effect below overwrites `roomfit:selectedRoomLayout`
-  // with the *current* (edited) furniture on every change, so that key can't
+  // on purpose — each edit overwrites `roomfit:selectedRoomLayout` with the
+  // *current* furniture before its Backend request starts, so that key can't
   // also serve as "what it looked like originally" once anything's been moved.
   const originalFurnitureRef = useRef<Furniture[]>(cloneFurniture(selectedRoom.furniture));
   const [selectedFurnitureId, setSelectedFurnitureId] = useState<string | null>(null);
@@ -65,6 +72,7 @@ export default function ManageFurniture() {
 
         setSelectedRoom(firstRoom);
         setFurniture(cloneFurniture(firstRoom.furniture));
+        latestRoomRef.current = firstRoom;
         originalFurnitureRef.current = cloneFurniture(firstRoom.furniture);
         localStorage.setItem("roomfit:selectedRoomLayout", JSON.stringify(firstRoom));
         localStorage.setItem("roomfit:selectedRoomId", firstRoom.id);
@@ -75,6 +83,7 @@ export default function ManageFurniture() {
       .catch(() => {
         setSelectedRoom(sampleRoom);
         setFurniture(cloneFurniture(sampleRoom.furniture));
+        latestRoomRef.current = sampleRoom;
         originalFurnitureRef.current = cloneFurniture(sampleRoom.furniture);
       });
   }, []);
@@ -90,6 +99,7 @@ export default function ManageFurniture() {
         if (cancelled || !restored) return;
         setSelectedRoom(restored);
         setFurniture(cloneFurniture(restored.furniture));
+        latestRoomRef.current = restored;
         originalFurnitureRef.current = cloneFurniture(restored.furniture);
         setLayoutError("");
       })
@@ -134,33 +144,58 @@ export default function ManageFurniture() {
     };
   }, [isResizing]);
 
+  const saveFurniture = (nextFurniture: Furniture[], persistToBackend: boolean) => {
+    const nextRoom = {
+      ...latestRoomRef.current,
+      furniture: nextFurniture,
+    };
+    latestRoomRef.current = nextRoom;
+    localStorage.setItem("roomfit:selectedRoomLayout", JSON.stringify(nextRoom));
+    setFurniture(nextFurniture);
+
+    if (persistToBackend) {
+      setLayoutError("");
+      void persistManagedFurnitureSnapshot(nextRoom).catch(() => {
+        setLayoutError("가구 배치를 저장하지 못했습니다. 편집 내용은 이 브라우저에 유지됩니다.");
+      });
+    }
+  };
+
   const removeFurniture = (id: string) => {
-    setFurniture((current) => current.map((item) => (
+    saveFurniture(latestRoomRef.current.furniture.map((item) => (
       item.id === id ? { ...item, status: "deleted" } : item
-    )));
+    )), true);
     setSelectedFurnitureId((current) => (current === id ? null : current));
   };
 
   const moveFurniture = (id: string, position: Vector2D) => {
-    setFurniture((current) => current.map((item) => (
+    saveFurniture(latestRoomRef.current.furniture.map((item) => (
       item.id === id
         ? markUserModified(moveFurnitureInsideRoom(selectedRoom, item, position))
         : item
-    )));
+    )), false);
+  };
+
+  const persistMovedFurniture = () => {
+    setLayoutError("");
+    void persistManagedFurnitureSnapshot(latestRoomRef.current).catch(() => {
+      setLayoutError("가구 배치를 저장하지 못했습니다. 편집 내용은 이 브라우저에 유지됩니다.");
+    });
   };
 
   const resetFurniture = () => {
-    setFurniture(cloneFurniture(originalFurnitureRef.current));
+    saveFurniture(cloneFurniture(originalFurnitureRef.current), true);
     setSelectedFurnitureId(null);
   };
 
   const rotateFurniture = (id: string) => {
-    setFurniture((current) =>
-      current.map((item) => (
+    saveFurniture(
+      latestRoomRef.current.furniture.map((item) => (
         item.id === id
           ? markUserModified(rotateFurnitureInsideRoom(selectedRoom, item, item.rotationY + Math.PI / 2))
           : item
       )),
+      true,
     );
   };
 
@@ -201,15 +236,6 @@ export default function ManageFurniture() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  useEffect(() => {
-    const nextRoom = {
-      ...selectedRoom,
-      furniture,
-    };
-
-    localStorage.setItem("roomfit:selectedRoomLayout", JSON.stringify(nextRoom));
-  }, [selectedRoom, furniture]);
-
   return (
     <main className="min-h-[calc(100vh-76px)] bg-[#fbfbfb] text-[#141414]">
       <div
@@ -248,6 +274,7 @@ export default function ManageFurniture() {
               selectedFurnitureId={selectedFurnitureId}
               onSelectFurniture={setSelectedFurnitureId}
               onMoveFurniture={moveFurniture}
+              onEndMoveFurniture={persistMovedFurniture}
               hideEntranceWalls={hideEntranceWalls}
               alignCameraToEntrance
               showEditingHelpers

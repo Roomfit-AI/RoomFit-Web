@@ -33,6 +33,7 @@ export interface Furniture {
   id: string;
   name: string;
   category: FurnitureCategory;
+  sourceType?: string;
   productId?: string | null;
   variantId?: string | null;
   styleTags?: string[];

@@ -16,11 +16,13 @@ import {
   confirmActiveLayout,
   createRecommendationFingerprintFromRequest,
   flushEditorLayoutPersistence,
+  flushManagedFurniturePersistence,
   loadManagedFurnitureLayout,
   prepareAdditionalFurnitureForEditor,
   prepareFurnitureSelectionForRecommendation,
   prepareRecommendationTransitionForEditor,
   prepareManagedFurnitureDraft,
+  persistManagedFurnitureSnapshot,
   persistEditorLayoutSnapshot,
   refreshActiveDraftNavigationState,
   type LayoutWorkflowApi,
@@ -369,6 +371,22 @@ describe("Draft layout editing workflow", () => {
     expect(api.getLatestConfirmedLayout).not.toHaveBeenCalled();
   });
 
+  it("reloads a persisted initial deletion from Backend Room", async () => {
+    const room = createRoom();
+    const backend = createRoom();
+    backend.furniture[1].status = "deleted";
+    const storage = selectedRoomStorage(room);
+
+    const restored = await loadManagedFurnitureLayout(
+      room,
+      1,
+      storage,
+      fakeApi({ room: backend }),
+    );
+
+    expect(restored?.furniture[1].status).toBe("deleted");
+  });
+
   it("keeps the existing Layout lookup path for a re-edit setup", async () => {
     const room = createRoom("api-room-7");
     const storage = selectedRoomStorage(room, 7);
@@ -703,6 +721,69 @@ describe("Draft layout editing workflow", () => {
     });
     expect(api.createLayoutDraft).not.toHaveBeenCalled();
     expect(api.updateLayout).not.toHaveBeenCalled();
+  });
+
+  it("persists initial manage-furniture deletion before next navigation", async () => {
+    const room = createRoom();
+    room.furniture[1].status = "deleted";
+    const storage = selectedRoomStorage(room);
+    const api = fakeApi({ latest: null, replacedRoom: room });
+
+    const state = await prepareManagedFurnitureDraft(storage, api);
+
+    expect(api.replaceRoomFurniture).toHaveBeenCalledWith(1, room);
+    expect(state?.roomLayout?.furniture[1].status).toBe("deleted");
+  });
+
+  it("uses Layout Draft persistence instead of Room replacement during re-edit", async () => {
+    const room = createRoom();
+    const storage = selectedRoomStorage(room);
+    const api = fakeApi();
+    saveDraftSession(storage, 31, 10);
+
+    await persistManagedFurnitureSnapshot(room, storage, api);
+
+    expect(api.updateLayout).toHaveBeenCalledWith(31, room);
+    expect(api.replaceRoomFurniture).not.toHaveBeenCalled();
+  });
+
+  it("serializes manage-furniture snapshots in user action order", async () => {
+    const firstRoom = createRoom("api-room-1", -0.4);
+    const secondRoom = createRoom("api-room-1", 0.4);
+    const storage = selectedRoomStorage(firstRoom);
+    const first = createDeferred<RoomLayout>();
+    const api = fakeApi();
+    vi.mocked(api.replaceRoomFurniture)
+      .mockReturnValueOnce(first.promise)
+      .mockResolvedValueOnce(secondRoom);
+
+    const firstSave = persistManagedFurnitureSnapshot(firstRoom, storage, api);
+    const secondSave = persistManagedFurnitureSnapshot(secondRoom, storage, api);
+    await vi.waitFor(() => expect(api.replaceRoomFurniture).toHaveBeenCalledTimes(1));
+    first.resolve(firstRoom);
+    await firstSave;
+    await secondSave;
+
+    expect(vi.mocked(api.replaceRoomFurniture).mock.calls.map(([, saved]) => saved.furniture[0].position.x))
+      .toEqual([-0.4, 0.4]);
+  });
+
+  it("keeps the edited mirror and rejects navigation when Room persistence fails", async () => {
+    const room = createRoom();
+    room.furniture[1].status = "deleted";
+    const serializedRoom = JSON.stringify(room);
+    const storage = selectedRoomStorage(room);
+    const api = fakeApi();
+    vi.mocked(api.replaceRoomFurniture).mockRejectedValueOnce(new Error("save failed"));
+
+    await expect(persistManagedFurnitureSnapshot(room, storage, api)).rejects.toThrow("save failed");
+    expect(storage.getItem("roomfit:selectedRoomLayout")).toBe(serializedRoom);
+    await expect(prepareManagedFurnitureDraft(storage, api)).rejects.toThrow("save failed");
+    expect(storage.getItem("roomfit:selectedRoomLayout")).toBe(serializedRoom);
+
+    vi.mocked(api.replaceRoomFurniture).mockResolvedValueOnce(room);
+    await persistManagedFurnitureSnapshot(room, storage, api);
+    await expect(flushManagedFurniturePersistence()).resolves.toBeUndefined();
   });
 
   it("enters initial setup without probing a Layout endpoint for a new Room", async () => {
@@ -1340,6 +1421,7 @@ function response(
 
 function fakeApi({
   room = createRoom(),
+  replacedRoom = room,
   latest = null,
   active = response(11, false, 10),
   draft = response(11, false, 10),
@@ -1348,6 +1430,7 @@ function fakeApi({
   recommendation = recommendationResponse(51, "SUCCESS"),
 }: {
   room?: RoomLayout;
+  replacedRoom?: RoomLayout;
   latest?: LayoutResponse | null;
   active?: LayoutResponse;
   draft?: LayoutResponse;
@@ -1357,6 +1440,7 @@ function fakeApi({
 } = {}): LayoutWorkflowApi {
   return {
     getRoomLayout: vi.fn().mockResolvedValue(room),
+    replaceRoomFurniture: vi.fn().mockResolvedValue(replacedRoom),
     getLayout: vi.fn().mockResolvedValue(active),
     getLatestConfirmedLayout: vi.fn().mockResolvedValue(latest),
     createLayoutDraft: vi.fn().mockResolvedValue(draft),

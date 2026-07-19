@@ -218,6 +218,43 @@ export async function uploadRoomLayout(room: RoomLayout): Promise<number> {
   return response.data.data.roomId;
 }
 
+function toFurnitureStatusApiValue(status: FurnitureStatus) {
+  const values = {
+    existing: "EXISTING",
+    recommended: "RECOMMENDED",
+    user_modified: "USER_MODIFIED",
+    deleted: "DELETED",
+  } as const satisfies Record<FurnitureStatus, string>;
+  return values[status];
+}
+
+export function toRoomFurnitureReplaceRequest(room: RoomLayout) {
+  return {
+    furniture: room.furniture.map((item) => ({
+      id: item.id,
+      type: item.sourceType ?? item.category,
+      label: item.name,
+      width: item.dimensions.width,
+      depth: item.dimensions.depth,
+      height: item.dimensions.height,
+      position: {
+        x: item.position.x + room.width / 2,
+        z: item.position.z + room.depth / 2,
+      },
+      rotation: normalizeDegrees((-item.rotationY * 180) / Math.PI),
+      status: toFurnitureStatusApiValue(item.status),
+    })),
+  };
+}
+
+export async function replaceRoomFurniture(roomId: number, room: RoomLayout): Promise<RoomLayout> {
+  const response = await apiClient.put<ApiResponse<SampleRoomApiItem>>(
+    `/api/rooms/${roomId}/layout`,
+    toRoomFurnitureReplaceRequest(room),
+  );
+  return toUploadedRoomCard(response.data.data, 0).layout;
+}
+
 function readApiRoomId(roomLayoutId: string): number | null {
   const match = /^api-room-(\d+)$/.exec(roomLayoutId);
   if (!match) return null;
@@ -643,6 +680,7 @@ function toFurniture(
 ): Furniture {
   const normalizedItem = normalizeBackendFurnitureApiItem(item);
   const category = toFurnitureCategory(normalizedItem.type);
+  const canonicalType = normalizeCanonicalFurnitureType(normalizedItem.type);
   const materialType = materialByCategory(category);
   const collectorAppearance = collectorAppearanceById[normalizedItem.id.replace(/^studio-/, "collector-")];
   const color = collectorAppearance?.color ?? colorByCategory(category);
@@ -653,6 +691,7 @@ function toFurniture(
     id: normalizedItem.id,
     name: normalizedItem.label,
     category,
+    ...(canonicalType ? { sourceType: canonicalType } : {}),
     productId: normalizedItem.productId,
     variantId: normalizedItem.variantId,
     styleTags: [...normalizedItem.styleTags],
