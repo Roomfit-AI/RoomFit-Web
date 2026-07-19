@@ -1,10 +1,22 @@
+import catalogDocument from "../data/furniture/catalog.json";
 import type { Furniture, RoomLayout } from "../types";
 
 export const LOFT_DESK_VARIANT_ID = "bed-loft-desk";
 export const DESK_LOFT_CONFLICT_MESSAGE = "책상 수납 로프트 침대에는 책상 기능이 포함되어 있어 일반 책상과 함께 배치할 수 없습니다. 둘 중 하나만 선택해 주세요.";
 
+// Catalog-backed fallback for legacy records that have no variantId. Current
+// production catalog data always carries `variantId: bed-loft-desk`; this set
+// deliberately avoids a broad prefix match that could classify a similar,
+// unrelated product as a loft desk in the future.
+const LOFT_DESK_PRODUCT_IDS = new Set(
+  catalogDocument.products
+    .filter((product) => product.variantId === LOFT_DESK_VARIANT_ID)
+    .map((product) => product.productId),
+);
+
 export function isLoftDeskFurniture(item: Pick<Furniture, "variantId" | "productId">): boolean {
-  return item.variantId === LOFT_DESK_VARIANT_ID || item.productId === `${LOFT_DESK_VARIANT_ID}-01`;
+  return item.variantId === LOFT_DESK_VARIANT_ID
+    || (item.variantId == null && item.productId != null && LOFT_DESK_PRODUCT_IDS.has(item.productId));
 }
 
 export function isDeskFurniture(item: Pick<Furniture, "category">): boolean {
@@ -30,7 +42,7 @@ export function getFurnitureSelectionBlockReason(
     return "현재 공간에는 블라인드를 설치할 수 있는 창문이 없습니다.";
   }
 
-  const furniture = room?.furniture ?? [];
+  const furniture = (room?.furniture ?? []).filter((item) => item.status !== "deleted");
   const selectingLoft = selectionId === LOFT_DESK_VARIANT_ID;
   const selectingDesk = selectionId === "desk";
   const hasLoft = selectedIds.includes(LOFT_DESK_VARIANT_ID) || furniture.some(isLoftDeskFurniture);
