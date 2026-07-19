@@ -10,6 +10,7 @@ interface EditorFeedbackPanelProps {
   onFeedbackChange: (value: string) => void;
   onApplyFeedback: () => void;
   onRecommend: () => void;
+  onSelectCandidate?: (furnitureId: string) => void;
 }
 
 export default function EditorFeedbackPanel({
@@ -21,6 +22,7 @@ export default function EditorFeedbackPanel({
   onFeedbackChange,
   onApplyFeedback,
   onRecommend,
+  onSelectCandidate,
 }: EditorFeedbackPanelProps) {
   const hasResult = isApplyingFeedback || result.presentation?.showPanel || Boolean(result.errorMessage);
 
@@ -80,7 +82,11 @@ export default function EditorFeedbackPanel({
           </p>
         )}
         {!isApplyingFeedback && result.presentation?.showPanel && (
-          <FeedbackAgentResultPanel presentation={result.presentation} />
+          <FeedbackAgentResultPanel
+            presentation={result.presentation}
+            onSelectCandidate={onSelectCandidate}
+            isSelectingCandidate={isApplyingFeedback}
+          />
         )}
         {!isApplyingFeedback && result.errorMessage && (
           <section role="alert" className="rounded-xl border border-[#ffd8d8] bg-[#fff5f5] p-4 text-sm font-bold text-[#c0392b]">

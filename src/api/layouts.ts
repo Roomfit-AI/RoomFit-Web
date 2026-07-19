@@ -99,9 +99,15 @@ export interface FeedbackOperationResult {
 }
 
 export interface FeedbackClarificationCandidate {
+  /** Internal handle for a retry request. Never render this value to the user. */
   furnitureId: string;
   type?: string | null;
   label?: string | null;
+}
+
+export interface ApplyLayoutFeedbackOptions {
+  /** Clarification candidate explicitly chosen by the user for this retry. */
+  selectedFurnitureId?: string | null;
 }
 
 export interface FeedbackClarification {
@@ -309,10 +315,16 @@ export async function confirmLayout(layoutId: number): Promise<ConfirmResponse> 
   return response.data.data;
 }
 
-export async function applyLayoutFeedback(layoutId: number, feedback: string): Promise<FeedbackResponse> {
+export async function applyLayoutFeedback(
+  layoutId: number,
+  feedback: string,
+  options: ApplyLayoutFeedbackOptions = {},
+): Promise<FeedbackResponse> {
+  const selectedFurnitureId = options.selectedFurnitureId?.trim();
   const response = await apiClient.post<ApiResponse<unknown>>("/api/layouts/feedback", {
     layoutId,
     feedback,
+    ...(selectedFurnitureId ? { selectedFurnitureId } : {}),
   });
 
   return normalizeFeedbackResponse(response.data.data);

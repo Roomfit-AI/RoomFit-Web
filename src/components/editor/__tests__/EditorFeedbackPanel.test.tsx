@@ -4,9 +4,11 @@ import { describe, expect, it, vi } from "vitest";
 import type { FeedbackPresentation } from "../feedbackPresentation";
 import EditorFeedbackPanel from "../EditorFeedbackPanel";
 import {
+  beginFeedbackRequest,
   createEmptyFeedbackResult,
   createSuccessfulFeedbackPresentation,
   readFeedbackErrorMessage,
+  shouldAcceptFeedbackResponse,
 } from "../feedbackResultState";
 
 describe("EditorFeedbackPanel", () => {
@@ -92,6 +94,28 @@ describe("EditorFeedbackPanel", () => {
 
     expect(markup).toContain("반영 실패");
     expect(markup).toContain("요청한 위치에는 가구를 안전하게 배치할 수 없습니다.");
+  });
+
+  it("starts only one request for rapid repeated candidate selection", () => {
+    const inFlightRef = { current: false };
+
+    expect(beginFeedbackRequest(inFlightRef)).toBe(true);
+    expect(beginFeedbackRequest(inFlightRef)).toBe(false);
+  });
+
+  it("accepts only the latest mounted response for the active layout", () => {
+    const current = {
+      isMounted: true,
+      currentSequence: 4,
+      requestSequence: 4,
+      activeLayoutId: 12,
+      requestedLayoutId: 12,
+    };
+
+    expect(shouldAcceptFeedbackResponse(current)).toBe(true);
+    expect(shouldAcceptFeedbackResponse({ ...current, isMounted: false })).toBe(false);
+    expect(shouldAcceptFeedbackResponse({ ...current, currentSequence: 5 })).toBe(false);
+    expect(shouldAcceptFeedbackResponse({ ...current, activeLayoutId: 13 })).toBe(false);
   });
 });
 

@@ -7,6 +7,18 @@ export interface FeedbackResultState {
   errorMessage: string;
 }
 
+export interface FeedbackResponseGuard {
+  isMounted: boolean;
+  currentSequence: number;
+  requestSequence: number;
+  activeLayoutId: number | null;
+  requestedLayoutId: number;
+}
+
+interface MutableBooleanRef {
+  current: boolean;
+}
+
 export function createEmptyFeedbackResult(): FeedbackResultState {
   return { presentation: null, errorMessage: "" };
 }
@@ -22,6 +34,24 @@ export function createSuccessfulFeedbackPresentation(): FeedbackPresentation {
     pendingCount: 0,
     showPanel: true,
   };
+}
+
+export function beginFeedbackRequest(inFlightRef: MutableBooleanRef): boolean {
+  if (inFlightRef.current) return false;
+  inFlightRef.current = true;
+  return true;
+}
+
+export function shouldAcceptFeedbackResponse({
+  isMounted,
+  currentSequence,
+  requestSequence,
+  activeLayoutId,
+  requestedLayoutId,
+}: FeedbackResponseGuard): boolean {
+  return isMounted
+    && currentSequence === requestSequence
+    && activeLayoutId === requestedLayoutId;
 }
 
 export function readFeedbackErrorMessage(error: unknown): string {

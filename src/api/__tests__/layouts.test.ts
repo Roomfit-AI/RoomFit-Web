@@ -194,6 +194,24 @@ describe("layout feedback response adapter", () => {
     }
   });
 
+  it("sends a selected furniture id only as an internal retry hint", async () => {
+    const post = vi.spyOn(apiClient, "post").mockResolvedValue({
+      data: { success: true, data: createFeedbackResponse(), error: null },
+    });
+
+    try {
+      await applyLayoutFeedback(11, "가구를 모서리에 배치해줘", { selectedFurnitureId: "chair-1" });
+
+      expect(post).toHaveBeenCalledWith("/api/layouts/feedback", {
+        layoutId: 11,
+        feedback: "가구를 모서리에 배치해줘",
+        selectedFurnitureId: "chair-1",
+      });
+    } finally {
+      post.mockRestore();
+    }
+  });
+
   it("normalizes aliases on a later Layout reload as well", async () => {
     const response = createFeedbackResponse();
     response.recommendedFurniture[0].type = "BED";
