@@ -35,8 +35,7 @@ import {
   resolveRoomLayoutPreferredColorTone,
   withAppliedPreferredColorTone,
 } from "../config/appliedColorTone";
-import { applyScenario, currentScenario, isCollectorRoom } from "../config/scenarios";
-import { createHobbyCoralRecommendation, isHobbyCoralRecommendationSelected } from "../mock/hobbyCoralRecommendation";
+import { currentScenario } from "../config/scenarios";
 import { readPreferredColorTone } from "../config/preferredColorTone";
 import {
   isSessionForRoom,
@@ -56,186 +55,11 @@ import {
 import { readRoomSetupSession } from "../config/roomSetupSession";
 import type { Furniture, RoomLayout, Vector2D } from "../types";
 
-const naturalWoodRestRoomExistingFurnitureIds = new Set(["bed-1", "desk-1", "chair-1"]);
-
-const naturalWoodRestRoomFurniture: Furniture[] = [
-  {
-    id: "natural-wardrobe",
-    name: "루버 우드 옷장",
-    category: "cabinet",
-    geometry: "box",
-    dimensions: { width: 0.88, depth: 0.58, height: 1.78 },
-    position: { x: 2.46, z: 0.2 },
-    rotationY: -Math.PI / 2,
-    color: "#c9955d",
-    material: { type: "wood", color: "#c9955d", roughness: 0.58, metalness: 0 },
-    status: "recommended",
-    removable: true,
-  },
-  {
-    id: "natural-bedside-table",
-    name: "우드 협탁",
-    category: "cabinet",
-    geometry: "box",
-    dimensions: { width: 0.5, depth: 0.42, height: 0.48 },
-    position: { x: -2.6, z: -1.3 },
-    rotationY: 0,
-    color: "#c9955d",
-    material: { type: "wood", color: "#c9955d", roughness: 0.56, metalness: 0 },
-    status: "recommended",
-    removable: true,
-  },
-  {
-    id: "natural-bedside-lamp",
-    name: "침대 옆 스탠드",
-    category: "lighting",
-    geometry: "cylinder",
-    dimensions: { width: 0.18, depth: 0.18, height: 0.48 },
-    position: { x: -2.55, z: -0.92 },
-    rotationY: 0,
-    color: "#d4a96a",
-    material: { type: "metal", color: "#d4a96a", roughness: 0.32, metalness: 0.45 },
-    status: "recommended",
-    removable: true,
-  },
-  {
-    id: "natural-window-plant",
-    name: "바닥 식물",
-    category: "cabinet",
-    geometry: "cylinder",
-    dimensions: { width: 0.42, depth: 0.42, height: 0.76 },
-    position: { x: -2.55, z: 1.62 },
-    rotationY: 0,
-    color: "#3f7d4a",
-    material: { type: "accent", color: "#3f7d4a", roughness: 0.8, metalness: 0 },
-    status: "recommended",
-    removable: true,
-  },
-  {
-    id: "natural-low-bookshelf",
-    name: "낮은 우드 책장",
-    category: "cabinet",
-    geometry: "box",
-    dimensions: { width: 1.1, depth: 0.34, height: 0.7 },
-    position: { x: 1.65, z: -2.18 },
-    rotationY: 0,
-    color: "#c9955d",
-    material: { type: "wood", color: "#c9955d", roughness: 0.56, metalness: 0 },
-    status: "recommended",
-    removable: true,
-  },
-  {
-    id: "natural-shelf-back-left",
-    name: "우드 벽 선반",
-    category: "cabinet",
-    geometry: "box",
-    dimensions: { width: 0.92, depth: 0.18, height: 0.2 },
-    position: { x: 0.1, z: -2.5 },
-    rotationY: 0,
-    color: "#b9824a",
-    material: { type: "wood", color: "#b9824a", roughness: 0.55, metalness: 0 },
-    status: "recommended",
-    removable: true,
-  },
-  {
-    id: "natural-shelf-back-right",
-    name: "우드 벽 선반",
-    category: "cabinet",
-    geometry: "box",
-    dimensions: { width: 0.96, depth: 0.18, height: 0.2 },
-    position: { x: 1.35, z: -2.5 },
-    rotationY: 0,
-    color: "#b9824a",
-    material: { type: "wood", color: "#b9824a", roughness: 0.55, metalness: 0 },
-    status: "recommended",
-    removable: true,
-  },
-  {
-    id: "natural-lounge-chair",
-    name: "세이지 라운지 소파",
-    category: "chair",
-    geometry: "rounded-box",
-    dimensions: { width: 0.78, depth: 0.72, height: 0.78 },
-    position: { x: 1.72, z: 1.6 },
-    rotationY: -Math.PI * 0.58,
-    color: "#8fae76",
-    material: { type: "fabric", color: "#8fae76", roughness: 0.82, metalness: 0 },
-    status: "recommended",
-    removable: true,
-  },
-  {
-    id: "natural-rattan-rug",
-    name: "원형 라탄 러그",
-    category: "rug",
-    geometry: "cylinder",
-    dimensions: { width: 1.55, depth: 1.55, height: 0.035 },
-    position: { x: 0.72, z: 1.36 },
-    rotationY: 0,
-    color: "#d4bd91",
-    material: { type: "fabric", color: "#d4bd91", roughness: 0.9, metalness: 0 },
-    status: "recommended",
-    removable: true,
-  },
-  {
-    id: "natural-coffee-table",
-    name: "원형 우드 테이블",
-    category: "desk",
-    geometry: "cylinder",
-    dimensions: { width: 0.68, depth: 0.68, height: 0.38 },
-    position: { x: 0.72, z: 1.36 },
-    rotationY: 0,
-    color: "#c9955d",
-    material: { type: "wood", color: "#c9955d", roughness: 0.55, metalness: 0 },
-    status: "recommended",
-    removable: true,
-  },
-  {
-    id: "natural-table-plant",
-    name: "화병",
-    category: "cabinet",
-    geometry: "cylinder",
-    dimensions: { width: 0.2, depth: 0.2, height: 0.28 },
-    position: { x: 0.72, z: 1.36 },
-    rotationY: 0,
-    color: "#4e8a55",
-    material: { type: "accent", color: "#4e8a55", roughness: 0.8, metalness: 0 },
-    status: "recommended",
-    removable: true,
-  },
-];
-
-function applyNaturalWoodRestRoom(layout: RoomLayout, sourceFurniture: Furniture[]): RoomLayout {
-  const naturalWoodExistingFurniture = sourceFurniture
-    .filter((item) => naturalWoodRestRoomExistingFurnitureIds.has(item.id))
-    .map((item) => {
-      if (item.id === "bed-1") {
-        return { ...item, position: { x: -1.5, z: -1.12 }, color: "#f5f0e4", material: { type: "fabric" as const, color: "#f5f0e4", roughness: 0.88, metalness: 0 } };
-      }
-      if (item.id === "desk-1") {
-        return { ...item, position: { x: 0.25, z: -1.85 }, rotationY: 0, color: "#d0a46c", material: { type: "wood" as const, color: "#d0a46c", roughness: 0.58, metalness: 0 } };
-      }
-      if (item.id === "chair-1") {
-        return { ...item, position: { x: 0.25, z: -0.98 }, rotationY: Math.PI, color: "#c9955d", material: { type: "wood" as const, color: "#c9955d", roughness: 0.58, metalness: 0 } };
-      }
-      return item;
-    });
-
-  return {
-    ...layout,
-    floor: { size: { width: layout.width, depth: layout.depth }, material: { color: "#d2a86e", roughness: 0.72 } },
-    lighting: { ...layout.lighting, ambient: 0.84, sun: { intensity: 1.9, position: [3.8, 7.5, 4.6] }, environment: "warm-natural-studio" },
-    walls: layout.walls.map((wall) => ({ ...wall, material: { color: "#f3efe7", roughness: 0.84 } })),
-    furniture: [...naturalWoodExistingFurniture, ...naturalWoodRestRoomFurniture],
-  };
-}
-
-// Sentinel layoutId for rooms whose "AI 추천 생성" took the scripted-mood
-// shortcut (see handleRecommend below) instead of a real backend call —
-// there's no backend layoutId to hand to applyLayoutFeedback in that case,
-// but the "AI 피드백" panel only unlocks once layoutId is truthy, so without
-// this the feedback box would stay permanently disabled for every scenario
-// demo run. handleFeedback branches on this value to run applyLocalFeedback
-// instead of hitting the network.
+// EXPERIMENTAL (experimental/develop): handleRecommend no longer produces
+// this sentinel (it always calls the real backend now — see handleRecommend
+// below), but handleFeedback still branches on it for any layout a user
+// already has saved locally from before this change, so a stale session
+// doesn't hard-crash trying to hit the network with an invalid layoutId.
 const LOCAL_SCENARIO_LAYOUT_ID = -1;
 
 // The room as saved from /manage-furniture, unmodified — demo-mood
@@ -453,67 +277,19 @@ export default function EditorPlaceholder() {
 
     const recommendationColorTone = readPreferredColorTone() ?? preferredColorTone;
 
-    if (isHobbyCoralRecommendationSelected()) {
-      setIsRecommending(true);
-      setErrorMessage("");
-      setInterpretedIntent(null);
-
-      await new Promise((resolve) => setTimeout(resolve, 5000));
-
-      const nextRoom = createHobbyCoralRecommendation(roomLayout);
-      const { scoreSummary, validationResult } = buildScenarioValidation();
-
-      setRoomLayout(withAppliedPreferredColorTone(nextRoom, recommendationColorTone));
-      setLayoutId(LOCAL_SCENARIO_LAYOUT_ID);
-      setScoreSummary(scoreSummary);
-      setValidationResult(validationResult);
-      clearCurrentRecommendationNotice();
-      setRecommendationNotice(null);
-      setIsRecommending(false);
-      recommendationInFlightRef.current = false;
-      return;
-    }
-
-    // The two exact scripted demo moods (see config/scenarios.ts) take over
-    // here instead of the real backend call. Every other supported
-    // purpose/style/palette combination continues through the backend.
+    // EXPERIMENTAL (experimental/develop): the scripted-mood shortcuts
+    // (isHobbyCoralRecommendationSelected / currentScenario) used to take
+    // over here instead of calling the real backend, for exactly the
+    // purpose/style/palette combos a judge/tester is most likely to try
+    // first ("휴식+우드+내추럴", "업무+모던+그레이", "hobby"+"pink"). That's
+    // why colorTone/lifestyle changes looked like they weren't reflected —
+    // the real (already-fixed) backend was never being called for those
+    // combos. Routing everything through the real backend call below
+    // instead, so what a tester sees always reflects the actual
+    // recommendation service. isCollectorRoom's two named demo rooms are
+    // unaffected either way — they already always went to the backend,
+    // which has its own separate scripted path for those two exact rooms.
     let roomId = loadBackendRoomId();
-    const scenario = roomLayout.source === "CUSTOM" || isCollectorRoom(roomLayout)
-      ? undefined
-      : currentScenario();
-
-    if (scenario) {
-      setIsRecommending(true);
-      setErrorMessage("");
-      setInterpretedIntent(null);
-
-      // A fixed 5s pause so "AI 추천 생성 중..." reads as the AI actually
-      // working, instead of an instant swap that gives away the scripted
-      // shortcut this demo path is taking.
-      await new Promise((resolve) => setTimeout(resolve, 5000));
-
-      // The hardcoded "natural wood rest room" layout below is tuned to one
-      // specific sample room's fixed dimensions/coordinates (see
-      // naturalWoodRestRoomFurniture above) — it only makes sense for that
-      // sample room, not for a real ROOMPLAN scan whose geometry can be
-      // anything. Scanned rooms always go through the generic, room-size-
-      // aware applyScenario pipeline instead.
-      const nextRoom =
-        scenario.id === "rest-natural-wood" && roomLayout.source !== "ROOMPLAN"
-          ? applyNaturalWoodRestRoom(roomLayout, roomLayout.furniture)
-          : applyScenario(roomLayout, scenario);
-      const { scoreSummary, validationResult } = buildScenarioValidation();
-
-      setRoomLayout(withAppliedPreferredColorTone(nextRoom, recommendationColorTone));
-      setLayoutId(LOCAL_SCENARIO_LAYOUT_ID);
-      setScoreSummary(scoreSummary);
-      setValidationResult(validationResult);
-      clearCurrentRecommendationNotice();
-      setRecommendationNotice(null);
-      setIsRecommending(false);
-      recommendationInFlightRef.current = false;
-      return;
-    }
 
     if (roomLayout.source === "CUSTOM") {
       setIsRecommending(true);
@@ -545,14 +321,10 @@ export default function EditorPlaceholder() {
     setInterpretedIntent(null);
 
     try {
-      // Real backend round trip (used by sample rooms whose
-      // purpose/style/palette don't match a scripted demo mood, e.g. the
-      // collector rooms above) —
-      // a local backend answers near-instantly, which read as an instant
-      // swap instead of the AI actually working. Racing it against the same
-      // fixed 5s floor used by the scripted-mood path keeps that "AI 추천
-      // 생성 중..." reading consistent regardless of which path a given
-      // sample room happens to take.
+      // Real backend round trip. A local backend answers near-instantly,
+      // which reads as an instant swap instead of the AI actually working —
+      // race it against a fixed 5s floor so "AI 추천 생성 중..." always shows
+      // for a consistent minimum duration.
       const [result] = await Promise.all([
         createDefaultAgentContext(roomId).then((context) => recommendLayout(roomId, context.contextId)),
         new Promise((resolve) => setTimeout(resolve, 5000)),
