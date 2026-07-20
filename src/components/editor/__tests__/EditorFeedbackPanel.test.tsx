@@ -12,6 +12,12 @@ import {
 } from "../feedbackResultState";
 
 describe("EditorFeedbackPanel", () => {
+  it("explains that added furniture feedback works for sample and uploaded rooms", () => {
+    const markup = renderPanel(createSuccessfulFeedbackPresentation());
+
+    expect(markup).toContain("샘플룸과 업로드룸 모두 추가한 가구에 대한 피드백을 잘 수용합니다.");
+  });
+
   it("renders a successful result directly after the apply button", () => {
     const markup = renderPanel(createSuccessfulFeedbackPresentation());
 
