@@ -60,11 +60,36 @@ describe("resolveFurnitureSupportPositions", () => {
       .toBe(desk.dimensions.height + monitor.dimensions.height / 2);
   });
 
-  it("keeps a dependent moved by 0.01m on the floor", () => {
+  it("keeps an uploaded dependent with small center drift on its support", () => {
     const desk = furniture("desk", "desk", { width: 1.4, depth: 0.7, height: 0.72 });
     const monitor = {
       ...furniture("monitor", "monitor", { width: 0.55, depth: 0.2, height: 0.4 }),
       position: { x: 0.01, z: 0 },
+    };
+
+    expect(resolveFurnitureSupportPositions([desk, monitor]).get("monitor")?.[1])
+      .toBe(desk.dimensions.height + monitor.dimensions.height / 2);
+  });
+
+  it("keeps a dependent inside a rotated support footprint on top", () => {
+    const desk = {
+      ...furniture("desk", "desk", { width: 1.4, depth: 0.7, height: 0.72 }),
+      rotationY: Math.PI / 2,
+    };
+    const monitor = {
+      ...furniture("monitor", "monitor", { width: 0.55, depth: 0.2, height: 0.4 }),
+      position: { x: 0.3, z: 0.4 },
+    };
+
+    expect(resolveFurnitureSupportPositions([desk, monitor]).get("monitor")?.[1])
+      .toBe(desk.dimensions.height + monitor.dimensions.height / 2);
+  });
+
+  it("drops a dependent moved outside the support footprint to the floor", () => {
+    const desk = furniture("desk", "desk", { width: 1.4, depth: 0.7, height: 0.72 });
+    const monitor = {
+      ...furniture("monitor", "monitor", { width: 0.55, depth: 0.2, height: 0.4 }),
+      position: { x: 0.8, z: 0 },
     };
 
     expect(resolveFurnitureSupportPositions([desk, monitor]).get("monitor")?.[1])

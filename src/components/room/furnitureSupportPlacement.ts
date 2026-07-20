@@ -1,8 +1,11 @@
 import { normalizeCanonicalFurnitureType } from "../../config/canonicalFurnitureType";
 import type { Furniture } from "../../types";
 import type { Vector3Tuple } from "../furniture/variants/types";
-
-const CENTER_EPSILON_METERS = 1e-6;
+import {
+  BOUNDARY_EPSILON,
+  calculateRotatedFootprint,
+  resolveFurnitureLocalFootprint,
+} from "./furnitureBoundary";
 
 const SUPPORT_TYPE_BY_DEPENDENT = {
   monitor: "desk",
@@ -22,11 +25,14 @@ export function resolveFurnitureSupportPositions(
     const dependentType = normalizeCanonicalFurnitureType(dependent.sourceType);
     if (dependentType !== "monitor" && dependentType !== "tv") continue;
     const supporterType = SUPPORT_TYPE_BY_DEPENDENT[dependentType];
-    const supporter = visibleItems.find((candidate) => (
-      candidate.id !== dependent.id
-      && normalizeCanonicalFurnitureType(candidate.sourceType) === supporterType
-      && hasMatchingCenter(candidate, dependent)
-    ));
+    const supporter = visibleItems
+      .filter((candidate) => (
+        candidate.id !== dependent.id
+        && normalizeCanonicalFurnitureType(candidate.sourceType) === supporterType
+        && containsDependentCenter(candidate, dependent)
+      ))
+      .sort((first, second) => centerDistanceSquared(first, dependent)
+        - centerDistanceSquared(second, dependent))[0];
     if (!supporter) continue;
 
     positions.set(dependent.id, [
@@ -39,7 +45,22 @@ export function resolveFurnitureSupportPositions(
   return positions;
 }
 
-function hasMatchingCenter(supporter: Furniture, dependent: Furniture): boolean {
-  return Math.abs(supporter.position.x - dependent.position.x) <= CENTER_EPSILON_METERS
-    && Math.abs(supporter.position.z - dependent.position.z) <= CENTER_EPSILON_METERS;
+function containsDependentCenter(supporter: Furniture, dependent: Furniture): boolean {
+  const footprint = calculateRotatedFootprint(
+    supporter.dimensions,
+    supporter.rotationY,
+    resolveFurnitureLocalFootprint(supporter),
+  );
+  const localX = dependent.position.x - supporter.position.x;
+  const localZ = dependent.position.z - supporter.position.z;
+  return localX >= footprint.minX - BOUNDARY_EPSILON
+    && localX <= footprint.maxX + BOUNDARY_EPSILON
+    && localZ >= footprint.minZ - BOUNDARY_EPSILON
+    && localZ <= footprint.maxZ + BOUNDARY_EPSILON;
+}
+
+function centerDistanceSquared(first: Furniture, second: Furniture): number {
+  const x = first.position.x - second.position.x;
+  const z = first.position.z - second.position.z;
+  return x * x + z * z;
 }
