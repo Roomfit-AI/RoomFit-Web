@@ -47,7 +47,8 @@ export default function EditorFeedbackPanel({
       ) : (
         <>
           <p className="mt-2 text-sm font-medium leading-6 text-[#777777]">
-            자연어 피드백을 LLM이 intent로 해석하고, 백엔드 규칙 기반 로직이 배치에 반영합니다.
+            <span className="block">자연어 피드백을 LLM이 intent로 해석하고, 백엔드 규칙 기반 로직이 배치에 반영합니다.</span>
+            <span className="mt-1 block">샘플룸과 업로드룸 모두 추가한 가구에 대한 피드백을 잘 수용합니다.</span>
           </p>
 
           <textarea
