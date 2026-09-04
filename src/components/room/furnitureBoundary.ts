@@ -1,5 +1,5 @@
 import { getProductionFurnitureVisualFootprint } from "../furniture/variants/productionFurnitureCatalog";
-import type { Furniture, RoomLayout, Size3D, Vector2D, WallSegment } from "../../types";
+import type { Furniture, Opening, RoomLayout, Size3D, Vector2D, WallSegment } from "../../types";
 
 export const WALL_CLEARANCE_METERS = 0.02;
 export const DEFAULT_WALL_THICKNESS_METERS = 0.12;
@@ -190,6 +190,43 @@ export function rotateFurnitureInsideRoom(
     localFootprint,
   );
   return position ? { ...furniture, position, rotationY: proposedRotationY } : furniture;
+}
+
+// RoomPlan's measured room width/depth can be off by a few centimeters, same
+// as an individual piece of furniture. Rescales the room's own walls/openings
+// proportionally so the floor/wall geometry stays consistent with the
+// corrected width/depth instead of just relabeling it, then re-clamps every
+// piece of furniture (scaled to the same proportional position) into the
+// resized room so nothing is left poking through a wall.
+export function resizeRoomInsideBounds(
+  room: RoomLayout,
+  next: Partial<Pick<RoomLayout, "width" | "depth" | "height">>,
+): RoomLayout {
+  const width = next.width ?? room.width;
+  const depth = next.depth ?? room.depth;
+  const height = next.height ?? room.height;
+  const scaleX = room.width > 0 ? width / room.width : 1;
+  const scaleZ = room.depth > 0 ? depth / room.depth : 1;
+  const scalePoint = (point: Vector2D): Vector2D => ({ x: point.x * scaleX, z: point.z * scaleZ });
+  const scaleOpening = (opening: Opening): Opening => ({ ...opening, position: scalePoint(opening.position) });
+
+  const resizedRoom: RoomLayout = {
+    ...room,
+    width,
+    depth,
+    height,
+    floor: room.floor ? { ...room.floor, size: { width, depth } } : room.floor,
+    walls: room.walls.map((wall) => ({ ...wall, start: scalePoint(wall.start), end: scalePoint(wall.end) })),
+    doors: room.doors.map(scaleOpening),
+    windows: room.windows.map(scaleOpening),
+  };
+
+  return {
+    ...resizedRoom,
+    furniture: room.furniture.map((item) => (
+      moveFurnitureInsideRoom(resizedRoom, item, scalePoint(item.position))
+    )),
+  };
 }
 
 function nominalLocalFootprint(

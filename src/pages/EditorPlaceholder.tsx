@@ -40,7 +40,6 @@ import {
 import RoomViewer from "../components/room/RoomViewer";
 import {
   moveFurnitureInsideRoom,
-  resizeFurnitureInsideRoom,
   rotateFurnitureInsideRoom,
 } from "../components/room/furnitureBoundary";
 import { getLiveMirrorForSelectedRoom } from "../config/confirmedLayouts";
@@ -305,21 +304,6 @@ export default function EditorPlaceholder() {
         furniture: current.furniture.map((item) =>
           item.id === id
             ? markUserModified(rotateFurnitureInsideRoom(current, item, item.rotationY + Math.PI / 2))
-            : item,
-        ),
-      }),
-    });
-  };
-
-  const handleResizeFurniture = (id: string, dimensions: { width: number; depth: number }) => {
-    dispatchEditorLayout({
-      type: "edit",
-      scopeKey: editorScopeKey,
-      update: (current) => ({
-        ...current,
-        furniture: current.furniture.map((item) =>
-          item.id === id
-            ? markUserModified(resizeFurnitureInsideRoom(current, item, dimensions))
             : item,
         ),
       }),
@@ -597,15 +581,30 @@ export default function EditorPlaceholder() {
             </label>
           </div>
 
+          <div className="mb-3 flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              onClick={() => navigate("/add-furniture")}
+              className="inline-flex min-h-10 items-center gap-2 rounded-lg border border-[#e2e2e2] bg-white px-4 py-2 text-sm font-extrabold text-[#222222] transition-colors hover:bg-[#f2f2f2]"
+            >
+              <span aria-hidden="true">+</span> 가구 추가
+            </button>
+            <button
+              type="button"
+              onClick={() => navigate("/preference", { state: location.state })}
+              className="inline-flex min-h-10 items-center gap-2 rounded-lg bg-[#111111] px-4 py-2 text-sm font-extrabold text-white transition-colors hover:bg-[#333333]"
+            >
+              <span aria-hidden="true">✨</span> AI 추천 받기
+            </button>
+          </div>
+
           <SelectedFurnitureActions
             selectedFurnitureId={selectedFurniture?.id ?? null}
             selectedFurnitureName={selectedFurniture?.name}
-            selectedFurnitureDimensions={selectedFurniture?.dimensions}
             canEditSelection={selectedFurniture?.status !== "deleted"}
             onRotate={handleRotateFurniture}
             onDelete={handleDeleteFurniture}
             onReset={handleResetFurniture}
-            onResize={handleResizeFurniture}
             canReset={canResetSelectedFurniture}
           />
 

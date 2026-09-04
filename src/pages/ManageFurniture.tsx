@@ -1,12 +1,15 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { FiRotateCcw, FiTrash2, FiZoomIn } from "react-icons/fi";
+import { FiMinus, FiPlus, FiRotateCcw, FiTrash2, FiZoomIn } from "react-icons/fi";
 
 import { getSampleRoomLayouts } from "../api/rooms";
 import { RoomViewer } from "../components/room/RoomViewer";
 import {
   moveFurnitureInsideRoom,
+  resizeFurnitureInsideRoom,
+  resizeRoomInsideBounds,
   rotateFurnitureInsideRoom,
 } from "../components/room/furnitureBoundary";
+import { resolveFurnitureVariant } from "../components/furniture/variants/furnitureVariantRouting";
 import { resolveRoomLayoutPreferredColorTone } from "../config/appliedColorTone";
 import { getLiveMirrorForSelectedRoom } from "../config/confirmedLayouts";
 import {
@@ -31,6 +34,25 @@ const specs: Record<FurnitureCategory, string> = {
 
 const MANAGED_FURNITURE_SAVE_ERROR = "가구 배치를 저장하지 못했습니다. 편집 내용은 이 브라우저에 유지됩니다.";
 
+// This page is the one place RoomPlan measurement error gets corrected, once,
+// right after scanning — not a general resize tool. Bounding every correction
+// to ±15% of the as-scanned value keeps it a "fix the noise" control rather
+// than a redesign one.
+const DIMENSION_CORRECTION_RANGE = 0.15;
+const MIN_DIMENSION_METERS = 0.1;
+const DIMENSION_STEP_METERS = 0.05;
+
+function correctedBounds(original: number): { min: number; max: number } {
+  return {
+    min: Math.max(MIN_DIMENSION_METERS, original * (1 - DIMENSION_CORRECTION_RANGE)),
+    max: original * (1 + DIMENSION_CORRECTION_RANGE),
+  };
+}
+
+function roundToStep(value: number): number {
+  return Math.round(value * 100) / 100;
+}
+
 export default function ManageFurniture() {
   const [selectedRoom, setSelectedRoom] = useState<RoomLayout>(() => getSelectedRoom());
   const selectedRoomMeta = useMemo(() => getSelectedRoomMeta(selectedRoom), [selectedRoom]);
@@ -48,6 +70,13 @@ export default function ManageFurniture() {
   // *current* furniture before its Backend request starts, so that key can't
   // also serve as "what it looked like originally" once anything's been moved.
   const originalFurnitureRef = useRef<Furniture[]>(cloneFurniture(selectedRoom.furniture));
+  // As-scanned room size — the correction range for the width/depth/height
+  // steppers below is relative to this, not to whatever the room currently is.
+  const originalRoomDimensionsRef = useRef<{ width: number; depth: number; height: number }>({
+    width: selectedRoom.width,
+    depth: selectedRoom.depth,
+    height: selectedRoom.height ?? 2.4,
+  });
   const [selectedFurnitureId, setSelectedFurnitureId] = useState<string | null>(null);
   // Starts true (not false) so the very first render already shows/captures
   // the interior view, without an initial exterior-view render needing to be
@@ -78,6 +107,11 @@ export default function ManageFurniture() {
         setFurniture(cloneFurniture(firstRoom.furniture));
         latestRoomRef.current = firstRoom;
         originalFurnitureRef.current = cloneFurniture(firstRoom.furniture);
+        originalRoomDimensionsRef.current = {
+          width: firstRoom.width,
+          depth: firstRoom.depth,
+          height: firstRoom.height ?? 2.4,
+        };
         localStorage.setItem("roomfit:selectedRoomLayout", JSON.stringify(firstRoom));
         localStorage.setItem("roomfit:selectedRoomId", firstRoom.id);
         localStorage.setItem("roomfit:selectedRoomTitle", firstRoom.name);
@@ -89,6 +123,11 @@ export default function ManageFurniture() {
         setFurniture(cloneFurniture(sampleRoom.furniture));
         latestRoomRef.current = sampleRoom;
         originalFurnitureRef.current = cloneFurniture(sampleRoom.furniture);
+        originalRoomDimensionsRef.current = {
+          width: sampleRoom.width,
+          depth: sampleRoom.depth,
+          height: sampleRoom.height ?? 2.4,
+        };
       });
   }, []);
 
@@ -105,6 +144,11 @@ export default function ManageFurniture() {
         setFurniture(cloneFurniture(restored.furniture));
         latestRoomRef.current = restored;
         originalFurnitureRef.current = cloneFurniture(restored.furniture);
+        originalRoomDimensionsRef.current = {
+          width: restored.width,
+          depth: restored.depth,
+          height: restored.height ?? 2.4,
+        };
         setLayoutError("");
       })
       .catch(() => {
@@ -148,18 +192,50 @@ export default function ManageFurniture() {
     };
   }, [isResizing]);
 
-  const saveFurniture = (nextFurniture: Furniture[], persistToBackend: boolean) => {
-    const nextRoom = {
-      ...latestRoomRef.current,
-      furniture: nextFurniture,
-    };
+  const applyRoomUpdate = (nextRoom: RoomLayout, persistToBackend: boolean) => {
     latestRoomRef.current = nextRoom;
     localStorage.setItem("roomfit:selectedRoomLayout", JSON.stringify(nextRoom));
-    setFurniture(nextFurniture);
+    setSelectedRoom(nextRoom);
+    setFurniture(nextRoom.furniture);
 
     if (persistToBackend) {
       persistFurniture(nextRoom);
     }
+  };
+
+  const saveFurniture = (nextFurniture: Furniture[], persistToBackend: boolean) => {
+    applyRoomUpdate({ ...latestRoomRef.current, furniture: nextFurniture }, persistToBackend);
+  };
+
+  // Room dimension correction has no backend endpoint to persist to (the
+  // upload/layout APIs only ever accept furniture, never room width/depth/
+  // height) — this stays a local/session correction, same as every other
+  // edit here until "다음 단계" runs prepareManagedFurnitureDraft.
+  const adjustRoomDimension = (axis: "width" | "depth" | "height", delta: number) => {
+    const current = latestRoomRef.current;
+    const currentValue = axis === "height" ? current.height ?? originalRoomDimensionsRef.current.height : current[axis];
+    const bounds = correctedBounds(originalRoomDimensionsRef.current[axis]);
+    const next = Math.min(bounds.max, Math.max(bounds.min, roundToStep(currentValue + delta)));
+    if (next === currentValue) return;
+    applyRoomUpdate(resizeRoomInsideBounds(current, { [axis]: next }), false);
+  };
+
+  const resizeFurniture = (id: string, axis: "width" | "depth", delta: number) => {
+    const item = latestRoomRef.current.furniture.find((candidate) => candidate.id === id);
+    const original = originalFurnitureRef.current.find((candidate) => candidate.id === id);
+    if (!item || !original) return;
+    const bounds = correctedBounds(original.dimensions[axis]);
+    const next = Math.min(bounds.max, Math.max(bounds.min, roundToStep(item.dimensions[axis] + delta)));
+    if (next === item.dimensions[axis]) return;
+    const nextDimensions = { width: item.dimensions.width, depth: item.dimensions.depth, [axis]: next };
+    saveFurniture(
+      latestRoomRef.current.furniture.map((candidate) => (
+        candidate.id === id
+          ? markUserModified(resizeFurnitureInsideRoom(latestRoomRef.current, candidate, nextDimensions))
+          : candidate
+      )),
+      true,
+    );
   };
 
   const persistFurniture = (room: RoomLayout) => {
@@ -269,6 +345,11 @@ export default function ManageFurniture() {
             </label>
           </div>
 
+          <RoomDimensionCorrectionPanel
+            room={selectedRoom}
+            onAdjust={adjustRoomDimension}
+          />
+
           {layoutError && (
             <p role="alert" className="mb-4 rounded-lg bg-[#fff1f1] px-4 py-3 text-sm font-bold text-[#b42318]">
               {layoutError}
@@ -317,6 +398,7 @@ export default function ManageFurniture() {
             selectedFurnitureId={selectedFurnitureId}
             onSelect={setSelectedFurnitureId}
             onRemove={removeFurniture}
+            onResize={resizeFurniture}
           />
         </aside>
       </div>
@@ -329,15 +411,20 @@ export function FurnitureStatusPanel({
   selectedFurnitureId,
   onSelect,
   onRemove,
+  onResize,
 }: {
   items: Furniture[];
   selectedFurnitureId: string | null;
   onSelect: (id: string) => void;
   onRemove: (id: string) => void;
+  onResize?: (id: string, axis: "width" | "depth", delta: number) => void;
 }) {
   return (
     <div className="rounded-xl border border-[#e8e8e8] bg-white p-4">
       <h2 className="mb-5 text-base font-extrabold">가구 현황</h2>
+      <p className="mb-4 text-xs font-semibold leading-5 text-[#888888]">
+        스캔 오차가 있다면 여기서 한 번에 보정하세요. 가로/세로는 스캔값의 ±15% 안에서만 조정할 수 있어요.
+      </p>
       <div className="max-h-[calc(100vh-320px)] space-y-4 overflow-y-auto pr-1">
         {items.map((item) => (
           <FurnitureRow
@@ -346,6 +433,7 @@ export function FurnitureStatusPanel({
             selected={selectedFurnitureId === item.id}
             onSelect={() => onSelect(item.id)}
             onRemove={() => onRemove(item.id)}
+            onResize={onResize ? (axis, delta) => onResize(item.id, axis, delta) : undefined}
           />
         ))}
       </div>
@@ -358,14 +446,23 @@ export function FurnitureRow({
   selected,
   onSelect,
   onRemove,
+  onResize,
 }: {
   item: Furniture;
   selected: boolean;
   onSelect: () => void;
   onRemove: () => void;
+  onResize?: (axis: "width" | "depth", delta: number) => void;
 }) {
+  // Scanned/existing furniture never carries a variantId (that's a catalog/
+  // product concept) — this only ever hides the stepper in the rare case an
+  // item does resolve to one, as a safety net, not something the common case
+  // should need.
+  const canResize = Boolean(onResize) && !resolveFurnitureVariant(item.variantId);
+
   return (
-    <div className={`flex items-center gap-3 rounded-lg border p-2 transition-colors ${selected ? "border-[#111111] bg-[#fafafa]" : "border-transparent"}`}>
+    <div className={`rounded-lg border p-2 transition-colors ${selected ? "border-[#111111] bg-[#fafafa]" : "border-transparent"}`}>
+      <div className="flex items-center gap-3">
       <button type="button" onClick={onSelect} className="flex min-w-0 flex-1 items-center gap-3 text-left">
         <FurnitureThumb category={item.category} color={item.color} />
         <span className="min-w-0">
@@ -381,6 +478,96 @@ export function FurnitureRow({
       >
         <FiTrash2 className="h-4 w-4" />
       </button>
+      </div>
+
+      {canResize && (
+        <div className="mt-2 flex flex-wrap gap-2 pl-15">
+          <DimensionStepper
+            label="가로"
+            value={item.dimensions.width}
+            onDecrease={() => onResize?.("width", -DIMENSION_STEP_METERS)}
+            onIncrease={() => onResize?.("width", DIMENSION_STEP_METERS)}
+          />
+          <DimensionStepper
+            label="세로"
+            value={item.dimensions.depth}
+            onDecrease={() => onResize?.("depth", -DIMENSION_STEP_METERS)}
+            onIncrease={() => onResize?.("depth", DIMENSION_STEP_METERS)}
+          />
+        </div>
+      )}
+    </div>
+  );
+}
+
+function DimensionStepper({
+  label,
+  value,
+  disabled,
+  onDecrease,
+  onIncrease,
+}: {
+  label: string;
+  value: number;
+  disabled?: boolean;
+  onDecrease: () => void;
+  onIncrease: () => void;
+}) {
+  return (
+    <div className="flex min-h-9 items-center gap-1 rounded-lg border border-[#e2e2e2] bg-white px-2 py-1 text-xs font-extrabold text-[#222222]">
+      <span className="text-[#777777]">{label}</span>
+      <button
+        type="button"
+        aria-label={`${label} 줄이기`}
+        onClick={onDecrease}
+        disabled={disabled}
+        className="grid h-6 w-6 place-items-center rounded-md hover:bg-[#f2f2f2] disabled:cursor-not-allowed disabled:opacity-40"
+      >
+        <FiMinus aria-hidden="true" />
+      </button>
+      <span className="w-12 text-center tabular-nums">{value.toFixed(2)}m</span>
+      <button
+        type="button"
+        aria-label={`${label} 늘리기`}
+        onClick={onIncrease}
+        disabled={disabled}
+        className="grid h-6 w-6 place-items-center rounded-md hover:bg-[#f2f2f2] disabled:cursor-not-allowed disabled:opacity-40"
+      >
+        <FiPlus aria-hidden="true" />
+      </button>
+    </div>
+  );
+}
+
+function RoomDimensionCorrectionPanel({
+  room,
+  onAdjust,
+}: {
+  room: RoomLayout;
+  onAdjust: (axis: "width" | "depth" | "height", delta: number) => void;
+}) {
+  return (
+    <div className="mb-4 flex flex-wrap items-center gap-3 rounded-xl border border-[#e8e8e8] bg-white px-4 py-3">
+      <span className="text-xs font-bold text-[#777777]">방 크기 보정</span>
+      <DimensionStepper
+        label="가로"
+        value={room.width}
+        onDecrease={() => onAdjust("width", -DIMENSION_STEP_METERS)}
+        onIncrease={() => onAdjust("width", DIMENSION_STEP_METERS)}
+      />
+      <DimensionStepper
+        label="세로"
+        value={room.depth}
+        onDecrease={() => onAdjust("depth", -DIMENSION_STEP_METERS)}
+        onIncrease={() => onAdjust("depth", DIMENSION_STEP_METERS)}
+      />
+      <DimensionStepper
+        label="높이"
+        value={room.height ?? 2.4}
+        onDecrease={() => onAdjust("height", -DIMENSION_STEP_METERS)}
+        onIncrease={() => onAdjust("height", DIMENSION_STEP_METERS)}
+      />
+      <span className="text-xs font-semibold text-[#999999]">스캔값의 ±15% 안에서만 조정할 수 있어요.</span>
     </div>
   );
 }
