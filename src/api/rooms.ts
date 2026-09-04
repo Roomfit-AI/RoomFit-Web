@@ -1,7 +1,7 @@
 import { isAxiosError } from "axios";
 
 import { apiClient } from "./client";
-import type { Furniture, FurnitureCategory, FurnitureStatus, Opening, RoomLayout, WallSegment } from "../types";
+import type { Furniture, FurnitureCategory, FurnitureStatus, Opening, RoomLayout, Vector2D, WallSegment } from "../types";
 import { normalizeCanonicalFurnitureType } from "../config/canonicalFurnitureType";
 import {
   clampFurniturePositionToRoom,
@@ -27,7 +27,11 @@ export interface SampleRoomApiItem {
   openings: Array<{
     id: string;
     type: "door" | "window" | string;
-    wall: "north" | "east" | "south" | "west" | string;
+    // A `walls[].id` reference (backend/iOS now send this). Older uploads may
+    // still carry a legacy cardinal-side string ("north"/"east"/"south"/"west");
+    // `openingPosition()` below falls back to the old rectangle-idealized math
+    // for those.
+    wall: string;
     offset: number;
     width: number;
     height: number;
@@ -105,7 +109,8 @@ export interface RoomUploadApiRequest {
   openings: Array<{
     id: string;
     type: "door" | "window";
-    wall: "north" | "east" | "south" | "west";
+    // `walls[].id` this opening belongs to.
+    wall: string;
     offset: number;
     width: number;
     height: number;
@@ -309,16 +314,36 @@ function toRoomUploadOpening(
   opening: Opening,
   type: "door" | "window",
 ): RoomUploadApiRequest["openings"][number] {
-  const wall = resolveOpeningWall(room, opening);
-  const rawOffset = wall === "north" || wall === "south"
+  // `opening.wallId` is normally already set (toOpening()/snapToWall() below
+  // resolve it on load) and, for a real scan, names an actual `room.walls[]`
+  // entry — offset can then be computed exactly along that wall. A room with
+  // no real wall geometry (`walls: []`, e.g. a manually-built/legacy layout)
+  // or an opening still carrying a legacy cardinal label ("south"/"east"/...)
+  // has no such entry to look up; fall back to the previous rectangle-
+  // idealized width/depth math for those, same as before this change.
+  const wall = opening.wallId ? room.walls.find((candidate) => candidate.id === opening.wallId) : undefined;
+  if (wall) {
+    return {
+      id: opening.id,
+      type,
+      wall: wall.id,
+      offset: offsetAlongWall(wall, opening.position, opening.dimensions.width),
+      width: opening.dimensions.width,
+      height: opening.dimensions.height,
+      sillHeight: type === "window" ? 0.9 : null,
+    };
+  }
+
+  const side = resolveOpeningSide(room, opening);
+  const rawOffset = side === "north" || side === "south"
     ? opening.position.x + room.width / 2
     : opening.position.z + room.depth / 2;
-  const wallLength = wall === "north" || wall === "south" ? room.width : room.depth;
+  const wallLength = side === "north" || side === "south" ? room.width : room.depth;
 
   return {
     id: opening.id,
     type,
-    wall,
+    wall: side,
     offset: Math.min(Math.max(rawOffset, opening.dimensions.width / 2), wallLength - opening.dimensions.width / 2),
     width: opening.dimensions.width,
     height: opening.dimensions.height,
@@ -326,7 +351,7 @@ function toRoomUploadOpening(
   };
 }
 
-function resolveOpeningWall(
+function resolveOpeningSide(
   room: RoomLayout,
   opening: Opening,
 ): "north" | "east" | "south" | "west" {
@@ -342,6 +367,19 @@ function resolveOpeningWall(
     ["west", Math.abs(opening.position.x + room.width / 2)],
   ] as const;
   return distances.reduce((nearest, candidate) => candidate[1] < nearest[1] ? candidate : nearest)[0];
+}
+
+// How far `position` sits from `wall.start`, measured along the wall's own
+// direction (not a room-width/depth-relative offset) — the offset convention
+// `openingPosition()` below expects. Clamped so the opening's whole footprint
+// (not just its center) stays within the wall segment's own length.
+function offsetAlongWall(wall: WallSegment, position: Vector2D, openingWidth: number): number {
+  const dx = wall.end.x - wall.start.x;
+  const dz = wall.end.z - wall.start.z;
+  const len = Math.hypot(dx, dz) || 1;
+  const rawAlong = ((position.x - wall.start.x) * dx + (position.z - wall.start.z) * dz) / len;
+  const halfWidth = Math.min(openingWidth / 2, len / 2);
+  return Math.min(Math.max(rawAlong, halfWidth), Math.max(len - halfWidth, halfWidth));
 }
 
 function normalizeDegrees(value: number): number {
@@ -626,7 +664,7 @@ function toOpening(
   walls: WallSegment[],
   index = 0,
 ): Opening {
-  const idealizedPosition = openingPosition(opening.wall, opening.offset, roomWidth, roomDepth);
+  const idealizedPosition = openingPosition(opening.wall, opening.offset, roomWidth, roomDepth, walls);
   const snapped = snapToWall(idealizedPosition, walls, opening.width / 2, opening.wall);
 
   return {
@@ -653,7 +691,32 @@ function toOpening(
   };
 }
 
-function openingPosition(wall: string, offset: number, roomWidth: number, roomDepth: number) {
+// `wall` is normally a `walls[].id` reference now: the opening's true
+// position is just that wall's start point plus `offset` meters along the
+// wall's own direction — exact, not an idealization, so it works for any
+// wall angle/count (not only 4 cardinal sides). Older payloads that still
+// send a literal "north"/"east"/"south"/"west" (no matching wall id exists)
+// fall back to the previous perfect-rectangle math; `snapToWall()` in the
+// caller then corrects that idealized guess against the real wall geometry
+// same as before.
+function openingPosition(
+  wall: string,
+  offset: number,
+  roomWidth: number,
+  roomDepth: number,
+  walls: WallSegment[],
+) {
+  const matched = walls.find((candidate) => candidate.id === wall);
+  if (matched) {
+    const dx = matched.end.x - matched.start.x;
+    const dz = matched.end.z - matched.start.z;
+    const len = Math.hypot(dx, dz);
+    if (len > 0.01) {
+      const t = Math.min(Math.max(offset, 0), len) / len;
+      return { x: matched.start.x + dx * t, z: matched.start.z + dz * t };
+    }
+  }
+
   const halfWidth = roomWidth / 2;
   const halfDepth = roomDepth / 2;
 

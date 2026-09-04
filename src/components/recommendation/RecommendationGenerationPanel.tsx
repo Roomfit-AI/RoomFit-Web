@@ -19,10 +19,10 @@ export default function RecommendationGenerationPanel({
 }: RecommendationGenerationPanelProps) {
   return (
     <section className="w-full max-w-xl rounded-2xl border border-[#e4e4e4] bg-white p-7 shadow-[0_22px_55px_rgba(0,0,0,0.07)] sm:p-10">
-      <span className="text-sm font-extrabold text-[#777777]">마지막 단계</span>
-      <h1 className="mt-3 text-3xl font-extrabold tracking-tight sm:text-4xl">AI 추천 배치를 생성할 준비가 됐어요</h1>
+      <span className="text-sm font-extrabold text-[#777777]">참고용 제안</span>
+      <h1 className="mt-3 text-3xl font-extrabold tracking-tight sm:text-4xl">AI 추천 배치, 참고해 보시겠어요?</h1>
       <p className="mt-4 text-sm font-semibold leading-6 text-[#666666]">
-        선택한 공간과 취향, 가구를 바탕으로 안전한 배치를 생성합니다. 아래 버튼을 누르기 전에는 추천이 시작되지 않습니다.
+        선택한 공간과 취향, 가구를 바탕으로 배치 하나를 제안해 드려요. 마음에 들지 않으면 다음 화면에서 직접 자유롭게 옮기고 바꿀 수 있으니, 참고용으로 가볍게 생성해 보세요.
       </p>
 
       <dl className="mt-7 grid gap-3 rounded-xl bg-[#f7f7f7] p-5 text-sm">

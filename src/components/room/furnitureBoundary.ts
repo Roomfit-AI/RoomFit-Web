@@ -153,6 +153,29 @@ export function moveFurnitureInsideRoom(
   return position ? { ...furniture, position } : furniture;
 }
 
+// RoomPlan's measured width/depth for a scanned piece can be off by a few
+// centimeters; this lets a user correct it after the fact. Re-clamps the
+// existing position/rotation against the new footprint (same as a move/
+// rotate) so a resize can't silently leave furniture poking through a wall
+// or overlapping its neighbors undetected.
+export function resizeFurnitureInsideRoom(
+  room: RoomBounds,
+  furniture: Furniture,
+  proposedDimensions: Pick<Size3D, "width" | "depth">,
+): Furniture {
+  const dimensions: Size3D = { ...furniture.dimensions, ...proposedDimensions };
+  const resized = { ...furniture, dimensions };
+  const localFootprint = resolveFurnitureLocalFootprint(resized);
+  const position = clampFurniturePositionToRoom(
+    room,
+    dimensions,
+    furniture.position,
+    furniture.rotationY,
+    localFootprint,
+  );
+  return position ? { ...resized, position } : resized;
+}
+
 export function rotateFurnitureInsideRoom(
   room: RoomBounds,
   furniture: Furniture,

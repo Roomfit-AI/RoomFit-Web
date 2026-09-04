@@ -38,7 +38,11 @@ import {
   resolveNextFeedbackLayoutId,
 } from "../components/editor/feedbackPresentation";
 import RoomViewer from "../components/room/RoomViewer";
-import { moveFurnitureInsideRoom, rotateFurnitureInsideRoom } from "../components/room/furnitureBoundary";
+import {
+  moveFurnitureInsideRoom,
+  resizeFurnitureInsideRoom,
+  rotateFurnitureInsideRoom,
+} from "../components/room/furnitureBoundary";
 import { getLiveMirrorForSelectedRoom } from "../config/confirmedLayouts";
 import { readActiveClientScope } from "../config/clientScope";
 import {
@@ -301,6 +305,21 @@ export default function EditorPlaceholder() {
         furniture: current.furniture.map((item) =>
           item.id === id
             ? markUserModified(rotateFurnitureInsideRoom(current, item, item.rotationY + Math.PI / 2))
+            : item,
+        ),
+      }),
+    });
+  };
+
+  const handleResizeFurniture = (id: string, dimensions: { width: number; depth: number }) => {
+    dispatchEditorLayout({
+      type: "edit",
+      scopeKey: editorScopeKey,
+      update: (current) => ({
+        ...current,
+        furniture: current.furniture.map((item) =>
+          item.id === id
+            ? markUserModified(resizeFurnitureInsideRoom(current, item, dimensions))
             : item,
         ),
       }),
@@ -581,10 +600,12 @@ export default function EditorPlaceholder() {
           <SelectedFurnitureActions
             selectedFurnitureId={selectedFurniture?.id ?? null}
             selectedFurnitureName={selectedFurniture?.name}
+            selectedFurnitureDimensions={selectedFurniture?.dimensions}
             canEditSelection={selectedFurniture?.status !== "deleted"}
             onRotate={handleRotateFurniture}
             onDelete={handleDeleteFurniture}
             onReset={handleResetFurniture}
+            onResize={handleResizeFurniture}
             canReset={canResetSelectedFurniture}
           />
 

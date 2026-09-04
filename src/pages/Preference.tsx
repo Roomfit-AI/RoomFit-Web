@@ -73,7 +73,7 @@ export default function Preference() {
 
         <header className="mb-8 text-center">
           <h1 className="text-3xl font-extrabold tracking-normal sm:text-4xl">당신의 라이프스타일과 선호하는 색감을 알려주세요</h1>
-          <p className="mt-3 text-sm font-semibold text-[#777777]">정확한 추천을 위해 생활 패턴을 입력해주세요.</p>
+          <p className="mt-3 text-sm font-semibold text-[#777777]">AI 추천을 더 참고가 되도록 다듬어 드려요. 물론 추천 없이 직접 배치해도 좋아요.</p>
         </header>
 
         <InlineSelectionValidation message={validationMessage} />
