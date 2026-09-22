@@ -12,13 +12,13 @@ describe("Navbar onboarding labels", () => {
     vi.stubGlobal("sessionStorage", memoryStorage());
   });
 
-  it("keeps the furniture selection action as next step instead of starting recommendation", () => {
+  it("returns to the editor from the furniture selection sub-flow instead of starting recommendation", () => {
     const markup = renderToStaticMarkup(
       <MemoryRouter initialEntries={["/add-furniture"]}>
         <Navbar />
       </MemoryRouter>,
     );
-    expect(markup).toContain("다음 단계");
+    expect(markup).toContain("완료하고 편집으로 돌아가기");
     expect(markup).not.toContain("추천 생성 중...");
   });
 

@@ -11,7 +11,7 @@ describe("RecommendationGenerationPanel", () => {
     const markup = renderToStaticMarkup(element);
 
     expect(markup).toContain("AI 추천 생성하기");
-    expect(markup).toContain("아래 버튼을 누르기 전에는 추천이 시작되지 않습니다.");
+    expect(markup).toContain("참고용으로 가볍게 생성해 보세요.");
     expect(onGenerate).not.toHaveBeenCalled();
   });
 

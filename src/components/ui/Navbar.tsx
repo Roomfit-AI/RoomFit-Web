@@ -14,9 +14,20 @@ interface NavigationStep {
   label: string;
   beforeNext?: () => Promise<unknown> | unknown;
   handlesNextInPage?: boolean;
+  // Overrides the generic "다음 단계" wording for this step's own next-button
+  // (e.g. a single-page sub-flow that returns to the editor reads better as
+  // "완료" than "다음 단계").
+  nextLabel?: string;
 }
 
-const navigationSteps: NavigationStep[] = [
+// The main onboarding/edit sequence. `/manage-furniture` is the dedicated
+// scan-correction step (room + existing-furniture dimensions), done once
+// right after picking a room, before anything else. `/preference`,
+// `/reference-image`, `/add-furniture` and `/recommendation` used to be
+// forced steps between `/manage-furniture` and `/editor` — they're now
+// editor-launched sub-flows (see preferenceFlowSteps/addFurnitureFlowSteps
+// below) so the editor itself is reachable right after scan correction.
+const mainFlowSteps: NavigationStep[] = [
   {
     path: "/",
     label: "홈",
@@ -29,9 +40,21 @@ const navigationSteps: NavigationStep[] = [
   },
   {
     path: "/manage-furniture",
-    label: "가구 관리",
+    label: "스캔 보정",
     beforeNext: async () => (await import("../../config/layoutEditingWorkflow")).prepareManagedFurnitureDraft(),
   },
+  {
+    path: "/editor",
+    label: "편집",
+    beforeNext: async () => (await import("../../config/layoutEditingWorkflow")).persistActiveEditorLayout(),
+  },
+  { path: "/layout-confirm", label: "결과 확인" },
+];
+
+// Launched from the editor's "✨ AI 추천 받기" button. Ends on /recommendation,
+// which already manages its own transition back to /editor on success
+// (handlesNextInPage), so this flow never needs a return-path of its own.
+const preferenceFlowSteps: NavigationStep[] = [
   {
     path: "/preference",
     label: "취향 선택",
@@ -43,32 +66,42 @@ const navigationSteps: NavigationStep[] = [
     beforeNext: async () => (await import("../../config/layoutEditingWorkflow")).refreshActiveDraftNavigationState(),
   },
   {
-    path: "/add-furniture",
-    label: "가구 선택",
-    beforeNext: async () => (await import("../../config/layoutEditingWorkflow")).prepareFurnitureSelectionForRecommendation(),
-  },
-  {
     path: "/recommendation",
     label: "추천 생성",
     handlesNextInPage: true,
   },
-  {
-    path: "/editor",
-    label: "편집",
-    beforeNext: async () => (await import("../../config/layoutEditingWorkflow")).persistActiveEditorLayout(),
-  },
-  { path: "/layout-confirm", label: "결과 확인" },
 ];
+
+// Launched from the editor's "+ 가구 추가" button. A single real step whose
+// "다음" returns straight to /editor — /editor is listed here purely so the
+// existing index-based nextStep lookup resolves to it; landing on /editor
+// itself always resolves to mainFlowSteps instead (see resolveActiveFlow).
+const addFurnitureFlowSteps: NavigationStep[] = [
+  {
+    path: "/add-furniture",
+    label: "가구 선택",
+    beforeNext: async () => (await import("../../config/layoutEditingWorkflow")).prepareFurnitureSelectionForRecommendation(),
+    nextLabel: "완료하고 편집으로 돌아가기",
+  },
+  { path: "/editor", label: "편집" },
+];
+
+const allFlows = [mainFlowSteps, preferenceFlowSteps, addFurnitureFlowSteps];
+
+function resolveActiveFlow(pathname: string): NavigationStep[] {
+  return allFlows.find((steps) => steps.some((step) => step.path === pathname)) ?? mainFlowSteps;
+}
 
 export default function Navbar() {
   const location = useLocation();
   const navigate = useNavigate();
-  const currentStepIndex = navigationSteps.findIndex((step) => step.path === location.pathname);
+  const activeFlow = resolveActiveFlow(location.pathname);
+  const currentStepIndex = activeFlow.findIndex((step) => step.path === location.pathname);
   const safeStepIndex = currentStepIndex >= 0 ? currentStepIndex : 0;
-  const isHome = safeStepIndex === 0;
-  const isLastStep = safeStepIndex === navigationSteps.length - 1;
-  const previousStep = navigationSteps[safeStepIndex - 1];
-  const nextStep = navigationSteps[safeStepIndex + 1];
+  const isHome = activeFlow === mainFlowSteps && safeStepIndex === 0;
+  const isLastStep = safeStepIndex === activeFlow.length - 1;
+  const previousStep = activeFlow[safeStepIndex - 1];
+  const nextStep = activeFlow[safeStepIndex + 1];
   const [isNavigating, setIsNavigating] = useState(false);
   const [navigationError, setNavigationError] = useState("");
   const [isFurnitureLimitDialogOpen, setIsFurnitureLimitDialogOpen] = useState(false);
@@ -110,7 +143,7 @@ export default function Navbar() {
       return;
     }
     navigationInFlightRef.current = true;
-    const currentStep = navigationSteps[safeStepIndex];
+    const currentStep = activeFlow[safeStepIndex];
     setIsNavigating(true);
     setNavigationError("");
 
@@ -170,11 +203,11 @@ export default function Navbar() {
           {/* LayoutConfirm.tsx has its own in-page "확정하기" button inside the
               요약 정보 aside, which also handles the thumbnail capture on
               confirm — keeping this navbar one too just doubled the button. */}
-          {nextStep && !isLastStep && !navigationSteps[safeStepIndex].handlesNextInPage && (
+          {nextStep && !isLastStep && !activeFlow[safeStepIndex].handlesNextInPage && (
             <Button onClick={goNext} disabled={isNavigating} className="hidden px-7 py-2.5 sm:inline-flex">
               {isNavigating
                 ? "저장 중..."
-                : isHome ? "시작하기" : "다음 단계"}
+                : isHome ? "시작하기" : activeFlow[safeStepIndex].nextLabel ?? "다음 단계"}
             </Button>
           )}
         </div>

@@ -4,6 +4,7 @@ import {
   getRoomById,
   getRecentUploadedRooms,
   getSampleRooms,
+  getSampleRoomLayouts,
   replaceRoomFurniture,
   toRoomFurnitureReplaceRequest,
   toRoomUploadRequest,
@@ -316,6 +317,34 @@ describe("toRoomUploadRequest", () => {
     ]);
   });
 
+  it("computes an opening's offset along its own real wall id, not the room's width/depth", () => {
+    // A wall that isn't one of the 4 cardinal sides — e.g. an L-shaped
+    // room's angled/notch wall — proves the offset comes from the wall's own
+    // geometry (start -> end) rather than the old north/south/east/west
+    // rectangle idealization.
+    const room: RoomLayout = {
+      ...baseLayout,
+      walls: [
+        { id: "wall-a", start: { x: -2, z: -1.5 }, end: { x: 2, z: -1.5 } },
+        { id: "wall-b", start: { x: 2, z: -1.5 }, end: { x: 2, z: 1.5 } },
+      ],
+      doors: [{
+        id: "door-1",
+        label: "현관",
+        position: { x: 2, z: 0.4 },
+        dimensions: { width: 0.8, depth: 0.18, height: 2.1 },
+        rotationY: 0,
+        wallId: "wall-b",
+      }],
+    };
+
+    const opening = toRoomUploadRequest(room).openings[0];
+    expect(opening.wall).toBe("wall-b");
+    // wall-b runs from z=-1.5 to z=1.5; the door sits at z=0.4, i.e. 1.9m
+    // along the wall from its start (-1.5) — not a width/depth-relative offset.
+    expect(opening.offset).toBeCloseTo(1.9);
+  });
+
   it("posts the upload contract and returns the Backend roomId", async () => {
     const post = vi.spyOn(apiClient, "post").mockResolvedValue({
       data: { success: true, data: { roomId: 57 }, error: null },
@@ -371,6 +400,48 @@ describe("toRoomUploadRequest", () => {
         source: "ROOMPLAN",
       });
       expect(get).toHaveBeenCalledWith("/api/rooms/57");
+    } finally {
+      get.mockRestore();
+    }
+  });
+
+  it("resolves an opening's real position from its wallId, not a rectangle idealization", async () => {
+    const get = vi.spyOn(apiClient, "get").mockResolvedValue({
+      data: {
+        success: true,
+        data: [{
+          roomId: 61,
+          name: "L자 원룸",
+          room: { width: 4, depth: 3, height: 2.4, unit: "meter" },
+          walls: [
+            { id: "wall-a", start: { x: 0, z: 0 }, end: { x: 4, z: 0 }, height: 2.4, thickness: 0.12 },
+            { id: "wall-b", start: { x: 4, z: 0 }, end: { x: 4, z: 3 }, height: 2.4, thickness: 0.12 },
+          ],
+          openings: [{
+            id: "door-1",
+            type: "door",
+            wall: "wall-b",
+            offset: 1.9,
+            width: 0.8,
+            height: 2.1,
+            sillHeight: null,
+          }],
+          furniture: [],
+          source: "ROOMPLAN",
+          createdAt: "2026-07-19T00:00:00Z",
+        }],
+        error: null,
+      },
+    });
+
+    try {
+      const [layout] = await getSampleRoomLayouts();
+      // wall-b runs (4,0) -> (4,3) in corner-origin space; 1.9m along it is
+      // (4, 1.9), then re-centered ( -width/2, -depth/2 ) to the scene's
+      // center-origin convention -> (2, 0.4).
+      expect(layout.doors[0].wallId).toBe("wall-b");
+      expect(layout.doors[0].position.x).toBeCloseTo(2);
+      expect(layout.doors[0].position.z).toBeCloseTo(0.4);
     } finally {
       get.mockRestore();
     }
